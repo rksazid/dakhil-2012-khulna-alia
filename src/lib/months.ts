@@ -150,3 +150,4 @@ export function getDefaultRollingMonths(minCount = 12): string[] {
 
   return initialList.slice(0, Math.max(initialList.length, minCount));
 }
+
