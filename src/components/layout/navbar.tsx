@@ -88,8 +88,16 @@ export function Navbar({ session }: NavbarProps) {
                   href="/dashboard"
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-emerald-100 text-emerald-900 hover:bg-emerald-200 rounded-lg transition"
                 >
-                  <LayoutDashboard className="w-3.5 h-3.5" />
-                  ড্যাশবোর্ড
+                  {session.avatarUrl ? (
+                    <img
+                      src={session.avatarUrl}
+                      alt={session.name}
+                      className="w-4 h-4 rounded-full object-cover border border-emerald-300"
+                    />
+                  ) : (
+                    <LayoutDashboard className="w-3.5 h-3.5" />
+                  )}
+                  <span>{session.name.split(" ")[0] || "ড্যাশবোর্ড"}</span>
                 </Link>
 
                 <button

@@ -147,9 +147,17 @@ export function MemberDirectoryClient({ members }: { members: MemberItem[] }) {
               <div className="space-y-3">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-800 text-white font-extrabold text-base flex items-center justify-center shrink-0 shadow-2xs">
-                      {member.name.charAt(0)}
-                    </div>
+                    {member.avatarUrl ? (
+                      <img
+                        src={member.avatarUrl}
+                        alt={member.name}
+                        className="w-13 h-13 rounded-2xl object-cover border-2 border-emerald-100 shrink-0 shadow-xs"
+                      />
+                    ) : (
+                      <div className="w-13 h-13 rounded-2xl bg-gradient-to-br from-emerald-600 to-emerald-800 text-white font-extrabold text-lg flex items-center justify-center shrink-0 shadow-xs">
+                        {member.name.charAt(0)}
+                      </div>
+                    )}
                     <div>
                       <h3 className="font-bold text-slate-900 text-sm">{member.name}</h3>
                       <div className="flex items-center gap-1.5 mt-0.5">
@@ -212,12 +220,22 @@ export function MemberDirectoryClient({ members }: { members: MemberItem[] }) {
                 )}
 
                 <div className="space-y-2 pt-2 text-xs text-slate-600">
-                  {/* Email (Explicit requirement) */}
+                  {/* Email */}
                   <div className="flex items-center gap-2">
                     <Mail className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span className="font-mono text-slate-800 truncate">
-                      {member.email || "ইমেইল প্রদান করা হয়নি"}
-                    </span>
+                    {member.email ? (
+                      <a
+                        href={`mailto:${member.email}`}
+                        className="font-mono text-slate-800 hover:text-emerald-700 truncate hover:underline"
+                        title={member.email}
+                      >
+                        {member.email}
+                      </a>
+                    ) : (
+                      <span className="font-mono text-slate-400 italic">
+                        ইমেইল প্রদান করা হয়নি
+                      </span>
+                    )}
                   </div>
 
                   {/* Phone */}

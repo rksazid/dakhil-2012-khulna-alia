@@ -3,10 +3,12 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { registerAction } from "@/actions/auth-actions";
+import { FileUploader } from "@/components/ui/file-uploader";
 import { UserPlus, Lock, Phone, User, Mail, Briefcase, MapPin, Droplet, GraduationCap, Hash, School } from "lucide-react";
 
 export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState("");
   const [isPending, startTransition] = useTransition();
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -263,6 +265,17 @@ export default function RegisterPage() {
                 placeholder="নিজের বা খুলনা আলিয়ায় অধ্যয়নের স্মৃতি নিয়ে কিছু কথা লিখুন..."
                 className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
               />
+            </div>
+
+            <div>
+              <FileUploader
+                folder="avatars"
+                label="প্রোফাইল ছবি (ঐচ্ছিক — ব্যাচমেট ডিরেক্টরিতে প্রদর্শনের জন্য)"
+                onUploadComplete={setAvatarUrl}
+                initialUrl={avatarUrl}
+                accept="image/*"
+              />
+              <input type="hidden" name="avatarUrl" value={avatarUrl} />
             </div>
 
             <button

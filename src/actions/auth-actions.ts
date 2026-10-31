@@ -67,6 +67,7 @@ export async function registerAction(formData: FormData) {
     const studentGroup = (formData.get("studentGroup") as string)?.trim() || null;
     const classRoll = (formData.get("classRoll") as string)?.trim() || null;
     const classroom = (formData.get("classroom") as string)?.trim() || null;
+    const avatarUrl = (formData.get("avatarUrl") as string)?.trim() || null;
     const occupation = (formData.get("occupation") as string)?.trim() || null;
     const workplace = (formData.get("workplace") as string)?.trim() || null;
     const presentAddress = (formData.get("presentAddress") as string)?.trim() || null;
@@ -106,6 +107,7 @@ export async function registerAction(formData: FormData) {
         phone,
         email,
         passwordHash,
+        avatarUrl,
         bloodGroup,
         studentGroup,
         classRoll,
@@ -185,6 +187,15 @@ export async function updateProfileAction(formData: FormData) {
         showPhoneInDirectory,
         showEmailInDirectory,
       },
+    });
+
+    await setSessionCookie({
+      userId: user.id,
+      name,
+      phone: user.phone,
+      email,
+      role: user.role,
+      avatarUrl,
     });
 
     revalidatePath("/dashboard");

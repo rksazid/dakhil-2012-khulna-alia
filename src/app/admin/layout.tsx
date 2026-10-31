@@ -32,6 +32,7 @@ export default async function AdminLayout({
           name: user.name,
           role: user.role,
           phone: user.phone,
+          avatarUrl: user.avatarUrl,
         }}
         pendingPaymentsCount={pendingPaymentsCount}
       />

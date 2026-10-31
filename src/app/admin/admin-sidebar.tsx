@@ -27,6 +27,7 @@ interface AdminSidebarProps {
     name: string;
     role: string;
     phone: string;
+    avatarUrl?: string | null;
   };
   pendingPaymentsCount: number;
 }
@@ -106,9 +107,17 @@ export function AdminSidebar({ user, pendingPaymentsCount }: AdminSidebarProps) 
       {/* User Info Capsule */}
       {!collapsed && (
         <div className="p-3 mx-3 my-3 bg-slate-800/80 rounded-xl border border-slate-700/60 flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-full bg-emerald-700 text-white font-bold text-xs flex items-center justify-center">
-            {user.name.charAt(0)}
-          </div>
+          {user.avatarUrl ? (
+            <img
+              src={user.avatarUrl}
+              alt={user.name}
+              className="w-8 h-8 rounded-full object-cover border border-emerald-500/60 shrink-0"
+            />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-emerald-700 text-white font-bold text-xs flex items-center justify-center shrink-0">
+              {user.name.charAt(0)}
+            </div>
+          )}
           <div className="min-w-0 flex-1">
             <p className="text-xs font-semibold text-white truncate">{user.name}</p>
             <span className="text-[10px] font-bold text-amber-400 flex items-center gap-1">

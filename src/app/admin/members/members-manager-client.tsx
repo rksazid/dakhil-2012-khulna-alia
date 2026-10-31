@@ -9,6 +9,7 @@ import {
   updateMemberRoleAction,
   toggleMemberActiveAction,
 } from "@/actions/member-actions";
+import { FileUploader } from "@/components/ui/file-uploader";
 import {
   Users,
   UserPlus,
@@ -36,6 +37,7 @@ export interface MemberData {
   name: string;
   email: string | null;
   phone: string;
+  avatarUrl: string | null;
   role: Role;
   isActive: boolean;
   bloodGroup: string | null;
@@ -71,6 +73,8 @@ export function MembersManagerClient({
   const [filterSection, setFilterSection] = useState<string>("ALL");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<MemberData | null>(null);
+  const [addAvatarUrl, setAddAvatarUrl] = useState("");
+  const [editAvatarUrl, setEditAvatarUrl] = useState("");
   const [isPending, startTransition] = useTransition();
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
@@ -176,7 +180,10 @@ export function MembersManagerClient({
 
         <div className="flex items-center gap-3">
           <button
-            onClick={() => setIsAddModalOpen(true)}
+            onClick={() => {
+              setAddAvatarUrl("");
+              setIsAddModalOpen(true);
+            }}
             className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-xs transition"
           >
             <UserPlus className="w-4 h-4" /> নতুন সদস্য যুক্ত করুন
@@ -243,10 +250,18 @@ export function MembersManagerClient({
               {filtered.map((m) => (
                 <tr key={m.id} className="hover:bg-slate-50">
                   <td className="py-3 px-4">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center shrink-0">
-                        {m.name.charAt(0)}
-                      </div>
+                    <div className="flex items-center gap-2.5">
+                      {m.avatarUrl ? (
+                        <img
+                          src={m.avatarUrl}
+                          alt={m.name}
+                          className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0 shadow-2xs"
+                        />
+                      ) : (
+                        <div className="w-9 h-9 rounded-full bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center shrink-0 text-xs">
+                          {m.name.charAt(0)}
+                        </div>
+                      )}
                       <div>
                         <p className="font-bold text-slate-900">{m.name}</p>
                         <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
@@ -282,8 +297,18 @@ export function MembersManagerClient({
                   </td>
 
                   <td className="py-3 px-3">
-                    <p className="font-mono text-slate-800">{m.phone}</p>
-                    {m.email && <p className="font-mono text-slate-400 text-[11px]">{m.email}</p>}
+                    <p className="font-mono text-slate-800 font-semibold">{m.phone}</p>
+                    {m.email ? (
+                      <a
+                        href={`mailto:${m.email}`}
+                        className="font-mono text-emerald-700 hover:underline text-[11px] block truncate max-w-[170px]"
+                        title={m.email}
+                      >
+                        {m.email}
+                      </a>
+                    ) : (
+                      <span className="text-[10px] text-slate-400 italic">ইমেইল নেই</span>
+                    )}
                   </td>
 
                   <td className="py-3 px-3 text-slate-700">
@@ -311,7 +336,10 @@ export function MembersManagerClient({
                   <td className="py-3 px-4 text-right">
                     <div className="flex items-center justify-end gap-2">
                       <button
-                        onClick={() => setEditingMember(m)}
+                        onClick={() => {
+                          setEditingMember(m);
+                          setEditAvatarUrl(m.avatarUrl || "");
+                        }}
                         className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition"
                         title="সদস্য তথ্য সম্পাদনা করুন"
                       >
@@ -593,6 +621,17 @@ export function MembersManagerClient({
                 />
               </div>
 
+              <div>
+                <FileUploader
+                  folder="avatars"
+                  label="সদস্যের প্রোফাইল ছবি (ঐচ্ছিক — Vercel Object Storage)"
+                  onUploadComplete={setAddAvatarUrl}
+                  initialUrl={addAvatarUrl}
+                  accept="image/*"
+                />
+                <input type="hidden" name="avatarUrl" value={addAvatarUrl} />
+              </div>
+
               <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
                 <button
                   type="button"
@@ -840,6 +879,17 @@ export function MembersManagerClient({
                   defaultValue={editingMember.bio || ""}
                   className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl"
                 />
+              </div>
+
+              <div>
+                <FileUploader
+                  folder="avatars"
+                  label="প্রোফাইল ছবি পরিবর্তন / আপলোড (Vercel Object Storage)"
+                  onUploadComplete={setEditAvatarUrl}
+                  initialUrl={editAvatarUrl}
+                  accept="image/*"
+                />
+                <input type="hidden" name="avatarUrl" value={editAvatarUrl} />
               </div>
 
               <div className="flex items-center gap-2 pt-1">

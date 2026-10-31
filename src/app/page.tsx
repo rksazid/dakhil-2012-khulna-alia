@@ -86,6 +86,25 @@ export default async function HomePage() {
     orderBy: { createdAt: "desc" },
   });
 
+  // 5. Fetch Sample Members for Directory Preview
+  const showcaseMembers = await prisma.user.findMany({
+    where: { isActive: true },
+    take: 6,
+    orderBy: { createdAt: "asc" },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phone: true,
+      avatarUrl: true,
+      bloodGroup: true,
+      studentGroup: true,
+      classRoll: true,
+      occupation: true,
+      workplace: true,
+    },
+  });
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 selection:bg-emerald-200">
       <Navbar session={session} />
@@ -415,6 +434,83 @@ export default async function HomePage() {
             </div>
           </div>
         </section>
+
+        {/* Members Directory Preview */}
+        {showcaseMembers.length > 0 && (
+          <section className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b border-slate-200 pb-4">
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-emerald-700">
+                  সহপাঠী ও বন্ধুমহল
+                </span>
+                <h2 className="text-2xl font-bold text-slate-900 mt-1">
+                  দাখিল ২০১২ ব্যাচমেট ডিরেক্টরি
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  খুলনা আলিয়ার বন্ধুদের প্রোফাইল, ছবি, ইমেইল ও যোগাযোগ পরিচিতি
+                </p>
+              </div>
+              <Link
+                href="/members"
+                className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 flex items-center gap-1"
+              >
+                সকল সদস্য দেখুন ({toBengaliNumber(totalMembers)} জন) <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {showcaseMembers.map((member) => (
+                <div
+                  key={member.id}
+                  className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs hover:shadow-md transition flex items-center gap-3.5"
+                >
+                  {member.avatarUrl ? (
+                    <img
+                      src={member.avatarUrl}
+                      alt={member.name}
+                      className="w-13 h-13 rounded-xl object-cover border border-emerald-100 shrink-0 shadow-2xs"
+                    />
+                  ) : (
+                    <div className="w-13 h-13 rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-800 text-white font-bold text-base flex items-center justify-center shrink-0 shadow-2xs">
+                      {member.name.charAt(0)}
+                    </div>
+                  )}
+
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <h4 className="font-bold text-slate-900 text-xs sm:text-sm truncate">
+                        {member.name}
+                      </h4>
+                      {member.studentGroup && (
+                        <span className="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 shrink-0">
+                          {member.studentGroup === "SCIENCE" ? "বিজ্ঞান" : "মানবিক"}
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="text-[11px] text-slate-500 truncate">
+                      {member.occupation || "দাখিল ২০১২ ব্যাচমেট"}
+                    </p>
+
+                    <div className="flex items-center gap-2 pt-0.5 text-[11px]">
+                      {member.email ? (
+                        <a
+                          href={`mailto:${member.email}`}
+                          className="text-emerald-700 hover:underline font-mono truncate max-w-[150px]"
+                          title={member.email}
+                        >
+                          {member.email}
+                        </a>
+                      ) : (
+                        <span className="text-slate-400 font-mono text-[10px]">{member.phone}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Gallery / Memories Preview */}
         {galleryItems.length > 0 && (

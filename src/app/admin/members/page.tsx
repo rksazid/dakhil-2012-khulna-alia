@@ -17,6 +17,7 @@ export default async function AdminMembersPage() {
       name: true,
       phone: true,
       email: true,
+      avatarUrl: true,
       role: true,
       isActive: true,
       bloodGroup: true,

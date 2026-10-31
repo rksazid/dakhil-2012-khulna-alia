@@ -20,6 +20,7 @@ export async function createMemberAction(formData: FormData) {
     const studentGroup = (formData.get("studentGroup") as string)?.trim() || null;
     const classRoll = (formData.get("classRoll") as string)?.trim() || null;
     const classroom = (formData.get("classroom") as string)?.trim() || null;
+    const avatarUrl = (formData.get("avatarUrl") as string)?.trim() || null;
     const occupation = (formData.get("occupation") as string)?.trim() || null;
     const workplace = (formData.get("workplace") as string)?.trim() || null;
     const presentAddress = (formData.get("presentAddress") as string)?.trim() || null;
@@ -55,6 +56,7 @@ export async function createMemberAction(formData: FormData) {
         email,
         passwordHash,
         role,
+        avatarUrl,
         bloodGroup,
         studentGroup,
         classRoll,
@@ -121,6 +123,7 @@ export async function updateMemberDetailsAction(userId: string, formData: FormDa
     const studentGroup = (formData.get("studentGroup") as string)?.trim() || null;
     const classRoll = (formData.get("classRoll") as string)?.trim() || null;
     const classroom = (formData.get("classroom") as string)?.trim() || null;
+    const avatarUrl = (formData.get("avatarUrl") as string)?.trim() || null;
     const occupation = (formData.get("occupation") as string)?.trim() || null;
     const workplace = (formData.get("workplace") as string)?.trim() || null;
     const presentAddress = (formData.get("presentAddress") as string)?.trim() || null;
@@ -155,6 +158,7 @@ export async function updateMemberDetailsAction(userId: string, formData: FormDa
       studentGroup: string | null;
       classRoll: string | null;
       classroom: string | null;
+      avatarUrl: string | null;
       occupation: string | null;
       workplace: string | null;
       presentAddress: string | null;
@@ -171,6 +175,7 @@ export async function updateMemberDetailsAction(userId: string, formData: FormDa
       studentGroup,
       classRoll,
       classroom,
+      avatarUrl,
       occupation,
       workplace,
       presentAddress,
@@ -203,6 +208,10 @@ export async function updateMemberDetailsAction(userId: string, formData: FormDa
     if (oldUser.studentGroup !== studentGroup) { beforeDiff["বিভাগ"] = oldUser.studentGroup || "—"; afterDiff["বিভাগ"] = studentGroup || "—"; }
     if (oldUser.classRoll !== classRoll) { beforeDiff["ক্লাস রোল"] = oldUser.classRoll || "—"; afterDiff["ক্লাস রোল"] = classRoll || "—"; }
     if (oldUser.classroom !== classroom) { beforeDiff["শাখা"] = oldUser.classroom || "—"; afterDiff["শাখা"] = classroom || "—"; }
+    if (oldUser.avatarUrl !== avatarUrl) {
+      beforeDiff["প্রোফাইল ছবি"] = oldUser.avatarUrl ? "সংযুক্ত ছিল" : "ছিল না";
+      afterDiff["প্রোফাইল ছবি"] = avatarUrl ? "নতুন ছবি আপলোড" : "ছবি সরানো হয়েছে";
+    }
     if (oldUser.occupation !== occupation) { beforeDiff["পেশা"] = oldUser.occupation || "—"; afterDiff["পেশা"] = occupation || "—"; }
     if (oldUser.workplace !== workplace) { beforeDiff["কর্মস্থল"] = oldUser.workplace || "—"; afterDiff["কর্মস্থল"] = workplace || "—"; }
     if (oldUser.presentAddress !== presentAddress) { beforeDiff["বর্তমান ঠিকানা"] = oldUser.presentAddress || "—"; afterDiff["বর্তমান ঠিকানা"] = presentAddress || "—"; }
