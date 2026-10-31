@@ -17,6 +17,9 @@ export async function createMemberAction(formData: FormData) {
     const password = rawPassword && rawPassword.length >= 6 ? rawPassword : "Password123!";
     const role = (formData.get("role") as Role) || Role.MEMBER;
     const bloodGroup = (formData.get("bloodGroup") as string)?.trim() || null;
+    const studentGroup = (formData.get("studentGroup") as string)?.trim() || null;
+    const classRoll = (formData.get("classRoll") as string)?.trim() || null;
+    const classroom = (formData.get("classroom") as string)?.trim() || null;
     const occupation = (formData.get("occupation") as string)?.trim() || null;
     const workplace = (formData.get("workplace") as string)?.trim() || null;
     const presentAddress = (formData.get("presentAddress") as string)?.trim() || null;
@@ -53,6 +56,9 @@ export async function createMemberAction(formData: FormData) {
         passwordHash,
         role,
         bloodGroup,
+        studentGroup,
+        classRoll,
+        classroom,
         occupation,
         workplace,
         presentAddress,
@@ -112,6 +118,9 @@ export async function updateMemberDetailsAction(userId: string, formData: FormDa
     const email = (formData.get("email") as string)?.trim() || null;
     const role = (formData.get("role") as Role) || oldUser.role;
     const bloodGroup = (formData.get("bloodGroup") as string)?.trim() || null;
+    const studentGroup = (formData.get("studentGroup") as string)?.trim() || null;
+    const classRoll = (formData.get("classRoll") as string)?.trim() || null;
+    const classroom = (formData.get("classroom") as string)?.trim() || null;
     const occupation = (formData.get("occupation") as string)?.trim() || null;
     const workplace = (formData.get("workplace") as string)?.trim() || null;
     const presentAddress = (formData.get("presentAddress") as string)?.trim() || null;
@@ -143,6 +152,9 @@ export async function updateMemberDetailsAction(userId: string, formData: FormDa
       email: string | null;
       role: Role;
       bloodGroup: string | null;
+      studentGroup: string | null;
+      classRoll: string | null;
+      classroom: string | null;
       occupation: string | null;
       workplace: string | null;
       presentAddress: string | null;
@@ -156,6 +168,9 @@ export async function updateMemberDetailsAction(userId: string, formData: FormDa
       email,
       role,
       bloodGroup,
+      studentGroup,
+      classRoll,
+      classroom,
       occupation,
       workplace,
       presentAddress,

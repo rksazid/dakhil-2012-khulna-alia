@@ -21,6 +21,9 @@ import {
   User,
   HeartHandshake,
   Check,
+  GraduationCap,
+  Hash,
+  School,
 } from "lucide-react";
 
 interface FundItem {
@@ -70,6 +73,9 @@ interface MemberDashboardClientProps {
     permanentAddress: string | null;
     showPhoneInDirectory: boolean;
     showEmailInDirectory: boolean;
+    studentGroup?: string | null;
+    classRoll?: string | null;
+    classroom?: string | null;
     avatarUrl: string | null;
   };
   commitments: CommitmentItem[];
@@ -449,6 +455,57 @@ export function MemberDashboardClient({
                   <option value="AB+">AB+</option>
                   <option value="AB-">AB-</option>
                 </select>
+              </div>
+            </div>
+
+            {/* মাদ্রাসার শিক্ষাবর্ষ তথ্য (ঐচ্ছিক) */}
+            <div className="p-4 bg-emerald-50/60 rounded-xl border border-emerald-100">
+              <p className="text-xs font-semibold text-emerald-800 mb-2 flex items-center gap-1.5">
+                <GraduationCap className="w-4 h-4 text-emerald-700" />
+                দাখিল ২০১১-১২ মাদ্রাসার তথ্য (ঐচ্ছিক)
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    বিভাগ / গ্রুপ
+                  </label>
+                  <select
+                    name="studentGroup"
+                    defaultValue={user.studentGroup || ""}
+                    className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                  >
+                    <option value="">নির্বাচন করুন</option>
+                    <option value="SCIENCE">বিজ্ঞান (Science)</option>
+                    <option value="ARTS">মানবিক (Arts)</option>
+                    <option value="COMMERCE">ব্যবসায় শিক্ষা</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    ক্লাস রোল
+                  </label>
+                  <input
+                    name="classRoll"
+                    defaultValue={user.classRoll || ""}
+                    type="text"
+                    placeholder="উদা: ১৫ বা 15"
+                    className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    শাখা / রুম
+                  </label>
+                  <input
+                    name="classroom"
+                    defaultValue={user.classroom || ""}
+                    type="text"
+                    placeholder="উদা: ক শাখা"
+                    className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
               </div>
             </div>
 

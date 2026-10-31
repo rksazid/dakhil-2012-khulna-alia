@@ -64,6 +64,9 @@ export async function registerAction(formData: FormData) {
     const email = (formData.get("email") as string)?.trim() || null;
     const password = (formData.get("password") as string)?.trim();
     const bloodGroup = (formData.get("bloodGroup") as string)?.trim() || null;
+    const studentGroup = (formData.get("studentGroup") as string)?.trim() || null;
+    const classRoll = (formData.get("classRoll") as string)?.trim() || null;
+    const classroom = (formData.get("classroom") as string)?.trim() || null;
     const occupation = (formData.get("occupation") as string)?.trim() || null;
     const workplace = (formData.get("workplace") as string)?.trim() || null;
     const presentAddress = (formData.get("presentAddress") as string)?.trim() || null;
@@ -104,6 +107,9 @@ export async function registerAction(formData: FormData) {
         email,
         passwordHash,
         bloodGroup,
+        studentGroup,
+        classRoll,
+        classroom,
         occupation,
         workplace,
         presentAddress,
@@ -141,6 +147,9 @@ export async function updateProfileAction(formData: FormData) {
     const name = (formData.get("name") as string)?.trim() || user.name;
     const email = (formData.get("email") as string)?.trim() || null;
     const bloodGroup = (formData.get("bloodGroup") as string)?.trim() || null;
+    const studentGroup = (formData.get("studentGroup") as string)?.trim() || null;
+    const classRoll = (formData.get("classRoll") as string)?.trim() || null;
+    const classroom = (formData.get("classroom") as string)?.trim() || null;
     const occupation = (formData.get("occupation") as string)?.trim() || null;
     const workplace = (formData.get("workplace") as string)?.trim() || null;
     const presentAddress = (formData.get("presentAddress") as string)?.trim() || null;
@@ -164,6 +173,9 @@ export async function updateProfileAction(formData: FormData) {
         name,
         email,
         bloodGroup,
+        studentGroup,
+        classRoll,
+        classroom,
         occupation,
         workplace,
         presentAddress,

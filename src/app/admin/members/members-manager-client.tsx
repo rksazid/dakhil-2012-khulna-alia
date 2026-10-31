@@ -26,6 +26,9 @@ import {
   Lock,
   MapPin,
   HeartHandshake,
+  GraduationCap,
+  Hash,
+  School,
 } from "lucide-react";
 
 export interface MemberData {
@@ -36,6 +39,9 @@ export interface MemberData {
   role: Role;
   isActive: boolean;
   bloodGroup: string | null;
+  studentGroup?: string | null;
+  classRoll?: string | null;
+  classroom?: string | null;
   occupation: string | null;
   workplace: string | null;
   presentAddress: string | null;
@@ -62,22 +68,28 @@ export function MembersManagerClient({
 }) {
   const [search, setSearch] = useState("");
   const [filterRole, setFilterRole] = useState<string>("ALL");
+  const [filterSection, setFilterSection] = useState<string>("ALL");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<MemberData | null>(null);
   const [isPending, startTransition] = useTransition();
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   const filtered = members.filter((m) => {
+    const query = search.toLowerCase();
     const matchesSearch =
-      m.name.toLowerCase().includes(search.toLowerCase()) ||
-      m.phone.includes(search) ||
-      (m.email && m.email.toLowerCase().includes(search.toLowerCase())) ||
-      (m.occupation && m.occupation.toLowerCase().includes(search.toLowerCase())) ||
-      (m.presentAddress && m.presentAddress.toLowerCase().includes(search.toLowerCase()));
+      m.name.toLowerCase().includes(query) ||
+      m.phone.includes(query) ||
+      (m.email && m.email.toLowerCase().includes(query)) ||
+      (m.occupation && m.occupation.toLowerCase().includes(query)) ||
+      (m.presentAddress && m.presentAddress.toLowerCase().includes(query)) ||
+      (m.classRoll && m.classRoll.toLowerCase().includes(query)) ||
+      (m.studentGroup && m.studentGroup.toLowerCase().includes(query)) ||
+      (m.classroom && m.classroom.toLowerCase().includes(query));
 
     const matchesRole = filterRole === "ALL" || m.role === filterRole;
+    const matchesSection = filterSection === "ALL" || m.studentGroup === filterSection;
 
-    return matchesSearch && matchesRole;
+    return matchesSearch && matchesRole && matchesSection;
   });
 
   const handleRoleChange = (userId: string, newRole: Role) => {
@@ -181,23 +193,36 @@ export function MembersManagerClient({
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="নাম, মোবাইল, ইমেইল অথবা পেশা দিয়ে সদস্য খুঁজুন..."
+            placeholder="নাম, রোল, মোবাইল, ইমেইল বা পেশা দিয়ে খুঁজুন..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-300 rounded-lg"
           />
         </div>
 
-        <select
-          value={filterRole}
-          onChange={(e) => setFilterRole(e.target.value)}
-          className="px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg"
-        >
-          <option value="ALL">সকল রোল / ভূমিকা</option>
-          <option value="SUPER_ADMIN">সুপার অ্যাডমিন</option>
-          <option value="FUND_MANAGER">তহবিল ব্যবস্থাপক</option>
-          <option value="MEMBER">সাধারণ ব্যাচমেট</option>
-        </select>
+        <div className="flex items-center gap-2">
+          <select
+            value={filterSection}
+            onChange={(e) => setFilterSection(e.target.value)}
+            className="px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg"
+          >
+            <option value="ALL">সকল বিভাগ (বিজ্ঞান/মানবিক)</option>
+            <option value="SCIENCE">বিজ্ঞান (Science)</option>
+            <option value="ARTS">মানবিক (Arts)</option>
+            <option value="COMMERCE">ব্যবসায় শিক্ষা</option>
+          </select>
+
+          <select
+            value={filterRole}
+            onChange={(e) => setFilterRole(e.target.value)}
+            className="px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg"
+          >
+            <option value="ALL">সকল রোল / ভূমিকা</option>
+            <option value="SUPER_ADMIN">সুপার অ্যাডমিন</option>
+            <option value="FUND_MANAGER">তহবিল ব্যবস্থাপক</option>
+            <option value="MEMBER">সাধারণ ব্যাচমেট</option>
+          </select>
+        </div>
       </div>
 
       {/* Members Table */}
@@ -224,11 +249,34 @@ export function MembersManagerClient({
                       </div>
                       <div>
                         <p className="font-bold text-slate-900">{m.name}</p>
-                        {m.bloodGroup && (
-                          <span className="text-[10px] text-red-600 font-bold inline-flex items-center gap-0.5">
-                            <Droplet className="w-2.5 h-2.5 fill-red-600" /> {m.bloodGroup}
-                          </span>
-                        )}
+                        <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                          {m.bloodGroup && (
+                            <span className="text-[10px] text-red-600 font-bold inline-flex items-center gap-0.5">
+                              <Droplet className="w-2.5 h-2.5 fill-red-600" /> {m.bloodGroup}
+                            </span>
+                          )}
+                          {m.studentGroup && (
+                            <span className={`px-1.5 py-0.2 rounded text-[10px] font-semibold ${
+                              m.studentGroup === "SCIENCE"
+                                ? "bg-blue-50 text-blue-700 border border-blue-200"
+                                : m.studentGroup === "ARTS"
+                                ? "bg-amber-50 text-amber-700 border border-amber-200"
+                                : "bg-purple-50 text-purple-700 border border-purple-200"
+                            }`}>
+                              {m.studentGroup === "SCIENCE" ? "বিজ্ঞান" : m.studentGroup === "ARTS" ? "মানবিক" : "ব্যবসায়"}
+                            </span>
+                          )}
+                          {m.classRoll && (
+                            <span className="px-1.5 py-0.2 rounded text-[10px] bg-slate-100 text-slate-700 font-mono border border-slate-200">
+                              রোল: {m.classRoll}
+                            </span>
+                          )}
+                          {m.classroom && (
+                            <span className="text-[10px] text-slate-500">
+                              ({m.classroom})
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </td>
@@ -405,6 +453,54 @@ export function MembersManagerClient({
                     <option value="AB+">AB+</option>
                     <option value="AB-">AB-</option>
                   </select>
+                </div>
+              </div>
+
+              {/* মাদ্রাসার তথ্য (ঐচ্ছিক) */}
+              <div className="p-3 bg-emerald-50/50 rounded-xl border border-emerald-100">
+                <p className="text-xs font-semibold text-emerald-800 mb-2 flex items-center gap-1.5">
+                  <GraduationCap className="w-4 h-4 text-emerald-700" />
+                  মাদ্রাসার তথ্য — দাখিল ২০১২ (ঐচ্ছিক)
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  <div>
+                    <label className="block text-[11px] font-medium text-slate-700 mb-1">
+                      বিভাগ / গ্রুপ
+                    </label>
+                    <select
+                      name="studentGroup"
+                      className="w-full px-2 py-1.5 text-xs border border-slate-300 rounded-lg bg-white"
+                    >
+                      <option value="">নির্বাচন করুন (ঐচ্ছিক)</option>
+                      <option value="SCIENCE">বিজ্ঞান (Science)</option>
+                      <option value="ARTS">মানবিক (Arts)</option>
+                      <option value="COMMERCE">ব্যবসায় শিক্ষা</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-medium text-slate-700 mb-1">
+                      ক্লাস রোল
+                    </label>
+                    <input
+                      name="classRoll"
+                      type="text"
+                      placeholder="উদা: ১৫ বা 15"
+                      className="w-full px-2 py-1.5 text-xs border border-slate-300 rounded-lg"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-medium text-slate-700 mb-1">
+                      শাখা / রুম
+                    </label>
+                    <input
+                      name="classroom"
+                      type="text"
+                      placeholder="উদা: ক শাখা"
+                      className="w-full px-2 py-1.5 text-xs border border-slate-300 rounded-lg"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -632,6 +728,57 @@ export function MembersManagerClient({
                     <option value="AB+">AB+</option>
                     <option value="AB-">AB-</option>
                   </select>
+                </div>
+              </div>
+
+              {/* মাদ্রাসার তথ্য (ঐচ্ছিক) */}
+              <div className="p-3 bg-emerald-50/50 rounded-xl border border-emerald-100">
+                <p className="text-xs font-semibold text-emerald-800 mb-2 flex items-center gap-1.5">
+                  <GraduationCap className="w-4 h-4 text-emerald-700" />
+                  মাদ্রাসার তথ্য — দাখিল ২০১২ (ঐচ্ছিক)
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  <div>
+                    <label className="block text-[11px] font-medium text-slate-700 mb-1">
+                      বিভাগ / গ্রুপ
+                    </label>
+                    <select
+                      name="studentGroup"
+                      defaultValue={editingMember.studentGroup || ""}
+                      className="w-full px-2 py-1.5 text-xs border border-slate-300 rounded-lg bg-white"
+                    >
+                      <option value="">নির্বাচন করুন (ঐচ্ছিক)</option>
+                      <option value="SCIENCE">বিজ্ঞান (Science)</option>
+                      <option value="ARTS">মানবিক (Arts)</option>
+                      <option value="COMMERCE">ব্যবসায় শিক্ষা</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-medium text-slate-700 mb-1">
+                      ক্লাস রোল
+                    </label>
+                    <input
+                      name="classRoll"
+                      defaultValue={editingMember.classRoll || ""}
+                      type="text"
+                      placeholder="উদা: ১৫ বা 15"
+                      className="w-full px-2 py-1.5 text-xs border border-slate-300 rounded-lg"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-medium text-slate-700 mb-1">
+                      শাখা / রুম
+                    </label>
+                    <input
+                      name="classroom"
+                      defaultValue={editingMember.classroom || ""}
+                      type="text"
+                      placeholder="উদা: ক শাখা"
+                      className="w-full px-2 py-1.5 text-xs border border-slate-300 rounded-lg"
+                    />
+                  </div>
                 </div>
               </div>
 

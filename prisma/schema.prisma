@@ -49,6 +49,9 @@ model User {
   batchYear            Int                    @default(2012)
   bio                  String?
   bloodGroup           String?
+  studentGroup         String?                // "বিজ্ঞান (Science)", "মানবিক / সাধারণ (Arts)", "ব্যবসায় শিক্ষা (Commerce)"
+  classRoll            String?                // ক্লাস রোল নম্বর
+  classroom            String?                // ক্লাসরুম / শাখা (Section)
   occupation           String?
   workplace            String?
   presentAddress       String?
@@ -72,6 +75,8 @@ model User {
   @@index([role, isActive])
   @@index([phone])
   @@index([email])
+  @@index([studentGroup])
+  @@index([classRoll])
 }
 
 model Fund {
