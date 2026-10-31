@@ -1,9 +1,15 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { formatCurrency, toBengaliNumber } from "@/lib/utils";
 import { PaymentMethod, PaymentStatus } from "@prisma/client";
 import { updateLedgerCellAction } from "@/actions/ledger-actions";
+import {
+  getNextMonthYear,
+  sortMonthYears,
+  BENGALI_MONTHS,
+  formatMonthYear,
+} from "@/lib/months";
 import {
   Search,
   Download,
@@ -12,7 +18,7 @@ import {
   Clock,
   Plus,
   Edit2,
-  Filter,
+  CalendarPlus,
 } from "lucide-react";
 
 export interface LedgerContribution {
@@ -50,6 +56,37 @@ export function SpreadsheetLedger({
   canEdit,
 }: SpreadsheetLedgerProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [monthsList, setMonthsList] = useState<string[]>(months);
+  const [isAddMonthModalOpen, setIsAddMonthModalOpen] = useState(false);
+  const [customMonthIndex, setCustomMonthIndex] = useState<number>(0);
+  const [customYear, setCustomYear] = useState<number>(2027);
+
+  // Sync if prop updates
+  useEffect(() => {
+    setMonthsList((prev) => {
+      const merged = new Set([...prev, ...months]);
+      return sortMonthYears(Array.from(merged));
+    });
+  }, [months]);
+
+  const lastMonth = monthsList[monthsList.length - 1] || "মার্চ-২৭";
+  const nextMonth = getNextMonthYear(lastMonth);
+
+  const handleAddNextMonth = () => {
+    if (!monthsList.includes(nextMonth)) {
+      setMonthsList((prev) => [...prev, nextMonth]);
+    }
+  };
+
+  const handleAddCustomMonth = (e: React.FormEvent) => {
+    e.preventDefault();
+    const formatted = formatMonthYear(customMonthIndex, customYear);
+    if (!monthsList.includes(formatted)) {
+      setMonthsList((prev) => sortMonthYears([...prev, formatted]));
+    }
+    setIsAddMonthModalOpen(false);
+  };
+
   const [selectedCell, setSelectedCell] = useState<{
     member: LedgerMember;
     month: string;
@@ -70,7 +107,7 @@ export function SpreadsheetLedger({
 
   // Calculate Column Totals (Verified amounts only)
   const columnTotals: Record<string, number> = {};
-  months.forEach((m) => {
+  monthsList.forEach((m) => {
     columnTotals[m] = members.reduce((sum, member) => {
       const c = member.contributions[m];
       return c && c.status === PaymentStatus.VERIFIED ? sum + Number(c.amountPaid) : sum;
@@ -104,10 +141,10 @@ export function SpreadsheetLedger({
   };
 
   const handleExportCSV = () => {
-    const headers = ["সদস্যের নাম", "মোবাইল নম্বর", "অঙ্গীকার", ...months, "মোট পরিশোধিত"];
+    const headers = ["সদস্যের নাম", "মোবাইল নম্বর", "অঙ্গীকার", ...monthsList, "মোট পরিশোধিত"];
     const rows = filteredMembers.map((m) => {
       let totalMemberPaid = 0;
-      const monthValues = months.map((month) => {
+      const monthValues = monthsList.map((month) => {
         const c = m.contributions[month];
         if (c && c.status === PaymentStatus.VERIFIED) {
           totalMemberPaid += Number(c.amountPaid);
@@ -160,7 +197,29 @@ export function SpreadsheetLedger({
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {canEdit && (
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={handleAddNextMonth}
+                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-lg transition shadow-2xs"
+                title={`পরবর্তী মাস ${nextMonth} কলাম হিসেবে যুক্ত করুন`}
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>পরবর্তী মাস ({nextMonth})</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsAddMonthModalOpen(true)}
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-lg transition shadow-2xs"
+                title="যেকোনো কাস্টম মাস নির্বাচন করুন"
+              >
+                <CalendarPlus className="w-3.5 h-3.5 text-emerald-700" />
+                <span>কাস্টম মাস...</span>
+              </button>
+            </div>
+          )}
           <button
             onClick={handleExportCSV}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition shadow-2xs"
@@ -189,7 +248,7 @@ export function SpreadsheetLedger({
               <th className="py-3 px-3 text-center min-w-[100px] border-r border-emerald-800">
                 প্রতিশ্রুতি (মাসিক)
               </th>
-              {months.map((month) => (
+              {monthsList.map((month) => (
                 <th
                   key={month}
                   className="py-3 px-3 text-center min-w-[110px] border-r border-emerald-800 whitespace-nowrap"
@@ -197,6 +256,18 @@ export function SpreadsheetLedger({
                   {month}
                 </th>
               ))}
+              {canEdit && (
+                <th className="py-2 px-2 text-center min-w-[50px] border-r border-emerald-800/80 no-print">
+                  <button
+                    type="button"
+                    onClick={handleAddNextMonth}
+                    className="p-1 rounded bg-emerald-800/90 hover:bg-emerald-700 text-emerald-200 hover:text-white transition"
+                    title={`পরবর্তী মাস কলাম যোগ করুন (${nextMonth})`}
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                  </button>
+                </th>
+              )}
               <th className="py-3 px-4 text-right min-w-[120px] bg-emerald-950">
                 মোট আদায়
               </th>
@@ -229,7 +300,7 @@ export function SpreadsheetLedger({
                   </td>
 
                   {/* Dynamic Month Cells */}
-                  {months.map((month) => {
+                  {monthsList.map((month) => {
                     const c = member.contributions[month];
                     if (c && c.status === PaymentStatus.VERIFIED) {
                       memberTotal += Number(c.amountPaid);
@@ -267,6 +338,12 @@ export function SpreadsheetLedger({
                     );
                   })}
 
+                  {canEdit && (
+                    <td className="py-2 px-2 text-center border-r border-slate-100 bg-slate-50/30 no-print">
+                      <span className="text-[10px] text-slate-300">—</span>
+                    </td>
+                  )}
+
                   {/* Member Total Paid */}
                   <td className="py-2.5 px-4 text-right font-bold text-slate-900 bg-slate-50/50">
                     {formatCurrency(memberTotal)}
@@ -282,7 +359,7 @@ export function SpreadsheetLedger({
                 মোট আদায় (মাসিক সংকলন)
               </td>
               <td className="py-3 px-3 text-center border-r border-slate-300">—</td>
-              {months.map((month) => (
+              {monthsList.map((month) => (
                 <td
                   key={month}
                   className="py-3 px-2 text-center border-r border-slate-300 text-emerald-800 font-bold"
@@ -290,6 +367,11 @@ export function SpreadsheetLedger({
                   {formatCurrency(columnTotals[month] || 0)}
                 </td>
               ))}
+              {canEdit && (
+                <td className="py-3 px-2 text-center border-r border-slate-300 no-print">
+                  <span className="text-slate-400">—</span>
+                </td>
+              )}
               <td className="py-3 px-4 text-right text-emerald-900 font-extrabold bg-slate-200">
                 {formatCurrency(grandTotal)}
               </td>
@@ -403,6 +485,82 @@ export function SpreadsheetLedger({
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Add Custom Month Column */}
+      {isAddMonthModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-sm w-full p-5 space-y-4 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <CalendarPlus className="w-5 h-5 text-emerald-700" />
+                <h4 className="text-sm font-bold text-slate-900">লেজারে নতুন মাসের কলাম যোগ</h4>
+              </div>
+              <button
+                onClick={() => setIsAddMonthModalOpen(false)}
+                className="text-slate-400 hover:text-slate-700 p-1 rounded-md"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleAddCustomMonth} className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  মাস নির্বাচন করুন
+                </label>
+                <select
+                  value={customMonthIndex}
+                  onChange={(e) => setCustomMonthIndex(parseInt(e.target.value, 10))}
+                  className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl bg-white"
+                >
+                  {BENGALI_MONTHS.map((m, idx) => (
+                    <option key={m} value={idx}>
+                      {m}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  সাল (ইংরেজি বছর)
+                </label>
+                <select
+                  value={customYear}
+                  onChange={(e) => setCustomYear(parseInt(e.target.value, 10))}
+                  className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl bg-white font-mono"
+                >
+                  {[2026, 2027, 2028, 2029, 2030].map((y) => (
+                    <option key={y} value={y}>
+                      {toBengaliNumber(y)} ({formatMonthYear(customMonthIndex, y)})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-xs text-emerald-900">
+                লেজারে নতুন কলাম যুক্ত হবে: <strong className="font-bold text-emerald-950">{formatMonthYear(customMonthIndex, customYear)}</strong>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsAddMonthModalOpen(false)}
+                  className="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-xl"
+                >
+                  বাতিল
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl shadow-xs"
+                >
+                  কলাম যুক্ত করুন
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

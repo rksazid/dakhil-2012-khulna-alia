@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { getCurrentUser, canManageFund } from "@/lib/auth";
 import { SpreadsheetLedger, LedgerMember, LedgerContribution } from "@/components/ledger/spreadsheet-ledger";
 import { formatCurrency, toBengaliNumber } from "@/lib/utils";
+import { sortMonthYears } from "@/lib/months";
 import { Table, Filter, Plus, ArrowRight } from "lucide-react";
 
 interface AdminLedgerPageProps {
@@ -39,8 +40,14 @@ export default async function AdminLedgerPage({ searchParams }: AdminLedgerPageP
   const selectedFund = funds.find((f) => f.id === queryFundId) || funds[0];
   const canEdit = await canManageFund(user.id, selectedFund.id);
 
-  // Dynamic Months list (Bengali months for current batch cycle)
-  const months = [
+  // 2. Fetch all months recorded in database for this fund + base cycle
+  const dbContributions = await prisma.monthlyContribution.findMany({
+    where: { fundId: selectedFund.id },
+    select: { monthYear: true },
+    distinct: ["monthYear"],
+  });
+
+  const baseMonths = [
     "অক্টোবর-২৬",
     "নভেম্বর-২৬",
     "ডিসেম্বর-২৬",
@@ -49,7 +56,14 @@ export default async function AdminLedgerPage({ searchParams }: AdminLedgerPageP
     "মার্চ-২৭",
   ];
 
-  // 2. Fetch all members with their commitments and contributions for this fund
+  const allMonthsSet = new Set<string>([...baseMonths]);
+  dbContributions.forEach((c) => {
+    if (c.monthYear) allMonthsSet.add(c.monthYear);
+  });
+
+  const months = sortMonthYears(Array.from(allMonthsSet));
+
+  // 3. Fetch all members with their commitments and contributions for this fund
   const members = await prisma.user.findMany({
     where: { isActive: true },
     select: {

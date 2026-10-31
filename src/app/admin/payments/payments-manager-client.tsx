@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { formatCurrency, toBengaliNumber, formatBengaliDate } from "@/lib/utils";
+import { getDefaultRollingMonths } from "@/lib/months";
 import { PaymentMethod, PaymentStatus } from "@prisma/client";
 import {
   verifyContributionAction,
@@ -75,14 +76,7 @@ export function PaymentsManagerClient({
   const [entryTrxId, setEntryTrxId] = useState("");
   const [entryNote, setEntryNote] = useState("");
 
-  const monthOptions = [
-    "অক্টোবর-২৬",
-    "নভেম্বর-২৬",
-    "ডিসেম্বর-২৬",
-    "জানুয়ারি-২৭",
-    "ফেব্রুয়ারি-২৭",
-    "মার্চ-২৭",
-  ];
+  const monthOptions = getDefaultRollingMonths(18);
 
   const filtered = contributions.filter((c) => {
     const matchesStatus = filterStatus === "ALL" || c.status === filterStatus;

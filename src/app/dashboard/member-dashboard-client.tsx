@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { formatCurrency, toBengaliNumber, formatBengaliDate } from "@/lib/utils";
+import { getDefaultRollingMonths } from "@/lib/months";
 import { PaymentMethod, PaymentStatus, CommitmentStatus } from "@prisma/client";
 import { recordMonthlyContributionAction } from "@/actions/ledger-actions";
 import { createOrUpdateCommitmentAction } from "@/actions/fund-actions";
@@ -122,14 +123,7 @@ export function MemberDashboardClient({
   const [commitAmount, setCommitAmount] = useState<number>(500);
   const [commitStartMonth, setCommitStartMonth] = useState("অক্টোবর-২৬");
 
-  const monthOptions = [
-    "অক্টোবর-২৬",
-    "নভেম্বর-২৬",
-    "ডিসেম্বর-২৬",
-    "জানুয়ারি-২৭",
-    "ফেব্রুয়ারি-২৭",
-    "মার্চ-২৭",
-  ];
+  const monthOptions = getDefaultRollingMonths(18);
 
   const handlePaymentSubmit = (e: React.FormEvent) => {
     e.preventDefault();
