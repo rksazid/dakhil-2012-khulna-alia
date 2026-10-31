@@ -4,7 +4,6 @@ import { getCurrentUser } from "@/lib/auth";
 import { Role } from "@prisma/client";
 import { AdminSidebar } from "./admin-sidebar";
 
-
 export default async function AdminLayout({
   children,
 }: {
@@ -26,7 +25,8 @@ export default async function AdminLayout({
   });
 
   return (
-    <div className="min-h-screen flex bg-slate-100 text-slate-900">
+    <div className="h-screen w-screen flex bg-slate-100 text-slate-900 overflow-hidden">
+      {/* Sticky, Fixed Sidebar */}
       <AdminSidebar
         user={{
           name: user.name,
@@ -35,8 +35,11 @@ export default async function AdminLayout({
         }}
         pendingPaymentsCount={pendingPaymentsCount}
       />
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        <header className="h-16 px-6 bg-white border-b border-slate-200 flex items-center justify-between no-print">
+
+      {/* Main Content Area: Fixed Height with Sticky Navbar & Scrollable Body */}
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+        {/* Sticky Top Navbar / Header */}
+        <header className="h-16 px-6 bg-white border-b border-slate-200 flex items-center justify-between shrink-0 z-20 no-print">
           <div>
             <h2 className="text-sm font-bold text-slate-800">
               দাখিল ২০১২ ব্যাচ ম্যানেজমেন্ট কনসোল
@@ -52,7 +55,10 @@ export default async function AdminLayout({
           </div>
         </header>
 
-        <main className="p-4 sm:p-6 lg:p-8 flex-1">{children}</main>
+        {/* Scrollable Body Only */}
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 custom-scrollbar">
+          {children}
+        </main>
       </div>
     </div>
   );

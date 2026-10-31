@@ -1,10 +1,205 @@
 "use server";
 
 import prisma from "@/lib/prisma";
-import { requireRole } from "@/lib/auth";
+import { requireRole, hashPassword } from "@/lib/auth";
 import { logActivity } from "@/lib/activity-logger";
-import { Role } from "@prisma/client";
+import { Role, CommitmentStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+
+export async function createMemberAction(formData: FormData) {
+  try {
+    const admin = await requireRole([Role.SUPER_ADMIN]);
+
+    const name = (formData.get("name") as string)?.trim();
+    const phone = (formData.get("phone") as string)?.trim();
+    const email = (formData.get("email") as string)?.trim() || null;
+    const rawPassword = (formData.get("password") as string)?.trim();
+    const password = rawPassword && rawPassword.length >= 6 ? rawPassword : "Password123!";
+    const role = (formData.get("role") as Role) || Role.MEMBER;
+    const bloodGroup = (formData.get("bloodGroup") as string)?.trim() || null;
+    const occupation = (formData.get("occupation") as string)?.trim() || null;
+    const workplace = (formData.get("workplace") as string)?.trim() || null;
+    const presentAddress = (formData.get("presentAddress") as string)?.trim() || null;
+    const permanentAddress = (formData.get("permanentAddress") as string)?.trim() || null;
+    const bio = (formData.get("bio") as string)?.trim() || null;
+    const initialFundId = (formData.get("initialFundId") as string)?.trim() || null;
+    const initialCommitment = parseFloat(formData.get("initialCommitment") as string) || 0;
+
+    if (!name || !phone) {
+      return { success: false, error: "সদস্যের নাম এবং মোবাইল নম্বর আবশ্যক।" };
+    }
+
+    // Check unique phone
+    const existingPhone = await prisma.user.findUnique({ where: { phone } });
+    if (existingPhone) {
+      return { success: false, error: "এই মোবাইল নম্বর দিয়ে ইতিমধ্যে একজন সদস্য নিবন্ধিত আছেন।" };
+    }
+
+    // Check unique email
+    if (email) {
+      const existingEmail = await prisma.user.findUnique({ where: { email } });
+      if (existingEmail) {
+        return { success: false, error: "এই ইমেইল ঠিকানাটি ইতিমধ্যে ব্যবহৃত হচ্ছে।" };
+      }
+    }
+
+    const passwordHash = await hashPassword(password);
+
+    const newUser = await prisma.user.create({
+      data: {
+        name,
+        phone,
+        email,
+        passwordHash,
+        role,
+        bloodGroup,
+        occupation,
+        workplace,
+        presentAddress,
+        permanentAddress,
+        bio,
+        isActive: true,
+      },
+    });
+
+    // If initial commitment selected
+    if (initialFundId && initialCommitment > 0) {
+      await prisma.fundCommitment.create({
+        data: {
+          fundId: initialFundId,
+          userId: newUser.id,
+          committedAmount: initialCommitment,
+          startMonth: "অক্টোবর-২৬",
+          status: CommitmentStatus.ACTIVE,
+        },
+      });
+    }
+
+    await logActivity({
+      action: "CREATE_USER",
+      entityType: "USER",
+      entityId: newUser.id,
+      performedByUserId: admin.id,
+      details: {
+        memberName: name,
+        phone,
+        role,
+        summary: `অ্যাডমিন কর্তৃক নতুন সদস্য "${name}" (${phone}) তৈরি করা হয়েছে।`,
+      },
+    });
+
+    revalidatePath("/admin/members");
+    revalidatePath("/admin/ledger");
+    revalidatePath("/members");
+    return { success: true, userId: newUser.id };
+  } catch (err: unknown) {
+    console.error("Create member error:", err);
+    return { success: false, error: "সদস্য তৈরি করতে ব্যর্থ হয়েছে।" };
+  }
+}
+
+export async function updateMemberDetailsAction(userId: string, formData: FormData) {
+  try {
+    const admin = await requireRole([Role.SUPER_ADMIN]);
+
+    const oldUser = await prisma.user.findUnique({ where: { id: userId } });
+    if (!oldUser) {
+      return { success: false, error: "সদস্য খুঁজে পাওয়া যায়নি।" };
+    }
+
+    const name = (formData.get("name") as string)?.trim() || oldUser.name;
+    const phone = (formData.get("phone") as string)?.trim() || oldUser.phone;
+    const email = (formData.get("email") as string)?.trim() || null;
+    const role = (formData.get("role") as Role) || oldUser.role;
+    const bloodGroup = (formData.get("bloodGroup") as string)?.trim() || null;
+    const occupation = (formData.get("occupation") as string)?.trim() || null;
+    const workplace = (formData.get("workplace") as string)?.trim() || null;
+    const presentAddress = (formData.get("presentAddress") as string)?.trim() || null;
+    const permanentAddress = (formData.get("permanentAddress") as string)?.trim() || null;
+    const bio = (formData.get("bio") as string)?.trim() || null;
+    const newPassword = (formData.get("newPassword") as string)?.trim();
+    const isActive = formData.get("isActive") === "true";
+
+    // Validate phone uniqueness if changed
+    if (phone !== oldUser.phone) {
+      const existingPhone = await prisma.user.findUnique({ where: { phone } });
+      if (existingPhone && existingPhone.id !== userId) {
+        return { success: false, error: "এই মোবাইল নম্বরটি অন্য একজন সদস্যের অ্যাকাউন্টে রয়েছে।" };
+      }
+    }
+
+    // Validate email uniqueness if changed
+    if (email && email !== oldUser.email) {
+      const existingEmail = await prisma.user.findUnique({ where: { email } });
+      if (existingEmail && existingEmail.id !== userId) {
+        return { success: false, error: "এই ইমেইলটি অন্য একজন সদস্যের অ্যাকাউন্টে রয়েছে।" };
+      }
+    }
+
+    // Prepare update data
+    const updateData: {
+      name: string;
+      phone: string;
+      email: string | null;
+      role: Role;
+      bloodGroup: string | null;
+      occupation: string | null;
+      workplace: string | null;
+      presentAddress: string | null;
+      permanentAddress: string | null;
+      bio: string | null;
+      isActive: boolean;
+      passwordHash?: string;
+    } = {
+      name,
+      phone,
+      email,
+      role,
+      bloodGroup,
+      occupation,
+      workplace,
+      presentAddress,
+      permanentAddress,
+      bio,
+      isActive,
+    };
+
+    if (newPassword && newPassword.length >= 6) {
+      updateData.passwordHash = await hashPassword(newPassword);
+    }
+
+    // Prevent removing own super admin status if this admin is editing themselves
+    if (oldUser.id === admin.id && role !== Role.SUPER_ADMIN) {
+      return { success: false, error: "নিজের সুপার অ্যাডমিন পদবি পরিবর্তন করা যাবে না।" };
+    }
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+    });
+
+    await logActivity({
+      action: "UPDATE_USER_DETAILS",
+      entityType: "USER",
+      entityId: userId,
+      performedByUserId: admin.id,
+      details: {
+        memberName: name,
+        phone,
+        role,
+        summary: `সদস্য "${name}"-এর তথ্য অ্যাডমিন প্যানেল থেকে সফলভাবে হালনাগাদ করা হয়েছে।`,
+      },
+    });
+
+    revalidatePath("/admin/members");
+    revalidatePath("/admin/ledger");
+    revalidatePath("/members");
+    return { success: true };
+  } catch (err: unknown) {
+    console.error("Update member details error:", err);
+    return { success: false, error: "সদস্য তথ্য আপডেট করতে ব্যর্থ হয়েছে।" };
+  }
+}
 
 export async function updateMemberRoleAction(userId: string, newRole: Role) {
   try {
@@ -13,7 +208,6 @@ export async function updateMemberRoleAction(userId: string, newRole: Role) {
     const oldUser = await prisma.user.findUnique({ where: { id: userId } });
     if (!oldUser) return { success: false, error: "সদস্য পাওয়া যায়নি।" };
 
-    // Prevent removing last super admin if applicable
     if (oldUser.id === admin.id && newRole !== Role.SUPER_ADMIN) {
       return { success: false, error: "নিজের সুপার অ্যাডমিন পদ পরিবর্তন করা যাবে না।" };
     }

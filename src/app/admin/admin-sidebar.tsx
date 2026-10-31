@@ -76,7 +76,7 @@ export function AdminSidebar({ user, pendingPaymentsCount }: AdminSidebarProps) 
 
   return (
     <aside
-      className={`bg-slate-900 text-slate-200 border-r border-slate-800 transition-all duration-300 flex flex-col shrink-0 z-30 no-print ${
+      className={`bg-slate-900 text-slate-200 border-r border-slate-800 transition-all duration-300 flex flex-col shrink-0 h-full overflow-hidden z-30 no-print ${
         collapsed ? "w-20" : "w-64"
       }`}
     >

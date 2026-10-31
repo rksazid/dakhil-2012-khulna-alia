@@ -4,7 +4,6 @@ import { Role } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { MembersManagerClient } from "./members-manager-client";
 
-
 export default async function AdminMembersPage() {
   const user = await getCurrentUser();
   if (!user || user.role !== Role.SUPER_ADMIN) {
@@ -13,7 +12,20 @@ export default async function AdminMembersPage() {
 
   const members = await prisma.user.findMany({
     orderBy: [{ role: "asc" }, { createdAt: "desc" }],
-    include: {
+    select: {
+      id: true,
+      name: true,
+      phone: true,
+      email: true,
+      role: true,
+      isActive: true,
+      bloodGroup: true,
+      occupation: true,
+      workplace: true,
+      presentAddress: true,
+      permanentAddress: true,
+      bio: true,
+      createdAt: true,
       managedFunds: {
         include: { fund: { select: { title: true } } },
       },
@@ -23,9 +35,16 @@ export default async function AdminMembersPage() {
     },
   });
 
+  const activeFunds = await prisma.fund.findMany({
+    where: { isActive: true },
+    select: { id: true, title: true },
+    orderBy: { createdAt: "asc" },
+  });
+
   return (
     <MembersManagerClient
       members={members}
+      activeFunds={activeFunds}
       currentUserId={user.id}
     />
   );

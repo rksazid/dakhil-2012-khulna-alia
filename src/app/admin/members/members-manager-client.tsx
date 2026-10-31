@@ -3,9 +3,15 @@
 import { useState, useTransition } from "react";
 import { toBengaliNumber, formatBengaliDate } from "@/lib/utils";
 import { Role } from "@prisma/client";
-import { updateMemberRoleAction, toggleMemberActiveAction } from "@/actions/member-actions";
+import {
+  createMemberAction,
+  updateMemberDetailsAction,
+  updateMemberRoleAction,
+  toggleMemberActiveAction,
+} from "@/actions/member-actions";
 import {
   Users,
+  UserPlus,
   Search,
   Shield,
   ShieldAlert,
@@ -16,9 +22,13 @@ import {
   Phone,
   Droplet,
   Briefcase,
+  Edit2,
+  Lock,
+  MapPin,
+  HeartHandshake,
 } from "lucide-react";
 
-interface MemberData {
+export interface MemberData {
   id: string;
   name: string;
   email: string | null;
@@ -28,20 +38,32 @@ interface MemberData {
   bloodGroup: string | null;
   occupation: string | null;
   workplace: string | null;
+  presentAddress: string | null;
+  permanentAddress: string | null;
+  bio: string | null;
   createdAt: Date;
   managedFunds: { fund: { title: string } }[];
   _count: { commitments: number; contributions: number };
 }
 
+interface FundOption {
+  id: string;
+  title: string;
+}
+
 export function MembersManagerClient({
   members,
+  activeFunds,
   currentUserId,
 }: {
   members: MemberData[];
+  activeFunds: FundOption[];
   currentUserId: string;
 }) {
   const [search, setSearch] = useState("");
   const [filterRole, setFilterRole] = useState<string>("ALL");
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingMember, setEditingMember] = useState<MemberData | null>(null);
   const [isPending, startTransition] = useTransition();
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
@@ -50,7 +72,8 @@ export function MembersManagerClient({
       m.name.toLowerCase().includes(search.toLowerCase()) ||
       m.phone.includes(search) ||
       (m.email && m.email.toLowerCase().includes(search.toLowerCase())) ||
-      (m.occupation && m.occupation.toLowerCase().includes(search.toLowerCase()));
+      (m.occupation && m.occupation.toLowerCase().includes(search.toLowerCase())) ||
+      (m.presentAddress && m.presentAddress.toLowerCase().includes(search.toLowerCase()));
 
     const matchesRole = filterRole === "ALL" || m.role === filterRole;
 
@@ -80,6 +103,37 @@ export function MembersManagerClient({
     });
   };
 
+  const handleCreateSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    setFeedback(null);
+    startTransition(async () => {
+      const res = await createMemberAction(formData);
+      if (res.success) {
+        setFeedback({ type: "success", message: "নতুন সদস্য সফলভাবে সিস্টেমে যুক্ত করা হয়েছে!" });
+        setIsAddModalOpen(false);
+      } else {
+        setFeedback({ type: "error", message: res.error || "সদস্য তৈরিতে ত্রুটি ঘটেছে।" });
+      }
+    });
+  };
+
+  const handleEditSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!editingMember) return;
+    const formData = new FormData(e.currentTarget);
+    setFeedback(null);
+    startTransition(async () => {
+      const res = await updateMemberDetailsAction(editingMember.id, formData);
+      if (res.success) {
+        setFeedback({ type: "success", message: "সদস্যের তথ্য সফলভাবে হালনাগাদ করা হয়েছে!" });
+        setEditingMember(null);
+      } else {
+        setFeedback({ type: "error", message: res.error || "তথ্য হালনাগাদ ব্যর্থ হয়েছে।" });
+      }
+    });
+  };
+
   return (
     <div className="space-y-6">
       {feedback && (
@@ -97,19 +151,27 @@ export function MembersManagerClient({
         </div>
       )}
 
-      {/* Header */}
+      {/* Header & Add User Button */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
           <h1 className="text-xl font-black text-slate-900">
             সদস্য ডিরেক্টরি ও ভূমিকা নির্ধারণ (RBAC)
           </h1>
           <p className="text-xs text-slate-500">
-            সুপার অ্যাডমিন কর্তৃক সদস্যের এক্সেস পারমিশন, রোল এবং অ্যাকাউন্ট নিয়ন্ত্রণ
+            সুপার অ্যাডমিন কর্তৃক সদস্য যোগ, বিস্তারিত তথ্য সম্পাদনা, রোল এবং অ্যাকাউন্ট নিয়ন্ত্রণ
           </p>
         </div>
 
-        <div className="text-xs font-semibold text-slate-600 bg-white border border-slate-200 px-3 py-1.5 rounded-xl shadow-2xs">
-          মোট নিবন্ধিত সদস্য: {toBengaliNumber(members.length)} জন
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setIsAddModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-xs transition"
+          >
+            <UserPlus className="w-4 h-4" /> নতুন সদস্য যুক্ত করুন
+          </button>
+          <div className="text-xs font-semibold text-slate-600 bg-white border border-slate-200 px-3 py-1.5 rounded-xl shadow-2xs">
+            মোট সদস্য: {toBengaliNumber(members.length)} জন
+          </div>
         </div>
       </div>
 
@@ -147,9 +209,9 @@ export function MembersManagerClient({
                 <th className="py-3 px-4">সদস্যের নাম ও রক্ত</th>
                 <th className="py-3 px-3">যোগাযোগ (মোবাইল ও ইমেইল)</th>
                 <th className="py-3 px-3">পেশা ও কর্মস্থল</th>
-                <th className="py-3 px-3">অ্যাক্টিভিটি</th>
-                <th className="py-3 px-3">ভূমিকা / রোল পরিবর্তন</th>
-                <th className="py-3 px-4 text-right">স্ট্যাটাস</th>
+                <th className="py-3 px-3">বর্তমান অবস্থান</th>
+                <th className="py-3 px-3">ভূমিকা / রোল</th>
+                <th className="py-3 px-4 text-right">অ্যাকশন ও সম্পাদনা</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -182,12 +244,7 @@ export function MembersManagerClient({
                   </td>
 
                   <td className="py-3 px-3 text-slate-600">
-                    <p>{toBengaliNumber(m._count.contributions)}টি চাঁদা এন্ট্রি</p>
-                    {m.managedFunds.length > 0 && (
-                      <span className="text-[10px] text-emerald-700 block">
-                        ম্যানেজার: {m.managedFunds.map((mf) => mf.fund.title).join(", ")}
-                      </span>
-                    )}
+                    <p>{m.presentAddress || "—"}</p>
                   </td>
 
                   <td className="py-3 px-3">
@@ -204,17 +261,27 @@ export function MembersManagerClient({
                   </td>
 
                   <td className="py-3 px-4 text-right">
-                    <button
-                      onClick={() => handleToggleActive(m.id, m.isActive)}
-                      disabled={isPending || m.id === currentUserId}
-                      className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition disabled:opacity-50 ${
-                        m.isActive
-                          ? "bg-emerald-100 text-emerald-800 hover:bg-amber-100 hover:text-amber-900"
-                          : "bg-red-100 text-red-800 hover:bg-emerald-100 hover:text-emerald-900"
-                      }`}
-                    >
-                      {m.isActive ? "সক্রিয়" : "স্থগিত"}
-                    </button>
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => setEditingMember(m)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition"
+                        title="সদস্য তথ্য সম্পাদনা করুন"
+                      >
+                        <Edit2 className="w-3.5 h-3.5 text-emerald-700" /> সম্পাদনা
+                      </button>
+
+                      <button
+                        onClick={() => handleToggleActive(m.id, m.isActive)}
+                        disabled={isPending || m.id === currentUserId}
+                        className={`px-2 py-1 text-[11px] font-bold rounded-lg transition disabled:opacity-50 ${
+                          m.isActive
+                            ? "bg-emerald-50 text-emerald-800 hover:bg-amber-100 hover:text-amber-900 border border-emerald-200"
+                            : "bg-red-50 text-red-800 hover:bg-emerald-100 hover:text-emerald-900 border border-red-200"
+                        }`}
+                      >
+                        {m.isActive ? "সক্রিয়" : "স্থগিত"}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -222,6 +289,446 @@ export function MembersManagerClient({
           </table>
         </div>
       </div>
+
+      {/* Modal 1: Add New Member / User */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-xl w-full p-6 max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
+                  <UserPlus className="w-4 h-4 text-emerald-700" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">
+                    নতুন সদস্য যুক্ত করুন
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    দাখিল ২০১২ ব্যাচ ডাটাবেজে নতুন ব্যাচমেট সরাসরি অন্তর্ভুক্তি
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsAddModalOpen(false)}
+                className="text-slate-400 hover:text-slate-700 p-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateSubmit} className="space-y-4 py-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    পুরো নাম *
+                  </label>
+                  <input
+                    name="name"
+                    required
+                    placeholder="উদা: মাওলানা হাফিজুর রহমান"
+                    className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    মোবাইল নম্বর * (লগইন ইউজারনেম)
+                  </label>
+                  <input
+                    name="phone"
+                    required
+                    placeholder="01XXXXXXXXX"
+                    className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    ইমেইল ঠিকানা (ঐচ্ছিক)
+                  </label>
+                  <input
+                    name="email"
+                    type="email"
+                    placeholder="example@gmail.com"
+                    className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    ভূমিকা / রোল
+                  </label>
+                  <select
+                    name="role"
+                    defaultValue="MEMBER"
+                    className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl bg-white"
+                  >
+                    <option value="MEMBER">MEMBER (সাধারণ সদস্য)</option>
+                    <option value="FUND_MANAGER">FUND_MANAGER (তহবিল ব্যবস্থাপক)</option>
+                    <option value="SUPER_ADMIN">SUPER_ADMIN (সুপার অ্যাডমিন)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    লগইন পাসওয়ার্ড
+                  </label>
+                  <input
+                    name="password"
+                    type="text"
+                    defaultValue="Password123!"
+                    placeholder="Password123!"
+                    className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl font-mono"
+                  />
+                  <p className="text-[10px] text-slate-400 mt-0.5">ডিফল্ট: Password123!</p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    রক্তের গ্রুপ
+                  </label>
+                  <select
+                    name="bloodGroup"
+                    className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl bg-white"
+                  >
+                    <option value="">নির্বাচন করুন</option>
+                    <option value="A+">A+</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B-">B-</option>
+                    <option value="O+">O+</option>
+                    <option value="O-">O-</option>
+                    <option value="AB+">AB+</option>
+                    <option value="AB-">AB-</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    বর্তমান পেশা
+                  </label>
+                  <input
+                    name="occupation"
+                    placeholder="উদা: সফটওয়্যার ইঞ্জিনিয়ার, শিক্ষক, ব্যাংকার"
+                    className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    কর্মস্থল / প্রতিষ্ঠান
+                  </label>
+                  <input
+                    name="workplace"
+                    placeholder="উদা: খুলনা মেডিকেল কলেজ, ঢাকা ব্যাংক"
+                    className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    বর্তমান ঠিকানা
+                  </label>
+                  <input
+                    name="presentAddress"
+                    placeholder="উদা: সোনাডাঙ্গা, খুলনা"
+                    className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    স্থায়ী ঠিকানা
+                  </label>
+                  <input
+                    name="permanentAddress"
+                    placeholder="উদা: রূপসা, খুলনা"
+                    className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl"
+                  />
+                </div>
+              </div>
+
+              {/* Optional Initial Commitment */}
+              {activeFunds.length > 0 && (
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                  <span className="text-[11px] font-bold text-slate-700 flex items-center gap-1">
+                    <HeartHandshake className="w-3.5 h-3.5 text-emerald-700" /> প্রাথমিক মাসিক অঙ্গীকার (ঐচ্ছিক)
+                  </span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <select
+                      name="initialFundId"
+                      className="px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg bg-white"
+                    >
+                      <option value="">তহবিল নির্বাচন (ঐচ্ছিক)</option>
+                      {activeFunds.map((f) => (
+                        <option key={f.id} value={f.id}>
+                          {f.title}
+                        </option>
+                      ))}
+                    </select>
+
+                    <input
+                      name="initialCommitment"
+                      type="number"
+                      placeholder="টাকার পরিমাণ (উদা: 500)"
+                      className="px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg font-bold text-emerald-800"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  সংক্ষিপ্ত বায়ো / স্মৃতি
+                </label>
+                <textarea
+                  name="bio"
+                  rows={2}
+                  placeholder="সদস্যের সংক্ষিপ্ত বিবরণ..."
+                  className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsAddModalOpen(false)}
+                  className="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-xl"
+                >
+                  বাতিল
+                </button>
+                <button
+                  type="submit"
+                  disabled={isPending}
+                  className="px-5 py-2 text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl disabled:opacity-50"
+                >
+                  {isPending ? "যুক্ত হচ্ছে..." : "সদস্য যুক্ত করুন"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal 2: Edit Member */}
+      {editingMember && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-xl w-full p-6 max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
+                  <Edit2 className="w-4 h-4 text-emerald-700" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">
+                    সদস্য তথ্য সম্পাদনা
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    {editingMember.name} • {editingMember.phone}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setEditingMember(null)}
+                className="text-slate-400 hover:text-slate-700 p-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleEditSubmit} className="space-y-4 py-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    পুরো নাম *
+                  </label>
+                  <input
+                    name="name"
+                    defaultValue={editingMember.name}
+                    required
+                    className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    মোবাইল নম্বর *
+                  </label>
+                  <input
+                    name="phone"
+                    defaultValue={editingMember.phone}
+                    required
+                    className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    ইমেইল ঠিকানা
+                  </label>
+                  <input
+                    name="email"
+                    type="email"
+                    defaultValue={editingMember.email || ""}
+                    className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    ভূমিকা / রোল
+                  </label>
+                  <select
+                    name="role"
+                    defaultValue={editingMember.role}
+                    className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl bg-white"
+                  >
+                    <option value="MEMBER">MEMBER (সাধারণ সদস্য)</option>
+                    <option value="FUND_MANAGER">FUND_MANAGER (তহবিল ব্যবস্থাপক)</option>
+                    <option value="SUPER_ADMIN">SUPER_ADMIN (সুপার অ্যাডমিন)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    নতুন পাসওয়ার্ড (পরিবর্তন করতে চাইলে লিখুন)
+                  </label>
+                  <input
+                    name="newPassword"
+                    type="text"
+                    placeholder="খালি রাখলে পাসওয়ার্ড অপরিবর্তিত থাকবে"
+                    className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl font-mono text-xs"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    রক্তের গ্রুপ
+                  </label>
+                  <select
+                    name="bloodGroup"
+                    defaultValue={editingMember.bloodGroup || ""}
+                    className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl bg-white"
+                  >
+                    <option value="">নির্বাচন করুন</option>
+                    <option value="A+">A+</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B-">B-</option>
+                    <option value="O+">O+</option>
+                    <option value="O-">O-</option>
+                    <option value="AB+">AB+</option>
+                    <option value="AB-">AB-</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    পেশা
+                  </label>
+                  <input
+                    name="occupation"
+                    defaultValue={editingMember.occupation || ""}
+                    className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    কর্মস্থল
+                  </label>
+                  <input
+                    name="workplace"
+                    defaultValue={editingMember.workplace || ""}
+                    className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    বর্তমান অবস্থান
+                  </label>
+                  <input
+                    name="presentAddress"
+                    defaultValue={editingMember.presentAddress || ""}
+                    className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    স্থায়ী ঠিকানা
+                  </label>
+                  <input
+                    name="permanentAddress"
+                    defaultValue={editingMember.permanentAddress || ""}
+                    className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  সংক্ষিপ্ত বায়ো
+                </label>
+                <textarea
+                  name="bio"
+                  rows={2}
+                  defaultValue={editingMember.bio || ""}
+                  className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="edit_isActive"
+                  name="isActive"
+                  value="true"
+                  defaultChecked={editingMember.isActive}
+                  className="w-4 h-4 text-emerald-600 rounded-sm"
+                />
+                <label htmlFor="edit_isActive" className="text-xs font-semibold text-slate-800">
+                  অ্যাকাউন্ট সক্রিয় রাখুন (Active)
+                </label>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setEditingMember(null)}
+                  className="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-xl"
+                >
+                  বাতিল
+                </button>
+                <button
+                  type="submit"
+                  disabled={isPending}
+                  className="px-5 py-2 text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl disabled:opacity-50"
+                >
+                  {isPending ? "সংরক্ষণ হচ্ছে..." : "হালনাগাদ সংরক্ষণ করুন"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
