@@ -372,14 +372,19 @@ export function FundsManagerClient({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  শর্ত ও নিয়মাবলী (নীতিমালা)
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-semibold text-slate-700">
+                    শর্ত ও নিয়মাবলী (নীতিমালা)
+                  </label>
+                  <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                    Markdown সমর্থিত: **বোল্ড**, - তালিকা, ### শিরোনাম
+                  </span>
+                </div>
                 <textarea
                   name="rules"
                   rows={4}
-                  placeholder="১. প্রতি মাসের ১-১০ তারিখের মধ্যে জমা দিতে হবে...&#10;২. করজে হাসানা নীতিমালা..."
-                  className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl"
+                  placeholder="### ১. তহবিলের মূল উদ্দেশ্য&#10;- প্রতি মাসের ১-১০ তারিখের মধ্যে জমা দিতে হবে&#10;- অসুস্থ বন্ধুদের চিকিৎসা সহায়তায় ব্যয় হবে..."
+                  className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl font-mono leading-relaxed"
                 />
               </div>
 
@@ -488,14 +493,19 @@ export function FundsManagerClient({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  শর্ত ও নিয়মাবলী (নীতিমালা)
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-semibold text-slate-700">
+                    শর্ত ও নিয়মাবলী (নীতিমালা)
+                  </label>
+                  <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                    Markdown সমর্থিত: **বোল্ড**, - তালিকা, ### শিরোনাম
+                  </span>
+                </div>
                 <textarea
                   name="rules"
                   rows={4}
                   defaultValue={editingFund.rules || ""}
-                  className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl"
+                  className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl font-mono leading-relaxed"
                 />
               </div>
 

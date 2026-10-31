@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { formatBengaliDate } from "@/lib/utils";
+import { MarkdownContent } from "@/components/ui/markdown-content";
 import { Bell, Pin, Calendar, User, AlertCircle, FileText } from "lucide-react";
 
 
@@ -92,9 +93,7 @@ export default async function NoticesPage() {
                   <h2 className="text-lg sm:text-xl font-bold text-slate-900 leading-snug">
                     {notice.title}
                   </h2>
-                  <div className="text-xs sm:text-sm text-slate-700 whitespace-pre-line leading-relaxed">
-                    {notice.content}
-                  </div>
+                  <MarkdownContent content={notice.content} className="text-xs sm:text-sm" />
                 </div>
 
                 <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">

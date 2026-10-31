@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { formatCurrency, toBengaliNumber, formatBengaliDate } from "@/lib/utils";
+import { MarkdownContent } from "@/components/ui/markdown-content";
 import {
   HeartHandshake,
   Users,
@@ -365,9 +366,9 @@ export default async function HomePage() {
                     {notice.title}
                   </h3>
 
-                  <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed whitespace-pre-line">
-                    {notice.content}
-                  </p>
+                  <div className="line-clamp-3 text-xs text-slate-600">
+                    <MarkdownContent content={notice.content} />
+                  </div>
                 </div>
 
                 <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">

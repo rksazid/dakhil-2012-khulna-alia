@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { formatCurrency, toBengaliNumber, formatBengaliDate } from "@/lib/utils";
+import { MarkdownContent } from "@/components/ui/markdown-content";
 import {
   HeartHandshake,
   ShieldCheck,
@@ -150,8 +151,10 @@ export default async function FundDetailPage({ params }: FundDetailPageProps) {
               </h2>
             </div>
 
-            <div className="prose prose-sm max-w-none text-slate-700 leading-relaxed whitespace-pre-line text-xs sm:text-sm">
-              {fund.rules || (
+            <div className="text-slate-700 leading-relaxed text-xs sm:text-sm">
+              {fund.rules ? (
+                <MarkdownContent content={fund.rules} />
+              ) : (
                 <p className="text-slate-500 italic">
                   এই তহবিলের বিশেষ নীতিমালা সাধারণ সভার সিদ্ধান্ত মোতাবেক পরিচালিত হবে।
                 </p>
