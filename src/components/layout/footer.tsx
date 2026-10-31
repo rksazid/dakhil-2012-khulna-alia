@@ -101,7 +101,7 @@ export function Footer() {
               rel="noopener noreferrer"
               className="font-semibold text-emerald-400 hover:text-emerald-300 hover:underline transition"
             >
-              Arka Sajit
+              rksazid
             </a>
             <span className="text-slate-600">•</span>
             <a
