@@ -19,9 +19,6 @@ import {
   CreditCard,
   UserCheck,
   UserPlus,
-  Code2,
-  Copy,
-  Check,
   Printer,
   Sparkles,
   Calendar,
@@ -196,23 +193,22 @@ interface ParsedDetails {
   summary: string | null;
   diffs: Array<{ field: string; label: string; before: string; after: string }>;
   metadata: Array<{ field: string; label: string; value: string }>;
-  rawJson: Record<string, unknown> | null;
 }
 
 function parseLogDetails(detailsStr: string | null): ParsedDetails {
   if (!detailsStr) {
-    return { summary: null, diffs: [], metadata: [], rawJson: null };
+    return { summary: null, diffs: [], metadata: [] };
   }
 
   let obj: Record<string, unknown> | null = null;
   try {
     obj = JSON.parse(detailsStr);
   } catch {
-    return { summary: detailsStr, diffs: [], metadata: [], rawJson: null };
+    return { summary: detailsStr, diffs: [], metadata: [] };
   }
 
   if (!obj || typeof obj !== "object") {
-    return { summary: detailsStr, diffs: [], metadata: [], rawJson: null };
+    return { summary: detailsStr, diffs: [], metadata: [] };
   }
 
   const summary = typeof obj.summary === "string" ? obj.summary : null;
@@ -290,7 +286,6 @@ function parseLogDetails(detailsStr: string | null): ParsedDetails {
     summary,
     diffs,
     metadata,
-    rawJson: obj,
   };
 }
 
@@ -298,14 +293,6 @@ export function LogsManagerClient({ logs }: { logs: LogItem[] }) {
   const [search, setSearch] = useState("");
   const [entityFilter, setEntityFilter] = useState<string>("ALL");
   const [actionFilter, setActionFilter] = useState<string>("ALL");
-  const [selectedRawPayload, setSelectedRawPayload] = useState<{
-    id: string;
-    action: string;
-    timestamp: Date;
-    performedBy: string;
-    json: Record<string, unknown> | null;
-  } | null>(null);
-  const [copied, setCopied] = useState(false);
 
   // Distinct Actions list for dropdown
   const uniqueActions = useMemo(() => {
@@ -350,13 +337,6 @@ export function LogsManagerClient({ logs }: { logs: LogItem[] }) {
       return matchesSearch && matchesEntity && matchesAction;
     });
   }, [logs, search, entityFilter, actionFilter]);
-
-  const handleCopyJson = () => {
-    if (!selectedRawPayload?.json) return;
-    navigator.clipboard.writeText(JSON.stringify(selectedRawPayload.json, null, 2));
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   return (
     <div className="space-y-6">
@@ -684,31 +664,9 @@ export function LogsManagerClient({ logs }: { logs: LogItem[] }) {
                               </p>
                             )}
 
-                          {/* Inspect Raw Payload Trigger */}
-                          {parsed.rawJson && (
-                            <div className="pt-1 flex items-center justify-between text-[10.5px]">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setSelectedRawPayload({
-                                    id: log.id,
-                                    action: log.action,
-                                    timestamp: log.timestamp,
-                                    performedBy: log.performedBy?.name || "সিস্টেম",
-                                    json: parsed.rawJson,
-                                  })
-                                }
-                                className="inline-flex items-center gap-1 text-slate-500 hover:text-emerald-700 font-mono font-medium hover:underline transition"
-                              >
-                                <Code2 className="w-3 h-3 text-emerald-600" />
-                                <span>কাঁচা ডাটা (JSON Payload) দেখুন</span>
-                              </button>
-
-                              <span className="text-slate-400 font-mono">
-                                আইডি: #{log.id.slice(-6)}
-                              </span>
-                            </div>
-                          )}
+                          <div className="pt-1 flex items-center justify-end text-[10px] text-slate-400 font-mono">
+                            লগ আইডি: #{log.id.slice(-6)}
+                          </div>
                         </div>
                       </td>
 
@@ -735,73 +693,7 @@ export function LogsManagerClient({ logs }: { logs: LogItem[] }) {
           </table>
         </div>
       </div>
-
-      {/* Raw JSON Payload Modal */}
-      {selectedRawPayload && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-xl w-full p-6 animate-in zoom-in-95 duration-200 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-800">
-                  <Code2 className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-slate-900">
-                    অডিট ট্রেইল কাঁচা ডাটা (Audit Payload)
-                  </h3>
-                  <p className="text-[11px] text-slate-500">
-                    {selectedRawPayload.action} • {selectedRawPayload.performedBy}
-                  </p>
-                </div>
-              </div>
-
-              <button
-                onClick={() => setSelectedRawPayload(null)}
-                className="text-slate-400 hover:text-slate-700 p-1 rounded-lg"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs text-slate-500">
-                <span>লগ আইডি: #{selectedRawPayload.id}</span>
-                <button
-                  type="button"
-                  onClick={handleCopyJson}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition"
-                >
-                  {copied ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>কপি হয়েছে!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5 text-slate-500" />
-                      <span>JSON কপি করুন</span>
-                    </>
-                  )}
-                </button>
-              </div>
-
-              <pre className="text-xs bg-slate-950 text-emerald-400 p-4 rounded-xl font-mono overflow-x-auto max-h-72 custom-scrollbar border border-slate-800 leading-relaxed">
-                {JSON.stringify(selectedRawPayload.json, null, 2)}
-              </pre>
-            </div>
-
-            <div className="pt-2 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setSelectedRawPayload(null)}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition"
-              >
-                বন্ধ করুন
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
+
