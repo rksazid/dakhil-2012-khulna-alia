@@ -193,6 +193,20 @@ export async function updateMemberDetailsAction(userId: string, formData: FormDa
       data: updateData,
     });
 
+    const beforeDiff: Record<string, unknown> = {};
+    const afterDiff: Record<string, unknown> = {};
+    if (oldUser.name !== name) { beforeDiff["নাম"] = oldUser.name; afterDiff["নাম"] = name; }
+    if (oldUser.phone !== phone) { beforeDiff["মোবাইল"] = oldUser.phone; afterDiff["মোবাইল"] = phone; }
+    if (oldUser.email !== email) { beforeDiff["ইমেইল"] = oldUser.email || "—"; afterDiff["ইমেইল"] = email || "—"; }
+    if (oldUser.role !== role) { beforeDiff["রোল"] = oldUser.role; afterDiff["রোল"] = role; }
+    if (oldUser.bloodGroup !== bloodGroup) { beforeDiff["রক্তের গ্রুপ"] = oldUser.bloodGroup || "—"; afterDiff["রক্তের গ্রুপ"] = bloodGroup || "—"; }
+    if (oldUser.studentGroup !== studentGroup) { beforeDiff["বিভাগ"] = oldUser.studentGroup || "—"; afterDiff["বিভাগ"] = studentGroup || "—"; }
+    if (oldUser.classRoll !== classRoll) { beforeDiff["ক্লাস রোল"] = oldUser.classRoll || "—"; afterDiff["ক্লাস রোল"] = classRoll || "—"; }
+    if (oldUser.classroom !== classroom) { beforeDiff["শাখা"] = oldUser.classroom || "—"; afterDiff["শাখা"] = classroom || "—"; }
+    if (oldUser.occupation !== occupation) { beforeDiff["পেশা"] = oldUser.occupation || "—"; afterDiff["পেশা"] = occupation || "—"; }
+    if (oldUser.workplace !== workplace) { beforeDiff["কর্মস্থল"] = oldUser.workplace || "—"; afterDiff["কর্মস্থল"] = workplace || "—"; }
+    if (oldUser.presentAddress !== presentAddress) { beforeDiff["বর্তমান ঠিকানা"] = oldUser.presentAddress || "—"; afterDiff["বর্তমান ঠিকানা"] = presentAddress || "—"; }
+
     await logActivity({
       action: "UPDATE_USER_DETAILS",
       entityType: "USER",
@@ -202,6 +216,8 @@ export async function updateMemberDetailsAction(userId: string, formData: FormDa
         memberName: name,
         phone,
         role,
+        before: Object.keys(beforeDiff).length > 0 ? beforeDiff : undefined,
+        after: Object.keys(afterDiff).length > 0 ? afterDiff : undefined,
         summary: `সদস্য "${name}"-এর তথ্য অ্যাডমিন প্যানেল থেকে সফলভাবে হালনাগাদ করা হয়েছে।`,
       },
     });
@@ -241,6 +257,8 @@ export async function updateMemberRoleAction(userId: string, newRole: Role) {
         memberName: oldUser.name,
         oldRole: oldUser.role,
         newRole,
+        before: { "ভূমিকা / পদবি": oldUser.role },
+        after: { "ভূমিকা / পদবি": newRole },
         summary: `${oldUser.name}-এর ভূমিকা ${oldUser.role} থেকে ${newRole}-এ পরিবর্তন করা হয়েছে।`,
       },
     });
@@ -275,6 +293,8 @@ export async function toggleMemberActiveAction(userId: string, isActive: boolean
       details: {
         memberName: member.name,
         isActive,
+        before: { "অ্যাকাউন্ট স্ট্যাটাস": !isActive ? "সক্রিয়" : "স্থগিত" },
+        after: { "অ্যাকাউন্ট স্ট্যাটাস": isActive ? "সক্রিয়" : "স্থগিত" },
         summary: `${member.name}-এর অ্যাকাউন্ট ${isActive ? "সক্রিয়" : "স্থগিত"} করা হয়েছে।`,
       },
     });

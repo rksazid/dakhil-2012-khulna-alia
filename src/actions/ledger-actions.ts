@@ -241,7 +241,9 @@ export async function verifyContributionAction(
       details: {
         contributorName: contribution.user.name,
         monthYear: contribution.monthYear,
-        amount: contribution.amountPaid,
+        amount: Number(contribution.amountPaid),
+        before: { "অনুমোদন স্ট্যাটাস": oldStatus },
+        after: { "অনুমোদন স্ট্যাটাস": status },
         oldStatus,
         newStatus: status,
         summary: `${contribution.user.name}-এর ${contribution.monthYear} মাসের চাঁদা (${status}) অনুমোদন করা হয়েছে।`,
