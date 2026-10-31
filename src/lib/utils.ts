@@ -47,3 +47,15 @@ export function formatBengaliDate(date: Date | string | null | undefined): strin
   const month = bengaliMonths[d.getMonth()];
   return `${day} ${month}, ${year}`;
 }
+
+// Format Date and Time in Bengali
+export function formatBengaliDateTime(date: Date | string | null | undefined): string {
+  if (!date) return "";
+  const d = new Date(date);
+  const dateStr = formatBengaliDate(d);
+  let hours = d.getHours();
+  const minutes = d.getMinutes().toString().padStart(2, "0");
+  const period = hours >= 12 ? "অপরাহ্ন" : "পূর্বাহ্ন";
+  hours = hours % 12 || 12;
+  return `${dateStr} | ${toBengaliNumber(hours)}:${toBengaliNumber(minutes)} ${period}`;
+}

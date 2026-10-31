@@ -19,6 +19,7 @@ import {
   Check,
   Receipt,
   User,
+  Download,
 } from "lucide-react";
 
 interface ContributionData {
@@ -271,6 +272,15 @@ export function PaymentsManagerClient({
                   </td>
                   <td className="py-3 px-4 text-right">
                     <div className="flex items-center justify-end gap-1.5">
+                      <a
+                        href={`/api/receipts/${c.id}`}
+                        target="_blank"
+                        download
+                        className="p-1.5 text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition"
+                        title="রশিদ ডাউনলোড করুন (PDF)"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                      </a>
                       {c.status !== "VERIFIED" && (
                         <button
                           onClick={() => handleVerify(c.id, PaymentStatus.VERIFIED)}

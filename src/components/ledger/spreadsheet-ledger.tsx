@@ -370,22 +370,38 @@ export function SpreadsheetLedger({
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={() => setSelectedCell(null)}
-                className="px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg"
-              >
-                বাতিল
-              </button>
-              <button
-                type="button"
-                disabled={isPending}
-                onClick={handleSaveCell}
-                className="px-4 py-1.5 text-xs font-semibold bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg transition disabled:opacity-50"
-              >
-                {isPending ? "সংরক্ষণ হচ্ছে..." : "সংরক্ষণ করুন"}
-              </button>
+            <div className="flex items-center justify-between gap-2 pt-3 border-t border-slate-100">
+              {selectedCell.contribution?.id ? (
+                <a
+                  href={`/api/receipts/${selectedCell.contribution.id}`}
+                  target="_blank"
+                  download
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 rounded-lg transition"
+                  title="এই সেলের ডিজিটাল রশিদ ডাউনলোড করুন"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>রশিদ (PDF)</span>
+                </a>
+              ) : (
+                <div />
+              )}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedCell(null)}
+                  className="px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg"
+                >
+                  বাতিল
+                </button>
+                <button
+                  type="button"
+                  disabled={isPending}
+                  onClick={handleSaveCell}
+                  className="px-4 py-1.5 text-xs font-semibold bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg transition disabled:opacity-50"
+                >
+                  {isPending ? "সংরক্ষণ হচ্ছে..." : "সংরক্ষণ করুন"}
+                </button>
+              </div>
             </div>
           </div>
         </div>

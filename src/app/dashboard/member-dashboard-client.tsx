@@ -24,6 +24,7 @@ import {
   GraduationCap,
   Hash,
   School,
+  ExternalLink,
 } from "lucide-react";
 
 interface FundItem {
@@ -95,6 +96,17 @@ export function MemberDashboardClient({
   const [isPending, startTransition] = useTransition();
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
+  // Instant receipt success dialog after donation
+  const [submittedPayment, setSubmittedPayment] = useState<{
+    id: string;
+    monthYear: string;
+    amount: number;
+    fundTitle: string;
+    status: string;
+    paymentMethod: string;
+    transactionId?: string | null;
+  } | null>(null);
+
   // Payment form states
   const [payFundId, setPayFundId] = useState(funds[0]?.id || "");
   const [payMonth, setPayMonth] = useState("নভেম্বর-২৬");
@@ -134,10 +146,20 @@ export function MemberDashboardClient({
         note: payNote,
       });
 
-      if (res.success) {
+      if (res.success && res.contribution) {
+        const chosenFund = funds.find((f) => f.id === payFundId);
+        setSubmittedPayment({
+          id: res.contribution.id,
+          monthYear: payMonth,
+          amount: Number(payAmount),
+          fundTitle: chosenFund?.title || "কল্যাণ তহবিল",
+          status: "PENDING",
+          paymentMethod: payMethod,
+          transactionId: payTrxId || null,
+        });
         setFeedback({
           type: "success",
-          message: "চাঁদা সফলভাবে জমা দেওয়া হয়েছে! ভেরিফিকেশনের জন্য অপেক্ষায় রাখা হয়েছে।",
+          message: "চাঁদা সফলভাবে জমা দেওয়া হয়েছে! আপনার ডিজিটাল রশিদ প্রস্তুত।",
         });
         setIsPaymentModalOpen(false);
         setPayTrxId("");
@@ -281,12 +303,13 @@ export function MemberDashboardClient({
                     <th className="py-3 px-3">টাকার পরিমাণ</th>
                     <th className="py-3 px-3">পদ্ধতি ও TrxID</th>
                     <th className="py-3 px-3">স্ট্যাটাস</th>
-                    <th className="py-3 px-4 text-right">তারিখ</th>
+                    <th className="py-3 px-3">তারিখ</th>
+                    <th className="py-3 px-4 text-right">রশিদ / ইনভয়েস</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {contributions.map((c) => (
-                    <tr key={c.id} className="hover:bg-slate-50">
+                    <tr key={c.id} className="hover:bg-slate-50 transition">
                       <td className="py-3 px-4 font-semibold text-slate-900">
                         {c.fund.title}
                       </td>
@@ -322,8 +345,42 @@ export function MemberDashboardClient({
                           </span>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-right text-slate-400">
+                      <td className="py-3 px-3 text-slate-400">
                         {formatBengaliDate(c.createdAt)}
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <a
+                            href={`/api/receipts/${c.id}`}
+                            target="_blank"
+                            download
+                            className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition shadow-2xs ${
+                              c.status === "VERIFIED"
+                                ? "bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300"
+                                : c.status === "PENDING"
+                                ? "bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300"
+                                : "bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200"
+                            }`}
+                            title={
+                              c.status === "VERIFIED"
+                                ? "অনুমোদিত ডিজিটাল রশিদ ডাউনলোড করুন"
+                                : "অপেক্ষমান (পেন্ডিং) রশিদ ডাউনলোড করুন"
+                            }
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            <span>
+                              {c.status === "VERIFIED" ? "রশিদ (অনুমোদিত)" : "রশিদ (পেন্ডিং)"}
+                            </span>
+                          </a>
+                          <a
+                            href={`/api/receipts/${c.id}?view=true`}
+                            target="_blank"
+                            className="p-1.5 text-slate-400 hover:text-emerald-700 hover:bg-slate-100 rounded-lg transition"
+                            title="ব্রাউজারে ভিউ করুন"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </a>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -852,6 +909,81 @@ export function MemberDashboardClient({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Donation Success & Instant Receipt Download */}
+      {submittedPayment && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-6 text-center space-y-4">
+            <div className="w-14 h-14 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center mx-auto shadow-inner">
+              <CheckCircle2 className="w-8 h-8" />
+            </div>
+
+            <div className="space-y-1">
+              <h3 className="text-lg font-black text-slate-900">
+                আলহামদুলিল্লাহ! অনুদান সফল হয়েছে
+              </h3>
+              <p className="text-xs text-slate-500">
+                আপনার চাঁদা সফলভাবে সিস্টেমে যুক্ত হয়েছে। আপনার ডিজিটাল মানি রিসিপ্ট প্রস্তুত।
+              </p>
+            </div>
+
+            <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 text-left space-y-2 text-xs">
+              <div className="flex justify-between">
+                <span className="text-slate-500 font-medium">তহবিল:</span>
+                <span className="font-bold text-slate-900">{submittedPayment.fundTitle}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500 font-medium">অনুদানের মাস:</span>
+                <span className="font-bold text-slate-900">{submittedPayment.monthYear}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500 font-medium">জমার পরিমাণ:</span>
+                <span className="font-bold text-emerald-800 text-sm">
+                  {formatCurrency(submittedPayment.amount)}
+                </span>
+              </div>
+              <div className="flex justify-between items-center pt-1 border-t border-slate-200">
+                <span className="text-slate-500 font-medium">স্ট্যাটাস:</span>
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
+                  <Clock className="w-2.5 h-2.5 text-amber-600" />
+                  যাচাই অপেক্ষমান (Pending)
+                </span>
+              </div>
+            </div>
+
+            <p className="text-[11px] text-amber-800 bg-amber-50 p-2.5 rounded-xl border border-amber-200 text-left leading-relaxed">
+              💡 <strong>রশিদ সংক্রান্ত তথ্য:</strong> বর্তমানে এই রশিদে &quot;যাচাই অপেক্ষমান (Pending)&quot; উল্লেখিত রয়েছে। তহবিল কমিটি ট্রানজেকশনটি যাচাই করলেই রশিদে স্বয়ংক্রিয়ভাবে &quot;অনুমোদিত (Approved)&quot; ও অনুমোদনের তারিখ যুক্ত হয়ে যাবে।
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-2 pt-2">
+              <a
+                href={`/api/receipts/${submittedPayment.id}`}
+                target="_blank"
+                download
+                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold rounded-xl transition shadow-xs"
+              >
+                <Download className="w-4 h-4" />
+                রশিদ ডাউনলোড (PDF)
+              </a>
+              <a
+                href={`/api/receipts/${submittedPayment.id}?view=true`}
+                target="_blank"
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-xl transition"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                প্রিভিউ
+              </a>
+            </div>
+
+            <button
+              onClick={() => setSubmittedPayment(null)}
+              className="w-full text-xs font-semibold text-slate-500 hover:text-slate-800 py-1 transition"
+            >
+              বন্ধ করুন
+            </button>
           </div>
         </div>
       )}
