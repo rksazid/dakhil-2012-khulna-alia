@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { formatCurrency, formatBengaliDate, toBengaliNumber } from "@/lib/utils";
 import { recordExpenseAction, deleteExpenseAction } from "@/actions/expense-actions";
 import { Receipt, Plus, Trash2, Calendar, Tag, AlertTriangle } from "lucide-react";
+import { FileUploader } from "@/components/ui/file-uploader";
 
 interface ExpenseData {
   id: string;
@@ -32,6 +33,7 @@ export function ExpensesManagerClient({
   funds: FundData[];
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [uploadedReceiptUrl, setUploadedReceiptUrl] = useState("");
   const [isPending, startTransition] = useTransition();
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
@@ -258,17 +260,16 @@ export function ExpensesManagerClient({
                     className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl"
                   />
                 </div>
+              </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    রসিদ বা ভাউচার লিংক (ঐচ্ছিক)
-                  </label>
-                  <input
-                    name="receiptUrl"
-                    placeholder="https://..."
-                    className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl font-mono"
-                  />
-                </div>
+              <div>
+                <FileUploader
+                  folder="receipts"
+                  label="রসিদ বা ভাউচার ছবি (Vercel Object Store)"
+                  onUploadComplete={setUploadedReceiptUrl}
+                  initialUrl={uploadedReceiptUrl}
+                />
+                <input type="hidden" name="receiptUrl" value={uploadedReceiptUrl} />
               </div>
 
               <div>

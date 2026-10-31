@@ -22,11 +22,13 @@ import {
   ExternalLink,
 } from "lucide-react";
 import Link from "next/link";
+import { FileUploader } from "@/components/ui/file-uploader";
 
 interface FundData {
   id: string;
   title: string;
   slug: string;
+  bannerImageUrl?: string | null;
   description: string | null;
   rules: string | null;
   targetAmount: number | null;
@@ -68,7 +70,9 @@ export function FundsManagerClient({
   currentUserId,
 }: FundsManagerClientProps) {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [createBannerUrl, setCreateBannerUrl] = useState("");
   const [editingFund, setEditingFund] = useState<FundData | null>(null);
+  const [editBannerUrl, setEditBannerUrl] = useState("");
   const [managerAssignFund, setManagerAssignFund] = useState<FundData | null>(null);
   const [selectedManagerId, setSelectedManagerId] = useState(allMembers[0]?.id || "");
   const [isPending, startTransition] = useTransition();
@@ -358,6 +362,16 @@ export function FundsManagerClient({
               </div>
 
               <div>
+                <FileUploader
+                  folder="banners"
+                  label="তহবিলের ব্যানার ছবি (Vercel Object Store)"
+                  onUploadComplete={setCreateBannerUrl}
+                  initialUrl={createBannerUrl}
+                />
+                <input type="hidden" name="bannerImageUrl" value={createBannerUrl} />
+              </div>
+
+              <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
                   শর্ত ও নিয়মাবলী (নীতিমালা)
                 </label>
@@ -461,6 +475,16 @@ export function FundsManagerClient({
                   defaultValue={editingFund.description || ""}
                   className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl"
                 />
+              </div>
+
+              <div>
+                <FileUploader
+                  folder="banners"
+                  label="তহবিলের ব্যানার ছবি (Vercel Object Store)"
+                  onUploadComplete={setEditBannerUrl}
+                  initialUrl={editingFund.bannerImageUrl || editBannerUrl}
+                />
+                <input type="hidden" name="bannerImageUrl" value={editBannerUrl || editingFund.bannerImageUrl || ""} />
               </div>
 
               <div>

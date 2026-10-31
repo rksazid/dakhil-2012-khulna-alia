@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { updateSiteSettingsAction } from "@/actions/settings-actions";
 import { Settings, Save, Sparkles, AlertCircle, Layout, Phone, Mail } from "lucide-react";
+import { FileUploader } from "@/components/ui/file-uploader";
 
 export function SettingsClient({
   initialSettings,
@@ -10,6 +11,7 @@ export function SettingsClient({
   initialSettings: Record<string, string>;
 }) {
   const [isPending, startTransition] = useTransition();
+  const [heroBannerUrl, setHeroBannerUrl] = useState(initialSettings["hero_banner_image"] || "");
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -95,15 +97,13 @@ export function SettingsClient({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
-              হিরো ব্যানার ব্যাকগ্রাউন্ড ছবি URL (ঐচ্ছিক)
-            </label>
-            <input
-              name="hero_banner_image"
-              defaultValue={initialSettings["hero_banner_image"] || ""}
-              placeholder="https://images.unsplash.com/..."
-              className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl font-mono"
+            <FileUploader
+              folder="banners"
+              label="হিরো ব্যানার ব্যাকগ্রাউন্ড ছবি (Vercel Object Store)"
+              onUploadComplete={setHeroBannerUrl}
+              initialUrl={heroBannerUrl}
             />
+            <input type="hidden" name="hero_banner_image" value={heroBannerUrl} />
           </div>
         </div>
 

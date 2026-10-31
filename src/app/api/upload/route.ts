@@ -1,0 +1,54 @@
+import { NextRequest, NextResponse } from "next/server";
+import { uploadToVercelBlob } from "@/lib/blob";
+import { getSession } from "@/lib/auth";
+
+export async function POST(request: NextRequest) {
+  try {
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json(
+        { success: false, error: "অননুমোদিত অ্যাক্সেস। অনুগ্রহ করে লগইন করুন।" },
+        { status: 401 }
+      );
+    }
+
+    const formData = await request.formData();
+    const file = formData.get("file") as File | null;
+    const folder = (formData.get("folder") as string) || "uploads";
+
+    if (!file) {
+      return NextResponse.json(
+        { success: false, error: "কোনো ফাইল পাওয়া যায়নি।" },
+        { status: 400 }
+      );
+    }
+
+    // Limit file size to 10MB
+    if (file.size > 10 * 1024 * 1024) {
+      return NextResponse.json(
+        { success: false, error: "ফাইলের সাইজ সর্বোচ্চ ১০ মেগাবাইট হতে পারবে।" },
+        { status: 400 }
+      );
+    }
+
+    const result = await uploadToVercelBlob(file, file.name, folder);
+
+    if (!result.success) {
+      return NextResponse.json(
+        { success: false, error: result.error || "আপলোড ব্যর্থ হয়েছে।" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      url: result.url,
+    });
+  } catch (error: unknown) {
+    console.error("Upload route error:", error);
+    return NextResponse.json(
+      { success: false, error: "সার্ভারে ফাইল আপলোড করতে সমস্যা হয়েছে।" },
+      { status: 500 }
+    );
+  }
+}

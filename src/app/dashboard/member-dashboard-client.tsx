@@ -6,6 +6,7 @@ import { PaymentMethod, PaymentStatus, CommitmentStatus } from "@prisma/client";
 import { recordMonthlyContributionAction } from "@/actions/ledger-actions";
 import { createOrUpdateCommitmentAction } from "@/actions/fund-actions";
 import { updateProfileAction } from "@/actions/auth-actions";
+import { FileUploader } from "@/components/ui/file-uploader";
 import {
   CreditCard,
   Plus,
@@ -94,7 +95,9 @@ export function MemberDashboardClient({
   const [payAmount, setPayAmount] = useState<number>(500);
   const [payMethod, setPayMethod] = useState<PaymentMethod>(PaymentMethod.BKASH);
   const [payTrxId, setPayTrxId] = useState("");
+  const [payReceiptUrl, setPayReceiptUrl] = useState("");
   const [payNote, setPayNote] = useState("");
+  const [profileAvatarUrl, setProfileAvatarUrl] = useState(user.avatarUrl || "");
 
   // Commitment form states
   const [commitFundId, setCommitFundId] = useState(funds[0]?.id || "");
@@ -121,6 +124,7 @@ export function MemberDashboardClient({
         amountPaid: Number(payAmount),
         paymentMethod: payMethod,
         transactionId: payTrxId,
+        receiptUrl: payReceiptUrl || undefined,
         note: payNote,
       });
 
@@ -131,6 +135,7 @@ export function MemberDashboardClient({
         });
         setIsPaymentModalOpen(false);
         setPayTrxId("");
+        setPayReceiptUrl("");
         setPayNote("");
       } else {
         setFeedback({ type: "error", message: res.error || "চাঁদা এন্ট্রি ব্যর্থ হয়েছে।" });
@@ -512,6 +517,16 @@ export function MemberDashboardClient({
               />
             </div>
 
+            <div>
+              <FileUploader
+                folder="avatars"
+                label="প্রোফাইল ছবি (Vercel Object Storage)"
+                onUploadComplete={setProfileAvatarUrl}
+                initialUrl={profileAvatarUrl}
+              />
+              <input type="hidden" name="avatarUrl" value={profileAvatarUrl} />
+            </div>
+
             <div className="pt-2">
               <button
                 type="submit"
@@ -641,6 +656,15 @@ export function MemberDashboardClient({
                   onChange={(e) => setPayNote(e.target.value)}
                   placeholder="উদা: অক্টোবর ও নভেম্বর মাসের একসাথে প্রদান"
                   className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl"
+                />
+              </div>
+
+              <div>
+                <FileUploader
+                  folder="receipts"
+                  label="পেমেন্টের স্ক্রিনশট বা রসিদ (Vercel Object Store)"
+                  onUploadComplete={setPayReceiptUrl}
+                  initialUrl={payReceiptUrl}
                 />
               </div>
 
