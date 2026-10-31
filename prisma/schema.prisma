@@ -1,0 +1,222 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  FUND_MANAGER
+  MEMBER
+}
+
+enum PaymentMethod {
+  BKASH
+  NAGAD
+  ROCKET
+  BANK
+  CASH
+}
+
+enum PaymentStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum CommitmentStatus {
+  ACTIVE
+  PAUSED
+}
+
+enum NoticeCategory {
+  GENERAL
+  URGENT
+  MEETING
+  FUND
+}
+
+model User {
+  id                   String                 @id @default(cuid())
+  name                 String
+  email                String?                @unique
+  phone                String                 @unique
+  passwordHash         String
+  avatarUrl            String?
+  batchYear            Int                    @default(2012)
+  bio                  String?
+  bloodGroup           String?
+  occupation           String?
+  workplace            String?
+  presentAddress       String?
+  permanentAddress     String?
+  showPhoneInDirectory Boolean                @default(true)
+  showEmailInDirectory Boolean                @default(true)
+  role                 Role                   @default(MEMBER)
+  isActive             Boolean                @default(true)
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+
+  managedFunds         FundManager[]
+  createdFunds         Fund[]                 @relation("FundCreator")
+  commitments          FundCommitment[]
+  contributions        MonthlyContribution[]  @relation("UserContributions")
+  verifiedContributions MonthlyContribution[] @relation("VerifiedByUser")
+  approvedExpenses     FundExpense[]
+  activities           ActivityLog[]
+  notices              Notice[]
+
+  @@index([role, isActive])
+  @@index([phone])
+  @@index([email])
+}
+
+model Fund {
+  id             String                @id @default(cuid())
+  title          String
+  slug           String                @unique
+  description    String?               @db.Text
+  bannerImageUrl String?
+  rules          String?               @db.Text
+  contactPerson  String?
+  contactPhone   String?
+  currentBalance Decimal               @default(0) @db.Decimal(12, 2)
+  targetAmount   Decimal?              @db.Decimal(12, 2)
+  bankDetails    String?               @db.Text
+  isActive       Boolean               @default(true)
+  createdById    String
+  createdBy      User                  @relation("FundCreator", fields: [createdById], references: [id])
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  managers       FundManager[]
+  commitments    FundCommitment[]
+  contributions  MonthlyContribution[]
+  expenses       FundExpense[]
+  activityLogs   ActivityLog[]
+
+  @@index([slug])
+  @@index([isActive])
+}
+
+model FundManager {
+  id         String   @id @default(cuid())
+  fundId     String
+  userId     String
+  fund       Fund     @relation(fields: [fundId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignedAt DateTime @default(now())
+
+  @@unique([fundId, userId])
+}
+
+model FundCommitment {
+  id              String           @id @default(cuid())
+  fundId          String
+  userId          String
+  fund            Fund             @relation(fields: [fundId], references: [id], onDelete: Cascade)
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  committedAmount Decimal          @db.Decimal(10, 2)
+  startMonth      String
+  status          CommitmentStatus @default(ACTIVE)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@unique([fundId, userId])
+  @@index([fundId, status])
+}
+
+model MonthlyContribution {
+  id               String        @id @default(cuid())
+  fundId           String
+  userId           String
+  fund             Fund          @relation(fields: [fundId], references: [id], onDelete: Cascade)
+  user             User          @relation("UserContributions", fields: [userId], references: [id], onDelete: Cascade)
+  monthYear        String
+  amountPaid       Decimal       @db.Decimal(10, 2)
+  paymentMethod    PaymentMethod @default(BKASH)
+  transactionId    String?
+  receiptUrl       String?
+  status           PaymentStatus @default(PENDING)
+  verifiedByUserId String?
+  verifiedBy       User?         @relation("VerifiedByUser", fields: [verifiedByUserId], references: [id])
+  verifiedAt       DateTime?
+  note             String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@index([fundId, monthYear])
+  @@index([userId, fundId])
+  @@index([status])
+}
+
+model FundExpense {
+  id               String    @id @default(cuid())
+  fundId           String
+  fund             Fund      @relation(fields: [fundId], references: [id], onDelete: Cascade)
+  title            String
+  amount           Decimal   @db.Decimal(10, 2)
+  category         String?
+  spentDate        DateTime  @default(now())
+  receiptUrl       String?
+  approvedByUserId String?
+  approvedBy       User?     @relation(fields: [approvedByUserId], references: [id])
+  note             String?
+  createdAt        DateTime  @default(now())
+
+  @@index([fundId])
+}
+
+model ActivityLog {
+  id                String   @id @default(cuid())
+  action            String
+  entityType        String
+  entityId          String?
+  fundId            String?
+  fund              Fund?    @relation(fields: [fundId], references: [id], onDelete: SetNull)
+  performedByUserId String?
+  performedBy       User?    @relation(fields: [performedByUserId], references: [id], onDelete: SetNull)
+  details           String?  @db.Text
+  timestamp         DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([timestamp])
+  @@index([fundId])
+}
+
+model Notice {
+  id          String         @id @default(cuid())
+  title       String
+  slug        String         @unique
+  content     String         @db.Text
+  category    NoticeCategory @default(GENERAL)
+  isPinned    Boolean        @default(false)
+  isPublished Boolean        @default(true)
+  authorId    String?
+  author      User?          @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([isPublished, isPinned, createdAt])
+}
+
+model SiteSetting {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String   @db.Text
+  description String?
+  updatedAt   DateTime @updatedAt
+}
+
+model GalleryItem {
+  id        String   @id @default(cuid())
+  title     String
+  imageUrl  String
+  caption   String?
+  eventDate String?
+  category  String?
+  createdAt DateTime @default(now())
+}

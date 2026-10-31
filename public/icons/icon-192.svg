@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <rect width="192" height="192" rx="40" fill="#047857"/>
+  <circle cx="96" cy="96" r="72" fill="#065f46" stroke="#f59e0b" stroke-width="3"/>
+  <path d="M70 120 C70 90, 122 90, 122 120 Z" fill="#f59e0b" opacity="0.9"/>
+  <circle cx="96" cy="80" r="22" fill="#ffffff"/>
+  <text x="96" y="148" font-family="system-ui, sans-serif" font-size="20" font-weight="bold" fill="#ffffff" text-anchor="middle">২০১২</text>
+  <text x="96" y="165" font-family="system-ui, sans-serif" font-size="11" fill="#f59e0b" text-anchor="middle">খুলনা আলিয়া</text>
+</svg>

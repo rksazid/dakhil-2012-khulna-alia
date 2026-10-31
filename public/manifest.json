@@ -1,0 +1,27 @@
+{
+  "name": "দাখিল ২০১২ ব্যাচ — খুলনা আলিয়া",
+  "short_name": "দাখিল ২০১২",
+  "description": "খুলনা আলিয়া মাদ্রাসা দাখিল ২০১২ ব্যাচ পোর্টাল ও কল্যাণ ফান্ড ম্যানেজমেন্ট সিস্টেম",
+  "start_url": "/",
+  "id": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#047857",
+  "orientation": "portrait-primary",
+  "lang": "bn",
+  "categories": ["community", "finance", "social"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

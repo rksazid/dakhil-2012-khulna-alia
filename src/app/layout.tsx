@@ -1,0 +1,43 @@
+import type { Metadata, Viewport } from "next";
+import "./globals.css";
+import { PwaRegister } from "@/components/pwa/pwa-register";
+import { InstallPrompt } from "@/components/pwa/install-prompt";
+
+export const metadata: Metadata = {
+  title: "দাখিল ২০১২ ব্যাচ — খুলনা আলিয়া মাদ্রাসা | পোর্টাল ও কল্যাণ ফান্ড",
+  description:
+    "খুলনা আলিয়া মাদ্রাসা দাখিল ২০১২ ব্যাচের অফিসিয়াল পোর্টাল ও কল্যাণ ফান্ড ম্যানেজমেন্ট সিস্টেম। স্বচ্ছতা, জবাবদিহিতা ও বন্ধুত্বের এক অনন্য ডিজিটাল প্ল্যাটফর্ম।",
+  manifest: "/manifest.json",
+  icons: {
+    icon: "/icons/icon-192.svg",
+    apple: "/icons/icon-192.svg",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "দাখিল ২০১২",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#047857",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="bn" className="h-full antialiased">
+      <body className="min-h-full flex flex-col bg-slate-50 text-slate-900">
+        <PwaRegister />
+        {children}
+        <InstallPrompt />
+      </body>
+    </html>
+  );
+}
