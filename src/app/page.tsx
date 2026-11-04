@@ -553,28 +553,36 @@ export default async function HomePage() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {galleryItems.map((item) => (
-                <div
+                <Link
                   key={item.id}
-                  className="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-xs group"
+                  href="/gallery"
+                  className="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-xs hover:shadow-md transition group flex flex-col"
                 >
-                  <div className="h-48 overflow-hidden bg-slate-100">
+                  <div className="h-48 overflow-hidden bg-slate-100 relative">
                     <img
                       src={item.imageUrl}
                       alt={item.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                     />
+                    {item.images && item.images.length > 1 && (
+                      <span className="absolute bottom-2.5 right-2.5 bg-black/70 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-0.5 rounded-md">
+                        📷 {toBengaliNumber(item.images.length)}টি ছবি
+                      </span>
+                    )}
                   </div>
                   <div className="p-4 space-y-1">
                     <div className="flex justify-between items-center text-[11px] text-emerald-700 font-semibold">
                       <span>{item.category || "স্মৃতিচারণ"}</span>
                       <span>{item.eventDate}</span>
                     </div>
-                    <h3 className="font-bold text-sm text-slate-900">{item.title}</h3>
+                    <h3 className="font-bold text-sm text-slate-900 group-hover:text-emerald-800 transition">
+                      {item.title}
+                    </h3>
                     {item.caption && (
                       <p className="text-xs text-slate-500 line-clamp-2">{item.caption}</p>
                     )}
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </section>

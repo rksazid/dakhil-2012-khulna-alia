@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Calendar,
@@ -13,16 +13,20 @@ import {
   Download,
   Share2,
   Check,
-  Tag,
+  Images,
+  ExternalLink,
 } from "lucide-react";
+import { toBengaliNumber } from "@/lib/utils";
 
 export interface GalleryItemView {
   id: string;
   title: string;
   imageUrl: string;
+  images?: string[];
   caption?: string | null;
   eventDate?: string | null;
   category?: string | null;
+  googlePhotosUrl?: string | null;
   createdAt: Date | string;
 }
 
@@ -33,7 +37,8 @@ interface GalleryClientProps {
 
 export function GalleryClient({ initialItems, canManage }: GalleryClientProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
-  const [activePhotoIndex, setActivePhotoIndex] = useState<number | null>(null);
+  const [activeAlbumIndex, setActiveAlbumIndex] = useState<number | null>(null);
+  const [activePhotoIndex, setActivePhotoIndex] = useState<number>(0);
   const [copied, setCopied] = useState(false);
 
   // Extract unique categories
@@ -46,25 +51,52 @@ export function GalleryClient({ initialItems, canManage }: GalleryClientProps) {
       ? initialItems
       : initialItems.filter((item) => item.category === selectedCategory);
 
-  const activePhoto =
-    activePhotoIndex !== null ? filteredItems[activePhotoIndex] : null;
+  const activeAlbum =
+    activeAlbumIndex !== null ? filteredItems[activeAlbumIndex] : null;
 
-  const handleNext = () => {
-    if (activePhotoIndex !== null) {
-      setActivePhotoIndex((activePhotoIndex + 1) % filteredItems.length);
+  // Resolved images list for the active album
+  const currentAlbumPhotos: string[] = activeAlbum
+    ? activeAlbum.images && activeAlbum.images.length > 0
+      ? activeAlbum.images
+      : activeAlbum.imageUrl
+      ? [activeAlbum.imageUrl]
+      : []
+    : [];
+
+  // Reset photo index when switching album
+  const handleOpenAlbum = (albumIdx: number) => {
+    setActiveAlbumIndex(albumIdx);
+    setActivePhotoIndex(0);
+  };
+
+  const handleNextPhoto = () => {
+    if (currentAlbumPhotos.length > 1) {
+      setActivePhotoIndex((prev) => (prev + 1) % currentAlbumPhotos.length);
     }
   };
 
-  const handlePrev = () => {
-    if (activePhotoIndex !== null) {
+  const handlePrevPhoto = () => {
+    if (currentAlbumPhotos.length > 1) {
       setActivePhotoIndex(
-        (activePhotoIndex - 1 + filteredItems.length) % filteredItems.length
+        (prev) => (prev - 1 + currentAlbumPhotos.length) % currentAlbumPhotos.length
       );
     }
   };
 
-  const handleCopyLink = (imageUrl: string) => {
-    navigator.clipboard.writeText(imageUrl);
+  // Keyboard navigation for lightbox
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!activeAlbum) return;
+      if (e.key === "ArrowRight") handleNextPhoto();
+      if (e.key === "ArrowLeft") handlePrevPhoto();
+      if (e.key === "Escape") setActiveAlbumIndex(null);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [activeAlbum, currentAlbumPhotos.length]);
+
+  const handleCopyLink = (url: string) => {
+    navigator.clipboard.writeText(url);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -83,7 +115,7 @@ export function GalleryClient({ initialItems, canManage }: GalleryClientProps) {
                 : "bg-slate-100 text-slate-600 hover:bg-slate-200"
             }`}
           >
-            সব ছবি ({initialItems.length})
+            সব অ্যালবাম ({toBengaliNumber(initialItems.length)})
           </button>
           {categories.map((cat) => (
             <button
@@ -107,7 +139,7 @@ export function GalleryClient({ initialItems, canManage }: GalleryClientProps) {
             className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition shadow-xs shrink-0"
           >
             <Plus className="w-4 h-4" />
-            <span>নতুন ছবি আপলোড করুন</span>
+            <span>নতুন অ্যালবাম/ছবি আপলোড</span>
           </Link>
         )}
       </div>
@@ -121,8 +153,8 @@ export function GalleryClient({ initialItems, canManage }: GalleryClientProps) {
           <div className="space-y-1">
             <h3 className="text-lg font-bold text-slate-800">
               {selectedCategory === "ALL"
-                ? "বর্তমানে কোনো ছবি যুক্ত করা হয়নি"
-                : `"${selectedCategory}" ক্যাটাগরিতে কোনো ছবি নেই`}
+                ? "বর্তমানে কোনো অ্যালবাম যুক্ত করা হয়নি"
+                : `"${selectedCategory}" ক্যাটাগরিতে কোনো অ্যালবাম নেই`}
             </h3>
             <p className="text-xs sm:text-sm text-slate-500 max-w-sm mx-auto">
               আমাদের ক্যাম্পাসের সোনালী স্মৃতি ও বন্ধুদের আনন্দের মুহূর্তগুলো শিগগিরই এখানে যুক্ত করা হবে।
@@ -140,91 +172,147 @@ export function GalleryClient({ initialItems, canManage }: GalleryClientProps) {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredItems.map((item, index) => (
-            <div
-              key={item.id}
-              onClick={() => setActivePhotoIndex(index)}
-              className="bg-white rounded-3xl overflow-hidden border border-slate-200 shadow-xs hover:shadow-xl transition-all duration-300 group flex flex-col cursor-pointer"
-            >
-              {/* Photo Box */}
-              <div className="h-60 bg-slate-100 overflow-hidden relative">
-                <img
-                  src={item.imageUrl}
-                  alt={item.title}
-                  className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500 [image-rendering:-webkit-optimize-contrast]"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-between p-4">
-                  <span className="text-white text-xs font-bold inline-flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-3 py-1 rounded-full">
-                    <Maximize2 className="w-3.5 h-3.5" /> বড় করে দেখুন
-                  </span>
-                </div>
-                {item.category && (
-                  <span className="absolute top-3 left-3 bg-slate-950/75 backdrop-blur-md text-white text-[11px] font-bold px-2.5 py-1 rounded-lg shadow-sm border border-white/10">
-                    {item.category}
-                  </span>
-                )}
-              </div>
+          {filteredItems.map((item, index) => {
+            const photoCount =
+              item.images && item.images.length > 0
+                ? item.images.length
+                : item.imageUrl
+                ? 1
+                : 0;
 
-              {/* Card Meta */}
-              <div className="p-5 flex-1 flex flex-col justify-between space-y-2">
-                <div>
-                  {item.eventDate && (
-                    <div className="flex items-center gap-1 text-[11px] text-emerald-700 font-bold mb-1.5">
-                      <Calendar className="w-3 h-3" />
-                      <span>{item.eventDate}</span>
-                    </div>
+            const coverUrl =
+              item.imageUrl || (item.images && item.images[0]) || "/logo.png";
+
+            return (
+              <div
+                key={item.id}
+                onClick={() => handleOpenAlbum(index)}
+                className="bg-white rounded-3xl overflow-hidden border border-slate-200 shadow-xs hover:shadow-xl transition-all duration-300 group flex flex-col cursor-pointer"
+              >
+                {/* Photo Cover Box */}
+                <div className="h-60 bg-slate-100 overflow-hidden relative">
+                  <img
+                    src={coverUrl}
+                    alt={item.title}
+                    className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500 [image-rendering:-webkit-optimize-contrast]"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-between p-4">
+                    <span className="text-white text-xs font-bold inline-flex items-center gap-1.5 bg-black/50 backdrop-blur-md px-3 py-1 rounded-full">
+                      <Maximize2 className="w-3.5 h-3.5" /> অ্যালবাম গ্যালারি খুলুন
+                    </span>
+                  </div>
+
+                  {/* Badges on card */}
+                  {item.category && (
+                    <span className="absolute top-3 left-3 bg-slate-950/75 backdrop-blur-md text-white text-[11px] font-bold px-2.5 py-1 rounded-lg shadow-sm border border-white/10">
+                      {item.category}
+                    </span>
                   )}
-                  <h3 className="font-bold text-slate-900 text-sm sm:text-base group-hover:text-emerald-800 transition line-clamp-2">
-                    {item.title}
-                  </h3>
+
+                  {/* Multi-photo count badge */}
+                  {photoCount > 1 && (
+                    <span className="absolute bottom-3 right-3 bg-emerald-950/85 backdrop-blur-md text-white text-[11px] font-bold px-2.5 py-1 rounded-lg shadow-sm border border-emerald-400/30 flex items-center gap-1.5">
+                      <Images className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>{toBengaliNumber(photoCount)}টি ছবি</span>
+                    </span>
+                  )}
+
+                  {/* Google Photos link indicator badge */}
+                  {item.googlePhotosUrl && (
+                    <span className="absolute top-3 right-3 bg-blue-600/90 text-white text-[10px] font-bold px-2 py-0.5 rounded-md shadow-xs flex items-center gap-1">
+                      <ExternalLink className="w-3 h-3" />
+                      <span>গুগল ফটোজ</span>
+                    </span>
+                  )}
                 </div>
 
-                {item.caption && (
-                  <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed pt-2 border-t border-slate-100">
-                    {item.caption}
-                  </p>
-                )}
+                {/* Card Meta */}
+                <div className="p-5 flex-1 flex flex-col justify-between space-y-2">
+                  <div>
+                    {item.eventDate && (
+                      <div className="flex items-center gap-1 text-[11px] text-emerald-700 font-bold mb-1.5">
+                        <Calendar className="w-3 h-3" />
+                        <span>{item.eventDate}</span>
+                      </div>
+                    )}
+                    <h3 className="font-bold text-slate-900 text-sm sm:text-base group-hover:text-emerald-800 transition line-clamp-2">
+                      {item.title}
+                    </h3>
+                  </div>
+
+                  {item.caption && (
+                    <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed pt-2 border-t border-slate-100">
+                      {item.caption}
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
-      {/* LIGHTBOX / FULL-SIZE PHOTO VIEWER MODAL */}
-      {activePhoto && (
+      {/* LIGHTBOX / MULTI-PHOTO ALBUM VIEWER MODAL */}
+      {activeAlbum && (
         <div
-          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col items-center justify-between p-4 sm:p-6 animate-in fade-in"
-          onClick={() => setActivePhotoIndex(null)}
+          className="fixed inset-0 z-50 bg-black/92 backdrop-blur-md flex flex-col items-center justify-between p-3 sm:p-6 animate-in fade-in"
+          onClick={() => setActiveAlbumIndex(null)}
         >
           {/* Top Bar */}
           <div
-            className="w-full max-w-6xl flex items-center justify-between text-white py-2"
+            className="w-full max-w-6xl flex flex-wrap items-center justify-between gap-3 text-white py-2"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="min-w-0 pr-4">
-              <h4 className="text-base sm:text-lg font-bold truncate">
-                {activePhoto.title}
-              </h4>
-              <div className="flex items-center gap-2 text-xs text-slate-400 mt-0.5">
-                {activePhoto.category && (
-                  <span className="text-emerald-400 font-medium">
-                    {activePhoto.category}
+              <div className="flex items-center gap-2">
+                <h4 className="text-base sm:text-lg font-bold truncate">
+                  {activeAlbum.title}
+                </h4>
+                {currentAlbumPhotos.length > 1 && (
+                  <span className="px-2 py-0.5 rounded-md bg-white/20 text-xs font-mono font-bold">
+                    ছবি {toBengaliNumber(activePhotoIndex + 1)} /{" "}
+                    {toBengaliNumber(currentAlbumPhotos.length)}
                   </span>
                 )}
-                {activePhoto.eventDate && (
+              </div>
+              <div className="flex items-center gap-2 text-xs text-slate-300 mt-0.5">
+                {activeAlbum.category && (
+                  <span className="text-emerald-400 font-medium">
+                    {activeAlbum.category}
+                  </span>
+                )}
+                {activeAlbum.eventDate && (
                   <>
                     <span>•</span>
-                    <span>{activePhoto.eventDate}</span>
+                    <span>{activeAlbum.eventDate}</span>
                   </>
                 )}
               </div>
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
+              {/* Google Photos Album Link Button */}
+              {activeAlbum.googlePhotosUrl && (
+                <a
+                  href={activeAlbum.googlePhotosUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition"
+                  title="গুগল ফটোজে মূল হাই-কোয়ালিটি অ্যালবাম দেখুন"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">গুগল ফটোজে দেখুন</span>
+                </a>
+              )}
+
               <button
                 type="button"
-                onClick={() => handleCopyLink(activePhoto.imageUrl)}
+                onClick={() =>
+                  handleCopyLink(
+                    currentAlbumPhotos[activePhotoIndex] || activeAlbum.imageUrl
+                  )
+                }
                 className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition text-xs flex items-center gap-1.5"
                 title="ছবির লিংক কপি করুন"
               >
@@ -242,7 +330,7 @@ export function GalleryClient({ initialItems, canManage }: GalleryClientProps) {
               </button>
 
               <a
-                href={activePhoto.imageUrl}
+                href={currentAlbumPhotos[activePhotoIndex] || activeAlbum.imageUrl}
                 target="_blank"
                 rel="noreferrer"
                 download
@@ -255,7 +343,7 @@ export function GalleryClient({ initialItems, canManage }: GalleryClientProps) {
 
               <button
                 type="button"
-                onClick={() => setActivePhotoIndex(null)}
+                onClick={() => setActiveAlbumIndex(null)}
                 className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition"
                 title="বন্ধ করুন"
               >
@@ -266,29 +354,34 @@ export function GalleryClient({ initialItems, canManage }: GalleryClientProps) {
 
           {/* Central Image View with Nav arrows */}
           <div
-            className="relative flex-1 w-full max-w-5xl flex items-center justify-center my-auto p-2"
+            className="relative flex-1 w-full max-w-5xl flex items-center justify-center my-auto p-1 sm:p-2"
             onClick={(e) => e.stopPropagation()}
           >
             <img
-              src={activePhoto.imageUrl}
-              alt={activePhoto.title}
-              className="max-h-[72vh] max-w-full object-contain rounded-2xl shadow-2xl [image-rendering:-webkit-optimize-contrast]"
+              src={
+                currentAlbumPhotos[activePhotoIndex] ||
+                activeAlbum.imageUrl ||
+                "/logo.png"
+              }
+              alt={`${activeAlbum.title} - photo ${activePhotoIndex + 1}`}
+              className="max-h-[64vh] max-w-full object-contain rounded-2xl shadow-2xl [image-rendering:-webkit-optimize-contrast]"
             />
 
-            {filteredItems.length > 1 && (
+            {/* Navigation Arrows for Photos in this Event */}
+            {currentAlbumPhotos.length > 1 && (
               <>
                 <button
                   type="button"
-                  onClick={handlePrev}
-                  className="absolute left-2 sm:-left-6 top-1/2 -translate-y-1/2 p-2 sm:p-3 rounded-full bg-black/60 hover:bg-black/80 text-white border border-white/20 shadow-xl transition hover:scale-105"
+                  onClick={handlePrevPhoto}
+                  className="absolute left-1 sm:-left-6 top-1/2 -translate-y-1/2 p-2 sm:p-3 rounded-full bg-black/70 hover:bg-black/90 text-white border border-white/20 shadow-xl transition hover:scale-105"
                   title="পূর্ববর্তী ছবি"
                 >
                   <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
                 </button>
                 <button
                   type="button"
-                  onClick={handleNext}
-                  className="absolute right-2 sm:-right-6 top-1/2 -translate-y-1/2 p-2 sm:p-3 rounded-full bg-black/60 hover:bg-black/80 text-white border border-white/20 shadow-xl transition hover:scale-105"
+                  onClick={handleNextPhoto}
+                  className="absolute right-1 sm:-right-6 top-1/2 -translate-y-1/2 p-2 sm:p-3 rounded-full bg-black/70 hover:bg-black/90 text-white border border-white/20 shadow-xl transition hover:scale-105"
                   title="পরবর্তী ছবি"
                 >
                   <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -297,13 +390,36 @@ export function GalleryClient({ initialItems, canManage }: GalleryClientProps) {
             )}
           </div>
 
-          {/* Bottom Caption Bar */}
-          {activePhoto.caption && (
+          {/* Bottom Thumbnails Strip for Multiple Photos */}
+          {currentAlbumPhotos.length > 1 && (
             <div
-              className="w-full max-w-3xl bg-black/60 backdrop-blur-md rounded-2xl p-4 text-center text-xs sm:text-sm text-slate-200 border border-white/10 shadow-lg mt-2"
+              className="w-full max-w-2xl flex items-center justify-center gap-2 overflow-x-auto py-2 px-1 scrollbar-none"
               onClick={(e) => e.stopPropagation()}
             >
-              {activePhoto.caption}
+              {currentAlbumPhotos.map((thumbUrl, tIdx) => (
+                <button
+                  key={tIdx}
+                  type="button"
+                  onClick={() => setActivePhotoIndex(tIdx)}
+                  className={`h-12 w-16 sm:h-14 sm:w-20 rounded-xl overflow-hidden shrink-0 border-2 transition-all ${
+                    tIdx === activePhotoIndex
+                      ? "border-emerald-400 ring-2 ring-emerald-400/50 scale-105"
+                      : "border-white/20 opacity-60 hover:opacity-100"
+                  }`}
+                >
+                  <img src={thumbUrl} alt="" className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Caption text */}
+          {activeAlbum.caption && (
+            <div
+              className="w-full max-w-3xl bg-black/60 backdrop-blur-md rounded-2xl p-3 text-center text-xs sm:text-sm text-slate-200 border border-white/10 shadow-lg mt-1"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {activeAlbum.caption}
             </div>
           )}
         </div>
