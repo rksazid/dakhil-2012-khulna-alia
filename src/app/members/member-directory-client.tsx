@@ -21,6 +21,7 @@ export type MemberItem = MemberDetailData;
 
 export function MemberDirectoryClient({ members }: { members: MemberItem[] }) {
   const [search, setSearch] = useState("");
+  const [selectedType, setSelectedType] = useState<string>("ALL");
   const [selectedBlood, setSelectedBlood] = useState<string>("ALL");
   const [selectedSection, setSelectedSection] = useState<string>("ALL");
   const [selectedMember, setSelectedMember] = useState<MemberItem | null>(null);
@@ -40,19 +41,46 @@ export function MemberDirectoryClient({ members }: { members: MemberItem[] }) {
       (m.classRoll && m.classRoll.includes(query)) ||
       (m.classroom && m.classroom.toLowerCase().includes(query));
 
+    const matchesType =
+      selectedType === "ALL" || (m.userType || "BATCH_MEMBER") === selectedType;
     const matchesBlood = selectedBlood === "ALL" || m.bloodGroup === selectedBlood;
     const matchesSection =
       selectedSection === "ALL" ||
       (selectedSection === "SCIENCE" && m.studentGroup === "SCIENCE") ||
       (selectedSection === "ARTS" && m.studentGroup === "ARTS");
 
-    return matchesSearch && matchesBlood && matchesSection;
+    return matchesSearch && matchesType && matchesBlood && matchesSection;
   });
 
   return (
     <div className="space-y-6">
       {/* Search and Filters */}
-      <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-xs space-y-4">
+      <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-xs space-y-3.5">
+        {/* User Identity / Type Filter Pills */}
+        <div className="flex flex-wrap items-center gap-1.5 pb-2 border-b border-slate-100 text-xs">
+          <span className="text-xs font-bold text-slate-700 mr-1 flex items-center gap-1">
+            <Users className="w-3.5 h-3.5 text-emerald-700" /> পরিচিতি:
+          </span>
+          {[
+            { key: "ALL", label: "সকল" },
+            { key: "BATCH_MEMBER", label: "দাখিল ২০১২ ব্যাচ" },
+            { key: "TEACHER", label: "সম্মানিত শিক্ষকবৃন্দ" },
+            { key: "WELL_WISHER", label: "শুভাকাঙ্ক্ষী ও সহযোগী" },
+          ].map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setSelectedType(t.key)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+                selectedType === t.key
+                  ? "bg-emerald-800 text-white shadow-2xs"
+                  : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -141,8 +169,8 @@ export function MemberDirectoryClient({ members }: { members: MemberItem[] }) {
                     </span>
                   )}
 
-                  {/* Role tag on top left */}
-                  <div className="absolute top-3 left-3">
+                  {/* Role & Category tag on top left */}
+                  <div className="absolute top-3 left-3 flex items-center gap-1">
                     {member.role === "SUPER_ADMIN" ? (
                       <span className="text-[10px] font-bold px-2.5 py-0.8 rounded-full bg-purple-900/90 text-purple-200 border border-purple-400/40 shadow-2xs">
                         সুপার অ্যাডমিন
@@ -151,11 +179,21 @@ export function MemberDirectoryClient({ members }: { members: MemberItem[] }) {
                       <span className="text-[10px] font-black px-2.5 py-0.8 rounded-full bg-amber-400 text-slate-950 shadow-2xs">
                         ফান্ড ম্যানেজার
                       </span>
-                    ) : (
+                    ) : null}
+
+                    {member.userType === "TEACHER" ? (
+                      <span className="text-[10px] font-bold px-2.5 py-0.8 rounded-full bg-amber-400 text-slate-950 shadow-2xs border border-amber-300">
+                        সম্মানিত শিক্ষক
+                      </span>
+                    ) : member.userType === "WELL_WISHER" ? (
+                      <span className="text-[10px] font-bold px-2.5 py-0.8 rounded-full bg-teal-500 text-white shadow-2xs border border-teal-400">
+                        শুভাকাঙ্ক্ষী
+                      </span>
+                    ) : member.role !== "SUPER_ADMIN" && member.role !== "FUND_MANAGER" ? (
                       <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-white/20 text-white backdrop-blur-xs">
                         দাখিল ২০১২
                       </span>
-                    )}
+                    ) : null}
                   </div>
                 </div>
 

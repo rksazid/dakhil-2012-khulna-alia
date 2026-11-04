@@ -16,6 +16,7 @@ export async function createMemberAction(formData: FormData) {
     const rawPassword = (formData.get("password") as string)?.trim();
     const password = rawPassword && rawPassword.length >= 6 ? rawPassword : "Password123!";
     const role = (formData.get("role") as Role) || Role.MEMBER;
+    const userType = (formData.get("userType") as string)?.trim() || "BATCH_MEMBER";
     const bloodGroup = (formData.get("bloodGroup") as string)?.trim() || null;
     const studentGroup = (formData.get("studentGroup") as string)?.trim() || null;
     const classRoll = (formData.get("classRoll") as string)?.trim() || null;
@@ -58,6 +59,7 @@ export async function createMemberAction(formData: FormData) {
         email,
         passwordHash,
         role,
+        userType,
         avatarUrl,
         thumbnailUrl,
         bannerUrl,
@@ -123,6 +125,7 @@ export async function updateMemberDetailsAction(userId: string, formData: FormDa
     const phone = (formData.get("phone") as string)?.trim() || oldUser.phone;
     const email = (formData.get("email") as string)?.trim() || null;
     const role = (formData.get("role") as Role) || oldUser.role;
+    const userType = (formData.get("userType") as string)?.trim() || oldUser.userType;
     const bloodGroup = (formData.get("bloodGroup") as string)?.trim() || null;
     const studentGroup = (formData.get("studentGroup") as string)?.trim() || null;
     const classRoll = (formData.get("classRoll") as string)?.trim() || null;
@@ -160,6 +163,7 @@ export async function updateMemberDetailsAction(userId: string, formData: FormDa
       phone: string;
       email: string | null;
       role: Role;
+      userType: string;
       bloodGroup: string | null;
       studentGroup: string | null;
       classRoll: string | null;
@@ -179,6 +183,7 @@ export async function updateMemberDetailsAction(userId: string, formData: FormDa
       phone,
       email,
       role,
+      userType,
       bloodGroup,
       studentGroup,
       classRoll,

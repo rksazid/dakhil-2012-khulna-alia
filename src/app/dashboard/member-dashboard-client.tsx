@@ -84,6 +84,7 @@ interface MemberDashboardClientProps {
     permanentAddress: string | null;
     showPhoneInDirectory: boolean;
     showEmailInDirectory: boolean;
+    userType?: string | null;
     studentGroup?: string | null;
     classRoll?: string | null;
     classroom?: string | null;
@@ -517,15 +518,30 @@ export function MemberDashboardClient({
           </div>
 
           <form onSubmit={handleProfileSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">নাম</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">নাম *</label>
                 <input
                   name="name"
                   defaultValue={user.name}
                   required
                   className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl"
                 />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  পরিচয় / ক্যাটাগরি *
+                </label>
+                <select
+                  name="userType"
+                  defaultValue={user.userType || "BATCH_MEMBER"}
+                  className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl bg-white"
+                >
+                  <option value="BATCH_MEMBER">দাখিল ২০১২ ব্যাচমেট</option>
+                  <option value="TEACHER">সম্মানিত শিক্ষক / উস্তাদ</option>
+                  <option value="WELL_WISHER">শুভাকাঙ্ক্ষী ও সহযোগী</option>
+                </select>
               </div>
 
               <div>

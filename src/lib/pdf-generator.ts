@@ -22,6 +22,8 @@ interface ReceiptPdfResult {
 export function generateReceiptHtml(data: {
   receiptNo: string;
   donorName: string;
+  donorIdentityHeading?: string;
+  donorIdentityLabel?: string;
   phone: string;
   email?: string | null;
   classRoll?: string | null;
@@ -463,7 +465,7 @@ export function generateReceiptHtml(data: {
         <td class="info-card" style="padding-right: 12px;">
           <div class="info-card-title">অনুদানদাতার তথ্য (Donor Details)</div>
           <div class="info-row"><span class="info-label">সদস্যের নাম:</span> <span class="info-val">${data.donorName}</span></div>
-          <div class="info-row"><span class="info-label">ব্যাচ ও প্রতিষ্ঠান:</span> <span class="info-val">দাখিল ২০১২, খুলনা আলিয়া মাদ্রাসা</span></div>
+          <div class="info-row"><span class="info-label">${data.donorIdentityHeading || "ব্যাচ ও প্রতিষ্ঠান:"}</span> <span class="info-val">${data.donorIdentityLabel || "দাখিল ২০১২, খুলনা আলিয়া মাদ্রাসা"}</span></div>
           ${data.classRoll ? `<div class="info-row"><span class="info-label">শ্রেণি রোল:</span> <span class="info-val">${data.classRoll}</span></div>` : ""}
           ${sectionLabel ? `<div class="info-row"><span class="info-label">শাখা / বিভাগ:</span> <span class="info-val">${sectionLabel}</span></div>` : ""}
           <div class="info-row"><span class="info-label">মোবাইল নম্বর:</span> <span class="info-val">${data.phone}</span></div>
@@ -626,9 +628,26 @@ export async function generateReceiptPdfBuffer(contributionId: string): Promise<
   const submissionDate = formatBengaliDate(contribution.createdAt);
   const approvalDate = contribution.verifiedAt ? formatBengaliDateTime(contribution.verifiedAt) : null;
 
+  const isTeacher = contribution.user.userType === "TEACHER";
+  const isWellWisher = contribution.user.userType === "WELL_WISHER";
+
+  const donorIdentityHeading = isTeacher
+    ? "পদবী ও প্রতিষ্ঠান:"
+    : isWellWisher
+    ? "পরিচয় ও সম্পর্ক:"
+    : "ব্যাচ ও প্রতিষ্ঠান:";
+
+  const donorIdentityLabel = isTeacher
+    ? "সম্মানিত শিক্ষক, খুলনা আলিয়া মাদ্রাসা"
+    : isWellWisher
+    ? "শুভাকাঙ্ক্ষী ও সহযোগী"
+    : "দাখিল ২০১২, খুলনা আলিয়া মাদ্রাসা";
+
   const html = generateReceiptHtml({
     receiptNo,
     donorName: contribution.user.name,
+    donorIdentityHeading,
+    donorIdentityLabel,
     phone: contribution.user.phone,
     email: contribution.user.email,
     classRoll: contribution.user.classRoll ? toBengaliNumber(contribution.user.classRoll) : null,

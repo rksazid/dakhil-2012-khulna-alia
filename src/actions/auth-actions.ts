@@ -63,6 +63,7 @@ export async function registerAction(formData: FormData) {
     const phone = (formData.get("phone") as string)?.trim();
     const email = (formData.get("email") as string)?.trim() || null;
     const password = (formData.get("password") as string)?.trim();
+    const userType = (formData.get("userType") as string)?.trim() || "BATCH_MEMBER";
     const bloodGroup = (formData.get("bloodGroup") as string)?.trim() || null;
     const studentGroup = (formData.get("studentGroup") as string)?.trim() || null;
     const classRoll = (formData.get("classRoll") as string)?.trim() || null;
@@ -122,6 +123,7 @@ export async function registerAction(formData: FormData) {
         workplace,
         presentAddress,
         bio,
+        userType,
         role: assignedRole,
         isActive: true,
       },
@@ -168,6 +170,7 @@ export async function updateProfileAction(formData: FormData) {
 
     const name = (formData.get("name") as string)?.trim() || user.name;
     const email = (formData.get("email") as string)?.trim() || null;
+    const userType = (formData.get("userType") as string)?.trim();
     const bloodGroup = (formData.get("bloodGroup") as string)?.trim() || null;
     const studentGroup = (formData.get("studentGroup") as string)?.trim() || null;
     const classRoll = (formData.get("classRoll") as string)?.trim() || null;
@@ -205,6 +208,7 @@ export async function updateProfileAction(formData: FormData) {
         presentAddress,
         permanentAddress,
         bio,
+        ...(userType ? { userType } : {}),
         avatarUrl,
         thumbnailUrl,
         bannerUrl,

@@ -99,9 +99,20 @@ export default async function DashboardPage() {
                   ? "সুপার অ্যাডমিন"
                   : user.role === "FUND_MANAGER"
                   ? "তহবিল ব্যবস্থাপক"
+                  : user.userType === "TEACHER"
+                  ? "সম্মানিত শিক্ষক / উস্তাদ"
+                  : user.userType === "WELL_WISHER"
+                  ? "শুভাকাঙ্ক্ষী ও সহযোগী"
                   : "সম্মানিত ব্যাচমেট"}
               </span>
-              <span className="text-xs text-emerald-300">• দাখিল ২০১২ ব্যাচ</span>
+              <span className="text-xs text-emerald-300">
+                •{" "}
+                {user.userType === "TEACHER"
+                  ? "সম্মানিত শিক্ষকবৃন্দ"
+                  : user.userType === "WELL_WISHER"
+                  ? "শুভাকাঙ্ক্ষী ও পৃষ্ঠপোষক"
+                  : "দাখিল ২০১২ ব্যাচ"}
+              </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold">{user.name}</h1>
             <p className="text-xs sm:text-sm text-emerald-100">

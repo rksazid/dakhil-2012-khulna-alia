@@ -37,6 +37,7 @@ export interface MemberDetailData {
   presentAddress?: string | null;
   permanentAddress?: string | null;
   role?: string | null;
+  userType?: string | null;
   showPhoneInDirectory?: boolean;
   showEmailInDirectory?: boolean;
 }
@@ -176,15 +177,21 @@ export function MemberDetailModal({ member, onClose }: MemberDetailModalProps) {
                     <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-200">
                       <Shield className="w-3 h-3 text-emerald-700" /> তহবিল ব্যবস্থাপক
                     </span>
+                  ) : null}
+
+                  {member.userType === "TEACHER" ? (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300">
+                      <GraduationCap className="w-3 h-3 text-amber-700" /> সম্মানিত শিক্ষক / উস্তাদ
+                    </span>
+                  ) : member.userType === "WELL_WISHER" ? (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-teal-100 text-teal-900 border border-teal-300">
+                      <Heart className="w-3 h-3 text-teal-700 fill-teal-700" /> শুভাকাঙ্ক্ষী ও সহযোগী
+                    </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
-                      সহপাঠী / ব্যাচমেট
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+                      দাখিল ২০১২ ব্যাচ
                     </span>
                   )}
-
-                  <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
-                    দাখিল ২০১২ ব্যাচ
-                  </span>
                 </div>
               </div>
             </div>
@@ -203,44 +210,84 @@ export function MemberDetailModal({ member, onClose }: MemberDetailModalProps) {
           )}
 
           {/* Academic & Madrasa Info Card */}
-          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-800 border-b border-slate-200 pb-2">
-              <School className="w-4 h-4 text-emerald-700" />
-              <span>মাদ্রাসা ও ব্যাচ তথ্য (খুলনা আলিয়া মাদ্রাসা)</span>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
-              <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-2xs">
-                <span className="text-slate-400 block text-[10px] font-medium">শিক্ষাবর্ষ / ব্যাচ:</span>
-                <span className="font-bold text-slate-900 mt-0.5 block">দাখিল ২০১২</span>
+          {member.userType === "TEACHER" ? (
+            <div className="bg-amber-50/60 border border-amber-200 rounded-2xl p-4 space-y-3">
+              <div className="flex items-center gap-2 text-xs font-bold text-amber-900 border-b border-amber-200 pb-2">
+                <GraduationCap className="w-4 h-4 text-amber-700" />
+                <span>শিক্ষক পরিচিতি (খুলনা আলিয়া মাদ্রাসা)</span>
               </div>
-
-              <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-2xs">
-                <span className="text-slate-400 block text-[10px] font-medium">বিভাগ (Group):</span>
-                <span className="font-bold text-slate-900 mt-0.5 block">
-                  {member.studentGroup === "SCIENCE"
-                    ? "বিজ্ঞান বিভাগ"
-                    : member.studentGroup === "ARTS"
-                    ? "মানবিক বিভাগ"
-                    : "সাধারণ"}
-                </span>
-              </div>
-
-              <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-2xs">
-                <span className="text-slate-400 block text-[10px] font-medium">ক্লাস রোল:</span>
-                <span className="font-bold text-emerald-800 font-mono mt-0.5 block">
-                  {member.classRoll ? `#${member.classRoll}` : "উল্লেখ নেই"}
-                </span>
-              </div>
-
-              {member.classroom && (
-                <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-2xs col-span-2 sm:col-span-1">
-                  <span className="text-slate-400 block text-[10px] font-medium">শাখা / রুম:</span>
-                  <span className="font-bold text-slate-900 mt-0.5 block">{member.classroom}</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                <div className="bg-white p-2.5 rounded-xl border border-amber-200/80 shadow-2xs">
+                  <span className="text-slate-400 block text-[10px] font-medium">ক্যাটাগরি:</span>
+                  <span className="font-bold text-amber-900 mt-0.5 block">সম্মানিত শিক্ষক / উস্তাদ</span>
                 </div>
-              )}
+                {member.classroom && (
+                  <div className="bg-white p-2.5 rounded-xl border border-amber-200/80 shadow-2xs">
+                    <span className="text-slate-400 block text-[10px] font-medium">পদবী / বিভাগ:</span>
+                    <span className="font-bold text-slate-900 mt-0.5 block">{member.classroom}</span>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          ) : member.userType === "WELL_WISHER" ? (
+            <div className="bg-teal-50/60 border border-teal-200 rounded-2xl p-4 space-y-3">
+              <div className="flex items-center gap-2 text-xs font-bold text-teal-900 border-b border-teal-200 pb-2">
+                <Heart className="w-4 h-4 text-teal-700 fill-teal-700" />
+                <span>শুভাকাঙ্ক্ষী ও পৃষ্ঠপোষক পরিচিতি</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                <div className="bg-white p-2.5 rounded-xl border border-teal-200/80 shadow-2xs">
+                  <span className="text-slate-400 block text-[10px] font-medium">ক্যাটাগরি:</span>
+                  <span className="font-bold text-teal-900 mt-0.5 block">শুভাকাঙ্ক্ষী ও সহযোগী</span>
+                </div>
+                {member.classroom && (
+                  <div className="bg-white p-2.5 rounded-xl border border-teal-200/80 shadow-2xs">
+                    <span className="text-slate-400 block text-[10px] font-medium">পরিচয় / সম্পর্ক:</span>
+                    <span className="font-bold text-slate-900 mt-0.5 block">{member.classroom}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
+              <div className="flex items-center gap-2 text-xs font-bold text-slate-800 border-b border-slate-200 pb-2">
+                <School className="w-4 h-4 text-emerald-700" />
+                <span>মাদ্রাসা ও ব্যাচ তথ্য (খুলনা আলিয়া মাদ্রাসা)</span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
+                <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-2xs">
+                  <span className="text-slate-400 block text-[10px] font-medium">শিক্ষাবর্ষ / ব্যাচ:</span>
+                  <span className="font-bold text-slate-900 mt-0.5 block">দাখিল ২০১২</span>
+                </div>
+
+                <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-2xs">
+                  <span className="text-slate-400 block text-[10px] font-medium">বিভাগ (Group):</span>
+                  <span className="font-bold text-slate-900 mt-0.5 block">
+                    {member.studentGroup === "SCIENCE"
+                      ? "বিজ্ঞান বিভাগ"
+                      : member.studentGroup === "ARTS"
+                      ? "মানবিক বিভাগ"
+                      : "সাধারণ"}
+                  </span>
+                </div>
+
+                <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-2xs">
+                  <span className="text-slate-400 block text-[10px] font-medium">ক্লাস রোল:</span>
+                  <span className="font-bold text-emerald-800 font-mono mt-0.5 block">
+                    {member.classRoll ? `#${member.classRoll}` : "উল্লেখ নেই"}
+                  </span>
+                </div>
+
+                {member.classroom && (
+                  <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-2xs col-span-2 sm:col-span-1">
+                    <span className="text-slate-400 block text-[10px] font-medium">শাখা / রুম:</span>
+                    <span className="font-bold text-slate-900 mt-0.5 block">{member.classroom}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Profession & Workplace */}
           {(member.occupation || member.workplace) && (

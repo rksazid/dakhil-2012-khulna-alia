@@ -20,6 +20,7 @@ export default async function AdminMembersPage() {
       avatarUrl: true,
       thumbnailUrl: true,
       role: true,
+      userType: true,
       isActive: true,
       bloodGroup: true,
       studentGroup: true,

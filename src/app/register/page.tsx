@@ -8,6 +8,7 @@ import { UserPlus, Lock, Phone, User, Mail, Briefcase, MapPin, Droplet, Graduati
 
 export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
+  const [userType, setUserType] = useState<string>("BATCH_MEMBER");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -52,10 +53,10 @@ export default function RegisterPage() {
           </div>
         </Link>
         <h2 className="text-2xl font-bold tracking-tight text-slate-900">
-          দাখিল ২০১২ ব্যাচমেট নিবন্ধন
+          সদস্য ও শুভাকাঙ্ক্ষী নিবন্ধন
         </h2>
         <p className="text-xs text-slate-500">
-          খুলনা আলিয়া মাদ্রাসা — বন্ধুত্ব ও পারস্পরিক কল্যাণে ঐক্যের মঞ্চ
+          দাখিল ২০১২ ব্যাচ ও কল্যাণ ফান্ড — খুলনা আলিয়া মাদ্রাসা
         </p>
       </div>
 
@@ -68,6 +69,40 @@ export default function RegisterPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* User Type Selection */}
+            <div className="bg-gradient-to-r from-emerald-50/70 to-teal-50/50 p-3.5 rounded-2xl border border-emerald-200/80 space-y-2">
+              <label className="block text-xs font-bold text-emerald-950">
+                আপনার পরিচয় / ক্যাটাগরি *
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {[
+                  { key: "BATCH_MEMBER", label: "দাখিল ২০১২ ব্যাচমেট", sub: "সহপাঠী বন্ধু" },
+                  { key: "TEACHER", label: "সম্মানিত শিক্ষক", sub: "উস্তাদ / শিক্ষকবৃন্দ" },
+                  { key: "WELL_WISHER", label: "শুভাকাঙ্ক্ষী ও দাতা", sub: "পৃষ্ঠপোষক / সহযোগী" },
+                ].map((item) => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => setUserType(item.key)}
+                    className={`py-2 px-3 rounded-xl border text-left transition ${
+                      userType === item.key
+                        ? "bg-emerald-800 text-white border-emerald-800 shadow-2xs"
+                        : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
+                    }`}
+                  >
+                    <span className="block text-xs font-bold">{item.label}</span>
+                    <span
+                      className={`block text-[10px] ${
+                        userType === item.key ? "text-emerald-200" : "text-slate-400"
+                      }`}
+                    >
+                      {item.sub}
+                    </span>
+                  </button>
+                ))}
+              </div>
+              <input type="hidden" name="userType" value={userType} />
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
@@ -174,60 +209,100 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            {/* মাদ্রাসার শিক্ষাবর্ষ তথ্য (ঐচ্ছিক) */}
-            <div className="p-3 bg-emerald-50/50 rounded-xl border border-emerald-100">
-              <p className="text-xs font-semibold text-emerald-800 mb-2">
-                মাদ্রাসার তথ্য — দাখিল ২০১২ (ঐচ্ছিক)
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">
-                    বিভাগ / গ্রুপ
-                  </label>
-                  <div className="relative">
-                    <GraduationCap className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                    <select
-                      name="studentGroup"
-                      className="w-full pl-9 pr-2 py-2 text-xs border border-slate-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-500 bg-white"
-                    >
-                      <option value="">নির্বাচন করুন</option>
-                      <option value="SCIENCE">বিজ্ঞান (Science)</option>
-                      <option value="ARTS">মানবিক (Arts)</option>
-                    </select>
+            {/* Identity-specific Info */}
+            {userType === "BATCH_MEMBER" && (
+              <div className="p-3.5 bg-emerald-50/60 rounded-2xl border border-emerald-100 space-y-2">
+                <p className="text-xs font-bold text-emerald-800">
+                  মাদ্রাসার তথ্য — দাখিল ২০১২ (ঐচ্ছিক)
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                      বিভাগ / গ্রুপ
+                    </label>
+                    <div className="relative">
+                      <GraduationCap className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <select
+                        name="studentGroup"
+                        className="w-full pl-9 pr-2 py-2 text-xs border border-slate-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-500 bg-white"
+                      >
+                        <option value="">নির্বাচন করুন</option>
+                        <option value="SCIENCE">বিজ্ঞান (Science)</option>
+                        <option value="ARTS">মানবিক (Arts)</option>
+                      </select>
+                    </div>
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">
-                    ক্লাস রোল
-                  </label>
-                  <div className="relative">
-                    <Hash className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                    <input
-                      name="classRoll"
-                      type="text"
-                      placeholder="উদা: ১৫ বা 15"
-                      className="w-full pl-9 pr-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
-                    />
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                      ক্লাস রোল
+                    </label>
+                    <div className="relative">
+                      <Hash className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        name="classRoll"
+                        type="text"
+                        placeholder="উদা: ১৫ বা 15"
+                        className="w-full pl-9 pr-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                      />
+                    </div>
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">
-                    শাখা / রুম
-                  </label>
-                  <div className="relative">
-                    <School className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                    <input
-                      name="classroom"
-                      type="text"
-                      placeholder="উদা: ক শাখা"
-                      className="w-full pl-9 pr-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
-                    />
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">
+                      শাখা / রুম
+                    </label>
+                    <div className="relative">
+                      <School className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        name="classroom"
+                        type="text"
+                        placeholder="উদা: ক শাখা"
+                        className="w-full pl-9 pr-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            )}
+
+            {userType === "TEACHER" && (
+              <div className="p-3.5 bg-amber-50/70 rounded-2xl border border-amber-200/80 space-y-2">
+                <p className="text-xs font-bold text-amber-900">
+                  শিক্ষক পদবী ও মাদ্রাসার পরিচিতি
+                </p>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    পদবী / বিভাগ (ঐচ্ছিক)
+                  </label>
+                  <input
+                    name="classroom"
+                    type="text"
+                    placeholder="উদা: সিনিয়র শিক্ষক / সহকারী মৌলভী / আরবি প্রভাষক, খুলনা আলিয়া মাদ্রাসা"
+                    className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-500 bg-white"
+                  />
+                </div>
+              </div>
+            )}
+
+            {userType === "WELL_WISHER" && (
+              <div className="p-3.5 bg-teal-50/70 rounded-2xl border border-teal-200/80 space-y-2">
+                <p className="text-xs font-bold text-teal-900">
+                  পরিচিতি ও সম্পর্ক
+                </p>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    পরিচয় / সম্পর্ক (ঐচ্ছিক)
+                  </label>
+                  <input
+                    name="classroom"
+                    type="text"
+                    placeholder="উদা: শুভানুধ্যায়ী / অভিভাবক / কল্যাণকামী শুভাকাঙ্ক্ষী"
+                    className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-500 bg-white"
+                  />
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>

@@ -275,9 +275,19 @@ export default async function ReceiptVerificationPage({ params }: Props) {
                 </span>
               </div>
               <div>
-                <span className="text-[11px] text-slate-500 block">ব্যাচ ও প্রতিষ্ঠান:</span>
+                <span className="text-[11px] text-slate-500 block">
+                  {contribution.user.userType === "TEACHER"
+                    ? "পদবী ও প্রতিষ্ঠান:"
+                    : contribution.user.userType === "WELL_WISHER"
+                    ? "পরিচয় ও সম্পর্ক:"
+                    : "ব্যাচ ও প্রতিষ্ঠান:"}
+                </span>
                 <span className="text-sm font-semibold text-slate-800">
-                  দাখিল ২০১২, খুলনা আলিয়া মাদ্রাসা
+                  {contribution.user.userType === "TEACHER"
+                    ? "সম্মানিত শিক্ষক, খুলনা আলিয়া মাদ্রাসা"
+                    : contribution.user.userType === "WELL_WISHER"
+                    ? "শুভাকাঙ্ক্ষী ও সহযোগী"
+                    : "দাখিল ২০১২, খুলনা আলিয়া মাদ্রাসা"}
                 </span>
               </div>
               {contribution.user.classRoll && (

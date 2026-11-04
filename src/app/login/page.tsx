@@ -28,15 +28,6 @@ export default function LoginPage() {
     });
   };
 
-  const handleDemoFill = (identifier: string) => {
-    const idInput = document.getElementById("identifier") as HTMLInputElement;
-    const passInput = document.getElementById("password") as HTMLInputElement;
-    if (idInput && passInput) {
-      idInput.value = identifier;
-      passInput.value = "Password123!";
-    }
-  };
-
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center space-y-2">
@@ -115,39 +106,6 @@ export default function LoginPage() {
               {isPending ? "লগইন হচ্ছে..." : "লগইন করুন"}
             </button>
           </form>
-
-          {/* Quick Demo Credentials */}
-          <div className="pt-4 border-t border-slate-100 space-y-2">
-            <span className="text-[11px] font-semibold text-slate-400 block uppercase tracking-wider">
-              ডেমো টেস্ট অ্যাকাউন্টসমূহ:
-            </span>
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => handleDemoFill("01711000001")}
-                className="text-[11px] bg-emerald-50 hover:bg-emerald-100 text-emerald-800 py-1.5 px-2 rounded-lg font-medium border border-emerald-200"
-              >
-                সুপার অ্যাডমিন
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDemoFill("01711000002")}
-                className="text-[11px] bg-emerald-50 hover:bg-emerald-100 text-emerald-800 py-1.5 px-2 rounded-lg font-medium border border-emerald-200"
-              >
-                ফান্ড ম্যানেজার
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDemoFill("01711000004")}
-                className="text-[11px] bg-emerald-50 hover:bg-emerald-100 text-emerald-800 py-1.5 px-2 rounded-lg font-medium border border-emerald-200"
-              >
-                সাধারণ সদস্য
-              </button>
-            </div>
-            <p className="text-[10px] text-slate-400 text-center">
-              পাসওয়ার্ড: <span className="font-mono">Password123!</span>
-            </p>
-          </div>
 
           <div className="pt-2 text-center text-xs text-slate-500">
             অ্যাকাউন্ট নেই?{" "}

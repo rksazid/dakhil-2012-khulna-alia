@@ -40,6 +40,7 @@ export interface MemberData {
   avatarUrl: string | null;
   thumbnailUrl?: string | null;
   role: Role;
+  userType?: string;
   isActive: boolean;
   bloodGroup: string | null;
   studentGroup?: string | null;
@@ -71,6 +72,7 @@ export function MembersManagerClient({
 }) {
   const [search, setSearch] = useState("");
   const [filterRole, setFilterRole] = useState<string>("ALL");
+  const [filterUserType, setFilterUserType] = useState<string>("ALL");
   const [filterSection, setFilterSection] = useState<string>("ALL");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<MemberData | null>(null);
@@ -94,9 +96,11 @@ export function MembersManagerClient({
       (m.classroom && m.classroom.toLowerCase().includes(query));
 
     const matchesRole = filterRole === "ALL" || m.role === filterRole;
+    const matchesUserType =
+      filterUserType === "ALL" || (m.userType || "BATCH_MEMBER") === filterUserType;
     const matchesSection = filterSection === "ALL" || m.studentGroup === filterSection;
 
-    return matchesSearch && matchesRole && matchesSection;
+    return matchesSearch && matchesRole && matchesUserType && matchesSection;
   });
 
   const handleRoleChange = (userId: string, newRole: Role) => {
@@ -213,6 +217,17 @@ export function MembersManagerClient({
 
         <div className="flex items-center gap-2">
           <select
+            value={filterUserType}
+            onChange={(e) => setFilterUserType(e.target.value)}
+            className="px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg"
+          >
+            <option value="ALL">সকল ক্যাটাগরি (পরিচয়)</option>
+            <option value="BATCH_MEMBER">দাখিল ২০১২ ব্যাচমেট</option>
+            <option value="TEACHER">সম্মানিত শিক্ষকবৃন্দ</option>
+            <option value="WELL_WISHER">শুভাকাঙ্ক্ষী ও সহযোগী</option>
+          </select>
+
+          <select
             value={filterSection}
             onChange={(e) => setFilterSection(e.target.value)}
             className="px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg"
@@ -268,6 +283,15 @@ export function MembersManagerClient({
                       <div>
                         <p className="font-bold text-slate-900">{m.name}</p>
                         <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                          {m.userType === "TEACHER" ? (
+                            <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
+                              সম্মানিত শিক্ষক
+                            </span>
+                          ) : m.userType === "WELL_WISHER" ? (
+                            <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-teal-100 text-teal-900 border border-teal-300">
+                              শুভাকাঙ্ক্ষী
+                            </span>
+                          ) : null}
                           {m.bloodGroup && (
                             <span className="text-[10px] text-red-600 font-bold inline-flex items-center gap-0.5">
                               <Droplet className="w-2.5 h-2.5 fill-red-600" /> {m.bloodGroup}
@@ -421,7 +445,22 @@ export function MembersManagerClient({
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    ক্যাটাগরি / পরিচয় *
+                  </label>
+                  <select
+                    name="userType"
+                    defaultValue="BATCH_MEMBER"
+                    className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl bg-white"
+                  >
+                    <option value="BATCH_MEMBER">দাখিল ২০১২ ব্যাচমেট</option>
+                    <option value="TEACHER">সম্মানিত শিক্ষক / উস্তাদ</option>
+                    <option value="WELL_WISHER">শুভাকাঙ্ক্ষী ও সহযোগী</option>
+                  </select>
+                </div>
+
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
                     ইমেইল ঠিকানা (ঐচ্ছিক)
@@ -711,7 +750,22 @@ export function MembersManagerClient({
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    ক্যাটাগরি / পরিচয় *
+                  </label>
+                  <select
+                    name="userType"
+                    defaultValue={editingMember.userType || "BATCH_MEMBER"}
+                    className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl bg-white"
+                  >
+                    <option value="BATCH_MEMBER">দাখিল ২০১২ ব্যাচমেট</option>
+                    <option value="TEACHER">সম্মানিত শিক্ষক / উস্তাদ</option>
+                    <option value="WELL_WISHER">শুভাকাঙ্ক্ষী ও সহযোগী</option>
+                  </select>
+                </div>
+
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
                     ইমেইল ঠিকানা

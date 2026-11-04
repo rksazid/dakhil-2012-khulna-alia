@@ -64,6 +64,7 @@ export async function getCurrentUser() {
       phone: true,
       email: true,
       role: true,
+      userType: true,
       avatarUrl: true,
       thumbnailUrl: true,
       bannerUrl: true,

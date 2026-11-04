@@ -40,6 +40,7 @@ export default async function MembersPage() {
       presentAddress: true,
       permanentAddress: true,
       role: true,
+      userType: true,
       showPhoneInDirectory: true,
       showEmailInDirectory: true,
     },

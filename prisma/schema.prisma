@@ -60,6 +60,7 @@ model User {
   permanentAddress     String?
   showPhoneInDirectory Boolean                @default(true)
   showEmailInDirectory Boolean                @default(true)
+  userType             String                 @default("BATCH_MEMBER") // "BATCH_MEMBER", "TEACHER", "WELL_WISHER"
   role                 Role                   @default(MEMBER)
   isActive             Boolean                @default(true)
   createdAt            DateTime               @default(now())
@@ -77,6 +78,7 @@ model User {
   notifications        Notification[]         @relation("UserNotifications")
 
   @@index([role, isActive])
+  @@index([userType])
   @@index([phone])
   @@index([email])
   @@index([studentGroup])
