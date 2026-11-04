@@ -240,79 +240,86 @@ export default async function HomePage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {activeFunds.map((fund) => {
-              const target = Number(fund.targetAmount || 0);
-              const balance = Number(fund.currentBalance);
-              const percent = target > 0 ? Math.min(Math.round((balance / target) * 100), 100) : 100;
+          {activeFunds.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-dashed border-slate-300 p-8 text-center space-y-2">
+              <p className="text-sm font-semibold text-slate-700">আপাতত কোনো সক্রিয় তহবিল তৈরি করা হয়নি।</p>
+              <p className="text-xs text-slate-400">অ্যাডমিন প্যানেলে লগইন করে নতুন কল্যাণ তহবিল বা প্রকল্প যুক্ত করুন।</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {activeFunds.map((fund) => {
+                const target = Number(fund.targetAmount || 0);
+                const balance = Number(fund.currentBalance);
+                const percent = target > 0 ? Math.min(Math.round((balance / target) * 100), 100) : 100;
 
-              return (
-                <div
-                  key={fund.id}
-                  className="bg-white rounded-2xl border border-slate-200 shadow-xs hover:shadow-md transition flex flex-col overflow-hidden group"
-                >
-                  <div className="h-2 bg-emerald-600 group-hover:bg-amber-500 transition-colors" />
-                  <div className="p-6 flex-1 flex flex-col justify-between space-y-5">
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-semibold bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-200">
-                          {toBengaliNumber(fund._count.commitments)} জন প্রতিশ্রুতিবদ্ধ
-                        </span>
-                        <span className="text-xs font-mono text-slate-400">
-                          #{fund.slug}
-                        </span>
-                      </div>
-                      <h3 className="text-lg font-bold text-slate-900 group-hover:text-emerald-800 transition">
-                        {fund.title}
-                      </h3>
-                      <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed">
-                        {fund.description || "তহবিলের নির্দিষ্ট উদ্দেশ্য ও বিস্তারিত নিয়মাবলী দেখতে ক্লিক করুন।"}
-                      </p>
-                    </div>
-
-                    <div className="space-y-3 pt-3 border-t border-slate-100">
-                      <div>
-                        <div className="flex justify-between text-xs mb-1">
-                          <span className="text-slate-500">বর্তমান স্থিতি:</span>
-                          <span className="font-bold text-emerald-800">
-                            {formatCurrency(balance)}
+                return (
+                  <div
+                    key={fund.id}
+                    className="bg-white rounded-2xl border border-slate-200 shadow-xs hover:shadow-md transition flex flex-col overflow-hidden group"
+                  >
+                    <div className="h-2 bg-emerald-600 group-hover:bg-amber-500 transition-colors" />
+                    <div className="p-6 flex-1 flex flex-col justify-between space-y-5">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-semibold bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-200">
+                            {toBengaliNumber(fund._count.commitments)} জন প্রতিশ্রুতিবদ্ধ
+                          </span>
+                          <span className="text-xs font-mono text-slate-400">
+                            #{fund.slug}
                           </span>
                         </div>
-                        {target > 0 && (
-                          <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                            <div
-                              className="bg-emerald-600 h-2 rounded-full transition-all duration-500"
-                              style={{ width: `${percent}%` }}
-                            />
-                          </div>
-                        )}
-                        {target > 0 && (
-                          <div className="flex justify-between text-[11px] text-slate-400 mt-1">
-                            <span>টার্গেট: {formatCurrency(target)}</span>
-                            <span>{toBengaliNumber(percent)}% সংগৃহীত</span>
-                          </div>
-                        )}
+                        <h3 className="text-lg font-bold text-slate-900 group-hover:text-emerald-800 transition">
+                          {fund.title}
+                        </h3>
+                        <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed">
+                          {fund.description || "তহবিলের নির্দিষ্ট উদ্দেশ্য ও বিস্তারিত নিয়মাবলী দেখতে ক্লিক করুন।"}
+                        </p>
                       </div>
 
-                      {fund.contactPerson && (
-                        <div className="flex items-center gap-2 text-xs text-slate-500 pt-1">
-                          <PhoneCall className="w-3.5 h-3.5 text-emerald-600" />
-                          <span>যোগাযোগ: {fund.contactPerson}</span>
+                      <div className="space-y-3 pt-3 border-t border-slate-100">
+                        <div>
+                          <div className="flex justify-between text-xs mb-1">
+                            <span className="text-slate-500">বর্তমান স্থিতি:</span>
+                            <span className="font-bold text-emerald-800">
+                              {formatCurrency(balance)}
+                            </span>
+                          </div>
+                          {target > 0 && (
+                            <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                              <div
+                                className="bg-emerald-600 h-2 rounded-full transition-all duration-500"
+                                style={{ width: `${percent}%` }}
+                              />
+                            </div>
+                          )}
+                          {target > 0 && (
+                            <div className="flex justify-between text-[11px] text-slate-400 mt-1">
+                              <span>টার্গেট: {formatCurrency(target)}</span>
+                              <span>{toBengaliNumber(percent)}% সংগৃহীত</span>
+                            </div>
+                          )}
                         </div>
-                      )}
 
-                      <Link
-                        href={`/funds/${fund.slug}`}
-                        className="w-full inline-flex items-center justify-center gap-1.5 py-2 text-xs font-semibold bg-slate-900 hover:bg-emerald-800 text-white rounded-xl transition"
-                      >
-                        শর্ত, নিয়মাবলী ও অনুদান দিন <ArrowRight className="w-3.5 h-3.5" />
-                      </Link>
+                        {fund.contactPerson && (
+                          <div className="flex items-center gap-2 text-xs text-slate-500 pt-1">
+                            <PhoneCall className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>যোগাযোগ: {fund.contactPerson}</span>
+                          </div>
+                        )}
+
+                        <Link
+                          href={`/funds/${fund.slug}`}
+                          className="w-full inline-flex items-center justify-center gap-1.5 py-2 text-xs font-semibold bg-slate-900 hover:bg-emerald-800 text-white rounded-xl transition"
+                        >
+                          শর্ত, নিয়মাবলী ও অনুদান দিন <ArrowRight className="w-3.5 h-3.5" />
+                        </Link>
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </section>
 
         {/* Notices & Announcements Section */}
@@ -334,57 +341,64 @@ export default async function HomePage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {latestNotices.map((notice) => (
-              <div
-                key={notice.id}
-                className="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col justify-between space-y-4 hover:border-emerald-300 transition"
-              >
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span
-                      className={`text-[11px] font-semibold px-2 py-0.5 rounded-md ${
-                        notice.category === "URGENT"
-                          ? "bg-red-100 text-red-800"
+          {latestNotices.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-dashed border-slate-300 p-8 text-center space-y-2">
+              <p className="text-sm font-semibold text-slate-700">বর্তমানে কোনো প্রকাশিত নোটিশ নেই।</p>
+              <p className="text-xs text-slate-400">নতুন কোনো জরুরি বার্তা বা সভা আহ্বান থাকলে এখানে প্রদর্শিত হবে।</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {latestNotices.map((notice) => (
+                <div
+                  key={notice.id}
+                  className="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col justify-between space-y-4 hover:border-emerald-300 transition"
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span
+                        className={`text-[11px] font-semibold px-2 py-0.5 rounded-md ${
+                          notice.category === "URGENT"
+                            ? "bg-red-100 text-red-800"
+                            : notice.category === "MEETING"
+                            ? "bg-amber-100 text-amber-800"
+                            : "bg-emerald-100 text-emerald-800"
+                        }`}
+                      >
+                        {notice.category === "URGENT"
+                          ? "জরুরি নোটিশ"
                           : notice.category === "MEETING"
-                          ? "bg-amber-100 text-amber-800"
-                          : "bg-emerald-100 text-emerald-800"
-                      }`}
+                          ? "সভা আহ্বান"
+                          : "সাধারণ বার্তা"}
+                      </span>
+                      <span className="text-[11px] text-slate-400">
+                        {formatBengaliDate(notice.createdAt)}
+                      </span>
+                    </div>
+
+                    <h3 className="text-base font-bold text-slate-900 hover:text-emerald-800 transition line-clamp-2">
+                      {notice.title}
+                    </h3>
+
+                    <div className="line-clamp-3 text-xs text-slate-600">
+                      <MarkdownContent content={notice.content} />
+                    </div>
+                  </div>
+
+                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <span className="text-slate-500">
+                      প্রকাশক: {notice.author?.name || "কমিটি"}
+                    </span>
+                    <Link
+                      href={`/notices`}
+                      className="font-semibold text-emerald-700 hover:text-emerald-800"
                     >
-                      {notice.category === "URGENT"
-                        ? "জরুরি নোটিশ"
-                        : notice.category === "MEETING"
-                        ? "সভা আহ্বান"
-                        : "সাধারণ বার্তা"}
-                    </span>
-                    <span className="text-[11px] text-slate-400">
-                      {formatBengaliDate(notice.createdAt)}
-                    </span>
-                  </div>
-
-                  <h3 className="text-base font-bold text-slate-900 hover:text-emerald-800 transition line-clamp-2">
-                    {notice.title}
-                  </h3>
-
-                  <div className="line-clamp-3 text-xs text-slate-600">
-                    <MarkdownContent content={notice.content} />
+                      বিস্তারিত পড়ুন →
+                    </Link>
                   </div>
                 </div>
-
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                  <span className="text-slate-500">
-                    প্রকাশক: {notice.author?.name || "কমিটি"}
-                  </span>
-                  <Link
-                    href={`/notices`}
-                    className="font-semibold text-emerald-700 hover:text-emerald-800"
-                  >
-                    বিস্তারিত পড়ুন →
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </section>
 
         {/* How Transparency Works: 3 Steps */}

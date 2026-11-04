@@ -183,8 +183,21 @@ export function FundsManagerClient({
       </div>
 
       {/* Funds Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {funds.map((fund) => {
+      {funds.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-dashed border-slate-300 p-12 text-center space-y-3">
+          <p className="text-sm font-semibold text-slate-700">বর্তমানে কোনো তহবিল তৈরি করা হয়নি।</p>
+          {isSuperAdmin && (
+            <button
+              onClick={() => setIsCreateOpen(true)}
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-xs transition"
+            >
+              <Plus className="w-4 h-4" /> নতুন তহবিল তৈরি করুন
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {funds.map((fund) => {
           const isUserAssigned =
             isSuperAdmin || fund.managers.some((m) => m.userId === currentUserId);
 
@@ -313,6 +326,7 @@ export function FundsManagerClient({
           );
         })}
       </div>
+      )}
 
       {/* Modal: Create Fund */}
       {isCreateOpen && (

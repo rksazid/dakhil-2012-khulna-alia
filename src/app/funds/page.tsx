@@ -39,8 +39,14 @@ export default async function FundsPage() {
       </div>
 
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {funds.map((fund) => {
+        {funds.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-dashed border-slate-300 p-12 text-center space-y-2">
+            <p className="text-base font-bold text-slate-700">বর্তমানে কোনো সক্রিয় তহবিল তৈরি করা হয়নি।</p>
+            <p className="text-xs text-slate-400">অ্যাডমিন প্যানেল থেকে নতুন কল্যাণ তহবিল বা প্রকল্প যুক্ত করা হলে তা এখানে প্রদর্শিত হবে।</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {funds.map((fund) => {
             const target = Number(fund.targetAmount || 0);
             const balance = Number(fund.currentBalance);
             const percent = target > 0 ? Math.min(Math.round((balance / target) * 100), 100) : 100;
@@ -115,6 +121,7 @@ export default async function FundsPage() {
             );
           })}
         </div>
+        )}
       </main>
 
       <Footer />

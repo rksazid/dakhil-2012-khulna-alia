@@ -230,7 +230,14 @@ export function PaymentsManagerClient({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filtered.map((c) => (
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center text-slate-400">
+                    কোনো চাঁদা বা পেমেন্ট রেকর্ড পাওয়া যায়নি।
+                  </td>
+                </tr>
+              ) : (
+                filtered.map((c) => (
                 <tr key={c.id} className="hover:bg-slate-50">
                   <td className="py-3 px-4">
                     <p className="font-bold text-slate-900">{c.user.name}</p>
@@ -304,7 +311,8 @@ export function PaymentsManagerClient({
                     </div>
                   </td>
                 </tr>
-              ))}
+              ))
+              )}
             </tbody>
           </table>
         </div>

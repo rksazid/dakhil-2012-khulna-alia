@@ -29,7 +29,11 @@ export default function RegisterPage() {
       if (!res.success) {
         setError(res.error || "নিবন্ধন ব্যর্থ হয়েছে।");
       } else {
-        window.location.href = "/dashboard";
+        if (res.role === "SUPER_ADMIN") {
+          window.location.href = "/admin";
+        } else {
+          window.location.href = "/dashboard";
+        }
       }
     });
   };

@@ -101,6 +101,10 @@ export async function registerAction(formData: FormData) {
 
     const passwordHash = await hashPassword(password);
 
+    // If this is the very first user in the database, automatically make them SUPER_ADMIN
+    const userCount = await prisma.user.count();
+    const assignedRole = userCount === 0 ? Role.SUPER_ADMIN : Role.MEMBER;
+
     const newUser = await prisma.user.create({
       data: {
         name,
@@ -116,10 +120,24 @@ export async function registerAction(formData: FormData) {
         workplace,
         presentAddress,
         bio,
-        role: Role.MEMBER,
+        role: assignedRole,
         isActive: true,
       },
     });
+
+    if (assignedRole === Role.SUPER_ADMIN) {
+      await prisma.activityLog.create({
+        data: {
+          action: "CREATE_USER",
+          entityType: "USER",
+          entityId: newUser.id,
+          performedByUserId: newUser.id,
+          details: JSON.stringify({
+            summary: `প্রাথমিক সুপার অ্যাডমিন হিসেবে নিবন্ধিত হয়েছেন: ${newUser.name} (${newUser.phone})`,
+          }),
+        },
+      });
+    }
 
     await setSessionCookie({
       userId: newUser.id,
@@ -130,7 +148,7 @@ export async function registerAction(formData: FormData) {
       avatarUrl: newUser.avatarUrl,
     });
 
-    return { success: true };
+    return { success: true, role: assignedRole };
   } catch (err: unknown) {
     console.error("Register error:", err);
     return { success: false, error: "নিবন্ধন করার সময় ত্রুটি ঘটেছে।" };

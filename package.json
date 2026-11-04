@@ -4,10 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
+    "postinstall": "prisma generate",
     "start": "next start",
     "lint": "eslint",
-    "seed": "ts-node -O '{\"module\":\"CommonJS\"}' prisma/seed.ts"
+    "seed": "ts-node -O '{\"module\":\"CommonJS\"}' prisma/seed.ts",
+    "db:clear": "ts-node -O '{\"module\":\"CommonJS\"}' prisma/clear-db.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",

@@ -149,8 +149,19 @@ export function NoticesManagerClient({ notices }: { notices: NoticeData[] }) {
       </div>
 
       {/* Notices List */}
-      <div className="grid grid-cols-1 gap-4">
-        {notices.map((n) => (
+      {notices.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-dashed border-slate-300 p-12 text-center space-y-3">
+          <p className="text-sm font-semibold text-slate-700">বর্তমানে কোনো নোটিশ প্রকাশিত হয়নি।</p>
+          <button
+            onClick={handleOpenCreate}
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-xs transition"
+          >
+            <Plus className="w-4 h-4" /> নতুন নোটিশ প্রকাশ করুন
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-4">
+          {notices.map((n) => (
           <div
             key={n.id}
             className={`bg-white rounded-2xl p-5 border shadow-xs flex flex-col sm:flex-row sm:items-start justify-between gap-4 ${
@@ -209,6 +220,7 @@ export function NoticesManagerClient({ notices }: { notices: NoticeData[] }) {
           </div>
         ))}
       </div>
+      )}
 
       {/* Modal: Create Notice */}
       {isOpen && (
