@@ -10,7 +10,7 @@ import { formatCurrency } from "@/lib/utils";
 
 export interface RecordContributionInput {
   fundId: string;
-  userId: string;
+  userId?: string;
   monthYear: string;
   amountPaid: number;
   paymentMethod: PaymentMethod;
@@ -24,9 +24,10 @@ export interface RecordContributionInput {
 export async function recordMonthlyContributionAction(data: RecordContributionInput) {
   try {
     const user = await requireAuth();
+    const targetUserId = data.userId || user.id;
 
     // Check permissions
-    const isSelf = user.id === data.userId;
+    const isSelf = user.id === targetUserId;
     const isManager = await canManageFund(user.id, data.fundId);
 
     if (!isSelf && !isManager) {
@@ -46,7 +47,7 @@ export async function recordMonthlyContributionAction(data: RecordContributionIn
     const existing = await prisma.monthlyContribution.findFirst({
       where: {
         fundId: data.fundId,
-        userId: data.userId,
+        userId: targetUserId,
         monthYear: data.monthYear,
       },
       include: {
@@ -99,7 +100,7 @@ export async function recordMonthlyContributionAction(data: RecordContributionIn
         contribution = await tx.monthlyContribution.create({
           data: {
             fundId: data.fundId,
-            userId: data.userId,
+            userId: targetUserId,
             monthYear: data.monthYear,
             amountPaid: amountDecimal,
             paymentMethod: data.paymentMethod,

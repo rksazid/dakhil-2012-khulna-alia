@@ -6,6 +6,8 @@ import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { formatCurrency, toBengaliNumber, formatBengaliDate } from "@/lib/utils";
 import { MarkdownContent } from "@/components/ui/markdown-content";
+import { getDefaultRollingMonths } from "@/lib/months";
+import { FundCommitmentCard } from "@/components/funds/fund-commitment-card";
 import {
   HeartHandshake,
   ShieldCheck,
@@ -79,6 +81,18 @@ export default async function FundDetailPage({ params }: FundDetailPageProps) {
       },
     });
   }
+
+  const serializedUserCommitment = userCommitment
+    ? {
+        id: userCommitment.id,
+        fundId: userCommitment.fundId,
+        committedAmount: Number(userCommitment.committedAmount),
+        startMonth: userCommitment.startMonth,
+        status: userCommitment.status,
+      }
+    : null;
+
+  const monthOptions = getDefaultRollingMonths(18);
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
@@ -212,17 +226,28 @@ export default async function FundDetailPage({ params }: FundDetailPageProps) {
           </div>
         </div>
 
-        {/* Right Column: Payment Instructions & Management Contacts */}
+        {/* Right Column: Commitment Card & Payment Instructions & Contacts */}
         <div className="space-y-6">
-          {/* Contribution CTA / Member Commitment */}
-          <div className="bg-emerald-900 text-white rounded-2xl p-6 border border-emerald-800 shadow-md space-y-4">
+          {/* Commitment Management Card (Direct Add, Edit, View right on this fund page) */}
+          <FundCommitmentCard
+            fundId={fund.id}
+            fundTitle={fund.title}
+            fundSlug={fund.slug}
+            isLoggedIn={!!session}
+            initialCommitment={serializedUserCommitment}
+            monthOptions={monthOptions}
+            bankDetails={fund.bankDetails}
+          />
+
+          {/* Payment Accounts Card */}
+          <div className="bg-emerald-900 text-white rounded-3xl p-6 border border-emerald-800 shadow-md space-y-4">
             <div className="flex items-center gap-2">
               <CreditCard className="w-5 h-5 text-amber-400" />
-              <h3 className="text-base font-bold text-white">চাঁদা বা অনুদান প্রদানের নিয়ম</h3>
+              <h3 className="text-base font-bold text-white">চাঁদা বা অনুদান পাঠানোর হিসাব</h3>
             </div>
 
             <p className="text-xs text-emerald-100 leading-relaxed">
-              নিচের নির্ধারিত একাউন্ট নম্বরে আপনার মাসিক কিস্তি বা স্বেচ্ছামূলক অনুদান প্রেরণ করুন।
+              নিচের নির্ধারিত একাউন্ট নম্বরে আপনার মাসিক কিস্তি বা স্বেচ্ছামূলক অনুদান প্রেরণ করুন। টাকা পাঠানোর পর উপরের বাটন থেকে সরাসরি এন্ট্রি দিতে পারবেন।
             </p>
 
             <div className="bg-emerald-950/80 p-4 rounded-xl border border-emerald-800/80 space-y-2 text-xs font-mono">
@@ -237,28 +262,13 @@ export default async function FundDetailPage({ params }: FundDetailPageProps) {
               </div>
             </div>
 
-            <div className="pt-2">
-              {session ? (
-                <Link
-                  href="/dashboard"
-                  className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition shadow-md"
-                >
-                  <UserCheck className="w-4 h-4" />
-                  ড্যাশবোর্ডে চাঁদা এন্ট্রি দিন
-                </Link>
-              ) : (
-                <div className="space-y-2">
-                  <Link
-                    href="/login"
-                    className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 bg-white text-slate-900 hover:bg-slate-100 font-bold text-xs rounded-xl transition"
-                  >
-                    লগইন করে চাঁদা রেকর্ড করুন
-                  </Link>
-                  <p className="text-[11px] text-center text-emerald-300">
-                    লগইন ছাড়া ট্রানজেকশন এন্ট্রি সংরক্ষিত হবে না।
-                  </p>
-                </div>
-              )}
+            <div className="pt-1 text-center">
+              <Link
+                href="/dashboard"
+                className="text-xs font-medium text-emerald-300 hover:text-white underline underline-offset-4"
+              >
+                সদস্য ড্যাশবোর্ডে পূর্ণাঙ্গ লেজার হিস্ট্রি দেখুন →
+              </Link>
             </div>
           </div>
 

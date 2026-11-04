@@ -272,9 +272,40 @@ export async function createOrUpdateCommitmentAction(
 
     revalidatePath("/dashboard");
     revalidatePath(`/funds`);
-    return { success: true, commitment };
+    revalidatePath("/funds", "layout");
+    return {
+      success: true,
+      commitment: {
+        id: commitment.id,
+        fundId: commitment.fundId,
+        committedAmount: Number(commitment.committedAmount),
+        startMonth: commitment.startMonth,
+        status: commitment.status,
+      },
+    };
   } catch (err: unknown) {
     console.error("Commitment error:", err);
     return { success: false, error: "অঙ্গীকার সংরক্ষণ ব্যর্থ হয়েছে।" };
+  }
+}
+
+export async function deleteCommitmentAction(fundId: string) {
+  try {
+    const user = await requireAuth();
+
+    await prisma.fundCommitment.deleteMany({
+      where: {
+        fundId,
+        userId: user.id,
+      },
+    });
+
+    revalidatePath("/dashboard");
+    revalidatePath("/funds");
+    revalidatePath("/funds", "layout");
+    return { success: true };
+  } catch (err: unknown) {
+    console.error("Delete commitment error:", err);
+    return { success: false, error: "প্রতিশ্রুতি বাতিল করতে সমস্যা হয়েছে।" };
   }
 }

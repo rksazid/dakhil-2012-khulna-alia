@@ -10,14 +10,26 @@ import { HeartHandshake, PhoneCall, ArrowRight, ShieldCheck, Users } from "lucid
 export default async function FundsPage() {
   const session = await getSession();
 
-  const funds = await prisma.fund.findMany({
-    orderBy: { createdAt: "asc" },
-    include: {
-      _count: {
-        select: { commitments: true, contributions: true, expenses: true },
+  const [funds, userCommitments] = await Promise.all([
+    prisma.fund.findMany({
+      orderBy: { createdAt: "asc" },
+      include: {
+        _count: {
+          select: { commitments: true, contributions: true, expenses: true },
+        },
       },
-    },
-  });
+    }),
+    session?.userId
+      ? prisma.fundCommitment.findMany({
+          where: { userId: session.userId, status: "ACTIVE" },
+          select: { fundId: true, committedAmount: true },
+        })
+      : Promise.resolve([]),
+  ]);
+
+  const userCommitmentMap = new Map(
+    userCommitments.map((c) => [c.fundId, Number(c.committedAmount)])
+  );
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
@@ -50,6 +62,7 @@ export default async function FundsPage() {
             const target = Number(fund.targetAmount || 0);
             const balance = Number(fund.currentBalance);
             const percent = target > 0 ? Math.min(Math.round((balance / target) * 100), 100) : 100;
+            const myCommittedAmount = userCommitmentMap.get(fund.id);
 
             return (
               <div
@@ -59,7 +72,7 @@ export default async function FundsPage() {
                 <div className="h-2 bg-emerald-600" />
                 <div className="p-6 flex-1 flex flex-col justify-between space-y-5">
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between gap-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
                       <span className="text-[11.5px] font-bold bg-emerald-50 text-emerald-800 px-3 py-1 rounded-full border border-emerald-200 whitespace-nowrap">
                         {toBengaliNumber(fund._count.commitments)} জন প্রতিশ্রুতিবদ্ধ
                       </span>
@@ -76,6 +89,14 @@ export default async function FundsPage() {
                     <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed">
                       {fund.description || "তহবিলের উদ্দেশ্য ও বিস্তারিত দেখতে ক্লিক করুন।"}
                     </p>
+
+                    {/* Active User Commitment Badge if logged in */}
+                    {myCommittedAmount !== undefined && (
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-bold shadow-2xs">
+                        <HeartHandshake className="w-3.5 h-3.5 text-emerald-700" />
+                        <span>আপনার সক্রিয় প্রতিশ্রুতি: {formatCurrency(myCommittedAmount)}/মাস</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-4 pt-4 border-t border-slate-100">
@@ -113,7 +134,10 @@ export default async function FundsPage() {
                       href={`/funds/${fund.slug}`}
                       className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl transition shadow-2xs"
                     >
-                      শর্ত ও নিয়মাবলী এবং বিস্তারিত দেখুন <ArrowRight className="w-3.5 h-3.5" />
+                      {myCommittedAmount !== undefined
+                        ? "প্রতিশ্রুতি পরিচালনা ও চাঁদা এন্ট্রি দিন"
+                        : "শর্তাবলী দেখুন ও প্রতিশ্রুতি দিন"}{" "}
+                      <ArrowRight className="w-3.5 h-3.5" />
                     </Link>
                   </div>
                 </div>
