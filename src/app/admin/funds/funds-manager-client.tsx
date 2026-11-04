@@ -378,7 +378,7 @@ export function FundsManagerClient({
               <div>
                 <FileUploader
                   folder="banners"
-                  label="তহবিলের ব্যানার ছবি (Vercel Object Store)"
+                  label="তহবিলের ব্যানার ছবি"
                   onUploadComplete={setCreateBannerUrl}
                   initialUrl={createBannerUrl}
                 />
@@ -499,7 +499,7 @@ export function FundsManagerClient({
               <div>
                 <FileUploader
                   folder="banners"
-                  label="তহবিলের ব্যানার ছবি (Vercel Object Store)"
+                  label="তহবিলের ব্যানার ছবি"
                   onUploadComplete={setEditBannerUrl}
                   initialUrl={editingFund.bannerImageUrl || editBannerUrl}
                 />

@@ -377,7 +377,7 @@ export function MembersManagerClient({
                     নতুন সদস্য যুক্ত করুন
                   </h3>
                   <p className="text-[11px] text-slate-500">
-                    দাখিল ২০১২ ব্যাচ ডাটাবেজে নতুন ব্যাচমেট সরাসরি অন্তর্ভুক্তি
+                    দাখিল ২০১২ ব্যাচে নতুন সহপাঠী সরাসরি অন্তর্ভুক্তি
                   </p>
                 </div>
               </div>
@@ -620,7 +620,7 @@ export function MembersManagerClient({
               <div>
                 <FileUploader
                   folder="avatars"
-                  label="সদস্যের প্রোফাইল ছবি (ঐচ্ছিক — Vercel Object Storage)"
+                  label="সদস্যের প্রোফাইল ছবি (ঐচ্ছিক)"
                   onUploadComplete={setAddAvatarUrl}
                   initialUrl={addAvatarUrl}
                   accept="image/*"
@@ -879,7 +879,7 @@ export function MembersManagerClient({
               <div>
                 <FileUploader
                   folder="avatars"
-                  label="প্রোফাইল ছবি পরিবর্তন / আপলোড (Vercel Object Storage)"
+                  label="প্রোফাইল ছবি পরিবর্তন / আপলোড"
                   onUploadComplete={setEditAvatarUrl}
                   initialUrl={editAvatarUrl}
                   accept="image/*"

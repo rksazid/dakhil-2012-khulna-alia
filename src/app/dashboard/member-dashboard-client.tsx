@@ -783,7 +783,7 @@ export function MemberDashboardClient({
               <div>
                 <FileUploader
                   folder="receipts"
-                  label="পেমেন্টের স্ক্রিনশট বা রসিদ (Vercel Object Store)"
+                  label="পেমেন্টের স্ক্রিনশট বা রসিদ (ঐচ্ছিক)"
                   onUploadComplete={setPayReceiptUrl}
                   initialUrl={payReceiptUrl}
                 />

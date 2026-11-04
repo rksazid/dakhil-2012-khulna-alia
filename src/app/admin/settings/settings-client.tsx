@@ -99,7 +99,7 @@ export function SettingsClient({
           <div>
             <FileUploader
               folder="banners"
-              label="হিরো ব্যানার ব্যাকগ্রাউন্ড ছবি (Vercel Object Store)"
+              label="হিরো ব্যানার ব্যাকগ্রাউন্ড ছবি"
               onUploadComplete={setHeroBannerUrl}
               initialUrl={heroBannerUrl}
             />

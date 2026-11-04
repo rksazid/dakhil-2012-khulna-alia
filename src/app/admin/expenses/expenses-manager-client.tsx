@@ -265,7 +265,7 @@ export function ExpensesManagerClient({
               <div>
                 <FileUploader
                   folder="receipts"
-                  label="রসিদ বা ভাউচার ছবি (Vercel Object Store)"
+                  label="রসিদ বা ভাউচার ছবি"
                   onUploadComplete={setUploadedReceiptUrl}
                   initialUrl={uploadedReceiptUrl}
                 />
