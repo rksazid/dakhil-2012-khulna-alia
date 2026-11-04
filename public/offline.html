@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="bn" class="h-full">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>অফলাইন মোড — দাখিল ২০১২ ব্যাচ | খুলনা আলিয়া মাদ্রাসা</title>
+  <meta name="theme-color" content="#047857">
+  <link rel="icon" href="/favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Hind Siliguri", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+    }
+    .card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 24px;
+      padding: 36px 28px;
+      max-width: 460px;
+      width: 100%;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+    }
+    .logo-container {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 20px;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 3px solid #10b981;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+    }
+    .logo-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fde68a;
+      padding: 4px 14px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+    h1 {
+      font-size: 20px;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+    p {
+      font-size: 13px;
+      color: #64748b;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+    .button-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: #047857;
+      color: #ffffff;
+      border: none;
+      grid-column: span 2;
+    }
+    .btn-primary:hover {
+      background: #065f46;
+    }
+    .btn-secondary {
+      background: #f1f5f9;
+      color: #334155;
+      border: 1px solid #e2e8f0;
+    }
+    .btn-secondary:hover {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+    .reload-note {
+      font-size: 11px;
+      color: #94a3b8;
+    }
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      background-color: #d97706;
+      border-radius: 50%;
+      display: inline-block;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      50% { transform: scale(1.3); opacity: 1; }
+      100% { transform: scale(0.95); opacity: 0.8; }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo-container">
+      <img src="/logo.png" alt="দাখিল ২০১২ ব্যাচ লোগো">
+    </div>
+
+    <div class="status-pill">
+      <span class="pulse-dot"></span>
+      <span>ইন্টারনেট সংযোগ বিচ্ছিন্ন</span>
+    </div>
+
+    <h1>আপনি বর্তমানে অফলাইন মোডে আছেন</h1>
+    <p>
+      ইন্টারনেট সংযোগ সাময়িক বন্ধ থাকলেও আপনার ডিভাইসে পূর্বে সংরক্ষিত পৃষ্ঠাগুলো দেখতে পারবেন। ইন্টারনেট সংযোগ পুনরায় চালু হলে স্বয়ংক্রিয়ভাবে নতুন তথ্য হালনাগাদ হবে।
+    </p>
+
+    <div class="button-grid">
+      <a href="/" class="btn btn-primary">
+        🏠 হোম পেজে ফিরে যান
+      </a>
+      <a href="/funds" class="btn btn-secondary">
+        💰 কল্যাণ তহবিল
+      </a>
+      <a href="/members" class="btn btn-secondary">
+        👥 সদস্য ডিরেক্টরি
+      </a>
+      <a href="/notices" class="btn btn-secondary">
+        📢 নোটিশ বোর্ড
+      </a>
+      <a href="/gallery" class="btn btn-secondary">
+        🖼️ ছবি গ্যালারি
+      </a>
+    </div>
+
+    <div class="reload-note">
+      ইন্টারনেট ফিরে আসলে পেজটি স্বয়ংক্রিয়ভাবে রিলোড হবে
+    </div>
+  </div>
+
+  <script>
+    // Automatically reload when network returns
+    window.addEventListener("online", () => {
+      window.location.reload();
+    });
+  </script>
+</body>
+</html>

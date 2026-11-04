@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { PwaRegister } from "@/components/pwa/pwa-register";
 import { InstallPrompt } from "@/components/pwa/install-prompt";
+import { OfflineIndicator } from "@/components/pwa/offline-indicator";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://dakhil2012-alia.vercel.app"),
@@ -70,6 +71,7 @@ export default function RootLayout({
     <html lang="bn" className="h-full antialiased">
       <body className="min-h-full flex flex-col bg-slate-50 text-slate-900">
         <PwaRegister />
+        <OfflineIndicator />
         {children}
         <InstallPrompt />
       </body>
