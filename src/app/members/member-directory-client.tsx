@@ -44,8 +44,7 @@ export function MemberDirectoryClient({ members }: { members: MemberItem[] }) {
     const matchesSection =
       selectedSection === "ALL" ||
       (selectedSection === "SCIENCE" && m.studentGroup === "SCIENCE") ||
-      (selectedSection === "ARTS" && m.studentGroup === "ARTS") ||
-      (selectedSection === "COMMERCE" && m.studentGroup === "COMMERCE");
+      (selectedSection === "ARTS" && m.studentGroup === "ARTS");
 
     return matchesSearch && matchesBlood && matchesSection;
   });
@@ -80,7 +79,6 @@ export function MemberDirectoryClient({ members }: { members: MemberItem[] }) {
               { key: "ALL", label: "সকল বিভাগ" },
               { key: "SCIENCE", label: "বিজ্ঞান" },
               { key: "ARTS", label: "মানবিক" },
-              { key: "COMMERCE", label: "ব্যবসায় শিক্ষা" },
             ].map((sec) => (
               <button
                 key={sec.key}
@@ -190,16 +188,12 @@ export function MemberDirectoryClient({ members }: { members: MemberItem[] }) {
                         className={`px-2 py-0.5 rounded-md text-[10.5px] font-bold ${
                           member.studentGroup === "SCIENCE"
                             ? "bg-blue-50 text-blue-700 border border-blue-200"
-                            : member.studentGroup === "ARTS"
-                            ? "bg-amber-50 text-amber-700 border border-amber-200"
-                            : "bg-purple-50 text-purple-700 border border-purple-200"
+                            : "bg-amber-50 text-amber-700 border border-amber-200"
                         }`}
                       >
                         {member.studentGroup === "SCIENCE"
                           ? "বিজ্ঞান"
-                          : member.studentGroup === "ARTS"
-                          ? "মানবিক"
-                          : "ব্যবসায় শিক্ষা"}
+                          : "মানবিক"}
                       </span>
                     )}
                     {member.classRoll && (

@@ -216,7 +216,6 @@ export function MembersManagerClient({
             <option value="ALL">সকল বিভাগ (বিজ্ঞান/মানবিক)</option>
             <option value="SCIENCE">বিজ্ঞান (Science)</option>
             <option value="ARTS">মানবিক (Arts)</option>
-            <option value="COMMERCE">ব্যবসায় শিক্ষা</option>
           </select>
 
           <select
@@ -274,11 +273,9 @@ export function MembersManagerClient({
                             <span className={`px-1.5 py-0.2 rounded text-[10px] font-semibold ${
                               m.studentGroup === "SCIENCE"
                                 ? "bg-blue-50 text-blue-700 border border-blue-200"
-                                : m.studentGroup === "ARTS"
-                                ? "bg-amber-50 text-amber-700 border border-amber-200"
-                                : "bg-purple-50 text-purple-700 border border-purple-200"
+                                : "bg-amber-50 text-amber-700 border border-amber-200"
                             }`}>
-                              {m.studentGroup === "SCIENCE" ? "বিজ্ঞান" : m.studentGroup === "ARTS" ? "মানবিক" : "ব্যবসায়"}
+                              {m.studentGroup === "SCIENCE" ? "বিজ্ঞান" : "মানবিক"}
                             </span>
                           )}
                           {m.classRoll && (
@@ -502,7 +499,6 @@ export function MembersManagerClient({
                       <option value="">নির্বাচন করুন (ঐচ্ছিক)</option>
                       <option value="SCIENCE">বিজ্ঞান (Science)</option>
                       <option value="ARTS">মানবিক (Arts)</option>
-                      <option value="COMMERCE">ব্যবসায় শিক্ষা</option>
                     </select>
                   </div>
 
@@ -789,7 +785,6 @@ export function MembersManagerClient({
                       <option value="">নির্বাচন করুন (ঐচ্ছিক)</option>
                       <option value="SCIENCE">বিজ্ঞান (Science)</option>
                       <option value="ARTS">মানবিক (Arts)</option>
-                      <option value="COMMERCE">ব্যবসায় শিক্ষা</option>
                     </select>
                   </div>
 

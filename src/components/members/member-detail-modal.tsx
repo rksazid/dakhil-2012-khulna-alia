@@ -221,8 +221,6 @@ export function MemberDetailModal({ member, onClose }: MemberDetailModalProps) {
                     ? "বিজ্ঞান বিভাগ"
                     : member.studentGroup === "ARTS"
                     ? "মানবিক বিভাগ"
-                    : member.studentGroup === "COMMERCE"
-                    ? "ব্যবসায় শিক্ষা"
                     : "সাধারণ"}
                 </span>
               </div>

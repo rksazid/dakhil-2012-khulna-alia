@@ -43,9 +43,7 @@ export function HomepageMembersClient({
                 <span className="absolute top-2.5 left-3 text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white backdrop-blur-xs">
                   {member.studentGroup === "SCIENCE"
                     ? "বিজ্ঞান বিভাগ"
-                    : member.studentGroup === "ARTS"
-                    ? "মানবিক বিভাগ"
-                    : "ব্যবসায় শিক্ষা"}
+                    : "মানবিক বিভাগ"}
                 </span>
               )}
             </div>

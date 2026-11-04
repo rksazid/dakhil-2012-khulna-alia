@@ -530,7 +530,6 @@ export function MemberDashboardClient({
                     <option value="">নির্বাচন করুন</option>
                     <option value="SCIENCE">বিজ্ঞান (Science)</option>
                     <option value="ARTS">মানবিক (Arts)</option>
-                    <option value="COMMERCE">ব্যবসায় শিক্ষা</option>
                   </select>
                 </div>
 

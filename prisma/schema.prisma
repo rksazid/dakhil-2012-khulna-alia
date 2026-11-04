@@ -50,7 +50,7 @@ model User {
   batchYear            Int                    @default(2012)
   bio                  String?
   bloodGroup           String?
-  studentGroup         String?                // "বিজ্ঞান (Science)", "মানবিক / সাধারণ (Arts)", "ব্যবসায় শিক্ষা (Commerce)"
+  studentGroup         String?                // "বিজ্ঞান (Science)", "মানবিক / সাধারণ (Arts)"
   classRoll            String?                // ক্লাস রোল নম্বর
   classroom            String?                // ক্লাসরুম / শাখা (Section)
   occupation           String?
