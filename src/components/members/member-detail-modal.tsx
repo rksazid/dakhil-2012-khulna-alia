@@ -25,6 +25,7 @@ export interface MemberDetailData {
   email?: string | null;
   phone: string;
   avatarUrl?: string | null;
+  bannerUrl?: string | null;
   bio?: string | null;
   bloodGroup?: string | null;
   studentGroup?: string | null;
@@ -79,94 +80,121 @@ export function MemberDetailModal({ member, onClose }: MemberDetailModalProps) {
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto animate-in fade-in duration-200"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-lg w-full overflow-hidden my-auto animate-in zoom-in-95 duration-200 max-h-[92vh] flex flex-col"
+        className="bg-white rounded-3xl shadow-2xl border border-slate-200/90 max-w-lg w-full overflow-hidden my-auto animate-in zoom-in-95 duration-200 max-h-[92vh] flex flex-col relative"
       >
-        {/* Top Decorative Banner */}
-        <div className="h-28 sm:h-32 bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-900 relative shrink-0">
-          {/* Close button */}
-          <button
-            onClick={onClose}
-            aria-label="বন্ধ করুন"
-            className="absolute top-3.5 right-3.5 w-8 h-8 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center transition shadow-xs z-10"
-          >
-            <X className="w-4 h-4" />
-          </button>
-
-          {/* Blood group tag */}
-          {member.bloodGroup && (
-            <div className="absolute top-3.5 left-3.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-white/95 text-red-600 shadow-sm backdrop-blur-xs border border-red-100">
-              <Droplet className="w-3.5 h-3.5 fill-red-600 text-red-600" />
-              <span>রক্তের গ্রুপ: {member.bloodGroup}</span>
-            </div>
-          )}
-        </div>
-
-        {/* Scrollable Body */}
-        <div className="overflow-y-auto px-5 sm:px-6 pb-6 pt-0 space-y-5 custom-scrollbar">
-          {/* Large Avatar & Name Header */}
-          <div className="flex flex-col sm:flex-row items-center sm:items-end gap-4 -mt-16 sm:-mt-20">
-            <div className="relative group shrink-0">
-              {member.avatarUrl ? (
-                <div className="relative w-32 h-32 sm:w-36 sm:h-36 rounded-3xl overflow-hidden border-4 border-white shadow-xl bg-slate-100">
-                  <img
-                    src={member.avatarUrl}
-                    alt={member.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <a
-                    href={member.avatarUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-semibold gap-1 transition-opacity backdrop-blur-2xs"
-                    title="বড় আকারে ছবি দেখুন"
-                  >
-                    <ExternalLink className="w-4 h-4" /> বড় ছবি
-                  </a>
+        {/* Top Header Block: Cover Banner + Avatar + Member Name (Non-scrolling so avatar never gets clipped) */}
+        <div className="relative shrink-0 bg-white">
+          {/* Cover Banner */}
+          <div className="h-32 sm:h-40 w-full relative overflow-hidden bg-gradient-to-r from-emerald-950 via-emerald-900 to-teal-950">
+            {member.bannerUrl ? (
+              <img
+                src={member.bannerUrl}
+                alt={`${member.name} কভার ব্যানার`}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full relative">
+                {/* Decorative Islamic Geometric Pattern & Gradient Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-tr from-emerald-950 via-emerald-800 to-teal-900 opacity-95" />
+                <div className="absolute inset-0 bg-[radial-gradient(#34d399_1.5px,transparent_1.5px)] [background-size:16px_16px] opacity-25" />
+                {/* Subtle luminous glow */}
+                <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-emerald-500/20 blur-2xl" />
+                <div className="absolute -bottom-8 -left-8 w-40 h-40 rounded-full bg-teal-500/20 blur-xl" />
+                {/* Watermark */}
+                <div className="absolute bottom-2 right-4 text-emerald-200/20 font-black text-3xl sm:text-4xl tracking-widest pointer-events-none select-none">
+                  ২০১২
                 </div>
-              ) : (
-                <div className="w-32 h-32 sm:w-36 sm:h-36 rounded-3xl bg-gradient-to-br from-emerald-700 to-emerald-950 text-white font-black text-4xl flex items-center justify-center border-4 border-white shadow-xl">
-                  {member.name.charAt(0)}
-                </div>
-              )}
-            </div>
+              </div>
+            )}
 
-            {/* Name, Role & Headline */}
-            <div className="text-center sm:text-left flex-1 min-w-0 pb-1">
-              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-1">
-                <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                  {member.name}
-                </h2>
+            {/* Subtle gradient vignette at bottom of banner */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 pointer-events-none" />
+
+            {/* Close button with high contrast & smooth hover */}
+            <button
+              onClick={onClose}
+              aria-label="বন্ধ করুন"
+              className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/50 hover:bg-black/75 text-white flex items-center justify-center transition shadow-md z-30 backdrop-blur-xs border border-white/20"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            {/* Blood group tag on banner */}
+            {member.bloodGroup && (
+              <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-white/95 text-red-600 shadow-md backdrop-blur-xs border border-red-100 z-30">
+                <Droplet className="w-3.5 h-3.5 fill-red-600 text-red-600" />
+                <span>রক্তের গ্রুপ: {member.bloodGroup}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Profile Identity Bar: Avatar overlapping banner + Name & Badges */}
+          <div className="px-5 sm:px-6 pb-3 pt-1">
+            <div className="flex flex-col sm:flex-row items-center sm:items-end gap-3.5 -mt-14 sm:-mt-16">
+              {/* Avatar: perfectly square, rounded-3xl, thick white border, elevated shadow */}
+              <div className="relative group shrink-0 z-20">
+                {member.avatarUrl ? (
+                  <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-3xl overflow-hidden border-4 border-white shadow-2xl bg-white aspect-square shrink-0 ring-1 ring-slate-900/10">
+                    <img
+                      src={member.avatarUrl}
+                      alt={member.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <a
+                      href={member.avatarUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-bold gap-1 transition-opacity backdrop-blur-xs"
+                      title="বড় আকারে ছবি দেখুন"
+                    >
+                      <ExternalLink className="w-4 h-4" /> পূর্ণ ছবি
+                    </a>
+                  </div>
+                ) : (
+                  <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl bg-gradient-to-br from-emerald-700 to-emerald-950 text-white font-black text-4xl flex items-center justify-center border-4 border-white shadow-2xl aspect-square shrink-0 ring-1 ring-slate-900/10">
+                    {member.name.charAt(0)}
+                  </div>
+                )}
               </div>
 
-              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5 mt-1">
-                {member.role === "SUPER_ADMIN" ? (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-900 border border-purple-200">
-                    <Shield className="w-3 h-3 text-purple-700" /> সুপার অ্যাডমিন
-                  </span>
-                ) : member.role === "FUND_MANAGER" ? (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-200">
-                    <Shield className="w-3 h-3 text-emerald-700" /> তহবিল ব্যবস্থাপক
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
-                    সহপাঠী / ব্যাচমেট
-                  </span>
-                )}
+              {/* Name & Role Badges */}
+              <div className="text-center sm:text-left flex-1 min-w-0 pt-1 sm:pt-0 pb-1">
+                <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight">
+                  {member.name}
+                </h2>
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5 mt-1.5">
+                  {member.role === "SUPER_ADMIN" ? (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-900 border border-purple-200">
+                      <Shield className="w-3 h-3 text-purple-700" /> সুপার অ্যাডমিন
+                    </span>
+                  ) : member.role === "FUND_MANAGER" ? (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-200">
+                      <Shield className="w-3 h-3 text-emerald-700" /> তহবিল ব্যবস্থাপক
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                      সহপাঠী / ব্যাচমেট
+                    </span>
+                  )}
 
-                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
-                  দাখিল ২০১২ ব্যাচ
-                </span>
+                  <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+                    দাখিল ২০১২ ব্যাচ
+                  </span>
+                </div>
               </div>
             </div>
           </div>
+        </div>
 
+        {/* Scrollable Body for Member Details */}
+        <div className="overflow-y-auto px-5 sm:px-6 pb-6 pt-2 space-y-4 custom-scrollbar flex-1 border-t border-slate-100">
           {/* Bio Quote if present */}
           {member.bio && (
-            <div className="bg-emerald-50/50 border border-emerald-200/60 p-3.5 rounded-2xl relative">
+            <div className="bg-emerald-50/60 border border-emerald-200/70 p-3.5 rounded-2xl relative">
               <p className="text-xs sm:text-sm text-slate-700 italic leading-relaxed text-center sm:text-left">
                 "{member.bio}"
               </p>
@@ -366,7 +394,7 @@ export function MemberDetailModal({ member, onClose }: MemberDetailModalProps) {
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between shrink-0">
+        <div className="p-3.5 sm:p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between shrink-0">
           <p className="text-[11px] text-slate-400">
             দাখিল ২০১২ ব্যাচমেট ডিরেক্টরি • খুলনা আলিয়া মাদ্রাসা
           </p>

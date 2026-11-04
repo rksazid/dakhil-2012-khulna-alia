@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
@@ -6,6 +7,47 @@ import { Footer } from "@/components/layout/footer";
 import { formatCurrency, toBengaliNumber, formatBengaliDate } from "@/lib/utils";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 import { HomepageMembersClient } from "@/components/home/homepage-members-client";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const heroBannerSetting = await prisma.siteSetting.findUnique({
+    where: { key: "hero_banner_image" },
+  });
+  const heroSubtitleSetting = await prisma.siteSetting.findUnique({
+    where: { key: "hero_subtitle" },
+  });
+
+  const bannerImage = heroBannerSetting?.value || "/og-banner.jpg";
+  const description =
+    heroSubtitleSetting?.value ||
+    "খুলনা আলিয়া মাদ্রাসা দাখিল ২০১২ ব্যাচের অফিসিয়াল পোর্টাল ও কল্যাণ ফান্ড ম্যানেজমেন্ট সিস্টেম।";
+
+  return {
+    title: "দাখিল ২০১২ ব্যাচ — খুলনা আলিয়া মাদ্রাসা | পোর্টাল ও কল্যাণ ফান্ড",
+    description,
+    openGraph: {
+      title: "দাখিল ২০১২ ব্যাচ — খুলনা আলিয়া মাদ্রাসা",
+      description,
+      url: "https://dakhil2012-alia.vercel.app",
+      siteName: "দাখিল ২০১২ ব্যাচ খুলনা আলিয়া",
+      images: [
+        {
+          url: bannerImage,
+          width: 1200,
+          height: 630,
+          alt: "দাখিল ২০১২ ব্যাচ অফিসিয়াল ব্যানার",
+        },
+      ],
+      type: "website",
+      locale: "bn_BD",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: "দাখিল ২০১২ ব্যাচ — খুলনা আলিয়া মাদ্রাসা",
+      description,
+      images: [bannerImage],
+    },
+  };
+}
 import {
   HeartHandshake,
   Users,
@@ -99,6 +141,7 @@ export default async function HomePage() {
       email: true,
       phone: true,
       avatarUrl: true,
+      bannerUrl: true,
       bloodGroup: true,
       studentGroup: true,
       classRoll: true,

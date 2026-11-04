@@ -176,6 +176,7 @@ export async function updateProfileAction(formData: FormData) {
     const permanentAddress = (formData.get("permanentAddress") as string)?.trim() || null;
     const bio = (formData.get("bio") as string)?.trim() || null;
     const avatarUrl = (formData.get("avatarUrl") as string)?.trim() || user.avatarUrl;
+    const bannerUrl = (formData.get("bannerUrl") as string)?.trim() || null;
     const showPhoneInDirectory = formData.get("showPhoneInDirectory") === "true";
     const showEmailInDirectory = formData.get("showEmailInDirectory") === "true";
 
@@ -202,6 +203,7 @@ export async function updateProfileAction(formData: FormData) {
         permanentAddress,
         bio,
         avatarUrl,
+        bannerUrl,
         showPhoneInDirectory,
         showEmailInDirectory,
       },

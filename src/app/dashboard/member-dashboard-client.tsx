@@ -79,6 +79,7 @@ interface MemberDashboardClientProps {
     classRoll?: string | null;
     classroom?: string | null;
     avatarUrl: string | null;
+    bannerUrl?: string | null;
   };
   commitments: CommitmentItem[];
   contributions: ContributionItem[];
@@ -117,6 +118,7 @@ export function MemberDashboardClient({
   const [payReceiptUrl, setPayReceiptUrl] = useState("");
   const [payNote, setPayNote] = useState("");
   const [profileAvatarUrl, setProfileAvatarUrl] = useState(user.avatarUrl || "");
+  const [profileBannerUrl, setProfileBannerUrl] = useState(user.bannerUrl || "");
 
   // Commitment form states
   const [commitFundId, setCommitFundId] = useState(funds[0]?.id || "");
@@ -625,14 +627,26 @@ export function MemberDashboardClient({
               />
             </div>
 
-            <div>
-              <FileUploader
-                folder="avatars"
-                label="প্রোফাইল ছবি (Vercel Object Storage)"
-                onUploadComplete={setProfileAvatarUrl}
-                initialUrl={profileAvatarUrl}
-              />
-              <input type="hidden" name="avatarUrl" value={profileAvatarUrl} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <FileUploader
+                  folder="avatars"
+                  label="প্রোফাইল ছবি"
+                  onUploadComplete={setProfileAvatarUrl}
+                  initialUrl={profileAvatarUrl}
+                />
+                <input type="hidden" name="avatarUrl" value={profileAvatarUrl} />
+              </div>
+
+              <div>
+                <FileUploader
+                  folder="banners"
+                  label="প্রোফাইল কভার ব্যানার (ঐচ্ছিক)"
+                  onUploadComplete={setProfileBannerUrl}
+                  initialUrl={profileBannerUrl}
+                />
+                <input type="hidden" name="bannerUrl" value={profileBannerUrl} />
+              </div>
             </div>
 
             <div className="pt-2">

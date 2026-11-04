@@ -21,6 +21,7 @@ export async function createMemberAction(formData: FormData) {
     const classRoll = (formData.get("classRoll") as string)?.trim() || null;
     const classroom = (formData.get("classroom") as string)?.trim() || null;
     const avatarUrl = (formData.get("avatarUrl") as string)?.trim() || null;
+    const bannerUrl = (formData.get("bannerUrl") as string)?.trim() || null;
     const occupation = (formData.get("occupation") as string)?.trim() || null;
     const workplace = (formData.get("workplace") as string)?.trim() || null;
     const presentAddress = (formData.get("presentAddress") as string)?.trim() || null;
@@ -57,6 +58,7 @@ export async function createMemberAction(formData: FormData) {
         passwordHash,
         role,
         avatarUrl,
+      bannerUrl,
         bloodGroup,
         studentGroup,
         classRoll,
@@ -124,6 +126,7 @@ export async function updateMemberDetailsAction(userId: string, formData: FormDa
     const classRoll = (formData.get("classRoll") as string)?.trim() || null;
     const classroom = (formData.get("classroom") as string)?.trim() || null;
     const avatarUrl = (formData.get("avatarUrl") as string)?.trim() || null;
+    const bannerUrl = (formData.get("bannerUrl") as string)?.trim() || null;
     const occupation = (formData.get("occupation") as string)?.trim() || null;
     const workplace = (formData.get("workplace") as string)?.trim() || null;
     const presentAddress = (formData.get("presentAddress") as string)?.trim() || null;
@@ -159,6 +162,7 @@ export async function updateMemberDetailsAction(userId: string, formData: FormDa
       classRoll: string | null;
       classroom: string | null;
       avatarUrl: string | null;
+      bannerUrl: string | null;
       occupation: string | null;
       workplace: string | null;
       presentAddress: string | null;
@@ -176,6 +180,7 @@ export async function updateMemberDetailsAction(userId: string, formData: FormDa
       classRoll,
       classroom,
       avatarUrl,
+      bannerUrl,
       occupation,
       workplace,
       presentAddress,
