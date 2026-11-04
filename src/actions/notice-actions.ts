@@ -18,7 +18,10 @@ export async function createNoticeAction(formData: FormData) {
       .replace(/^-+|-+$/g, "");
     const content = (formData.get("content") as string)?.trim();
     const category = (formData.get("category") as NoticeCategory) || NoticeCategory.GENERAL;
-    const isPinned = formData.get("isPinned") === "true";
+    const isPinned = formData.get("isPinned") === "true" || formData.get("isPinned") === "on";
+    const isPublished = formData.has("isPublished")
+      ? formData.get("isPublished") === "true" || formData.get("isPublished") === "on"
+      : true;
 
     if (!title || !content) {
       return { success: false, error: "নোটিশের শিরোনাম ও বিস্তারিত বিবরণ আবশ্যক।" };
@@ -33,6 +36,7 @@ export async function createNoticeAction(formData: FormData) {
         content,
         category,
         isPinned,
+        isPublished,
         authorId: admin.id,
       },
     });
@@ -66,8 +70,10 @@ export async function updateNoticeAction(id: string, formData: FormData) {
     const title = (formData.get("title") as string)?.trim();
     const content = (formData.get("content") as string)?.trim();
     const category = (formData.get("category") as NoticeCategory) || NoticeCategory.GENERAL;
-    const isPinned = formData.get("isPinned") === "true";
-    const isPublished = formData.get("isPublished") === "true";
+    const isPinned = formData.get("isPinned") === "true" || formData.get("isPinned") === "on";
+    const isPublished = formData.has("isPublished")
+      ? formData.get("isPublished") === "true" || formData.get("isPublished") === "on"
+      : true;
 
     const notice = await prisma.notice.update({
       where: { id },
@@ -147,5 +153,24 @@ export async function togglePinNoticeAction(id: string, isPinned: boolean) {
   } catch (err: unknown) {
     console.error("Toggle pin notice error:", err);
     return { success: false, error: "পিন স্ট্যাটাস পরিবর্তন ব্যর্থ।" };
+  }
+}
+
+export async function togglePublishNoticeAction(id: string, isPublished: boolean) {
+  try {
+    await requireRole([Role.SUPER_ADMIN, Role.FUND_MANAGER]);
+
+    await prisma.notice.update({
+      where: { id },
+      data: { isPublished },
+    });
+
+    revalidatePath("/notices");
+    revalidatePath("/admin/notices");
+    revalidatePath("/");
+    return { success: true };
+  } catch (err: unknown) {
+    console.error("Toggle publish notice error:", err);
+    return { success: false, error: "পাবলিশ স্ট্যাটাস পরিবর্তন ব্যর্থ।" };
   }
 }

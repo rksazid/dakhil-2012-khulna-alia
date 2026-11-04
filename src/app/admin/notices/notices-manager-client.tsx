@@ -8,6 +8,7 @@ import {
   updateNoticeAction,
   deleteNoticeAction,
   togglePinNoticeAction,
+  togglePublishNoticeAction,
 } from "@/actions/notice-actions";
 import { Bell, Plus, Pin, Trash2, Edit2, Calendar, Eye, Edit3 } from "lucide-react";
 import { MarkdownContent } from "@/components/ui/markdown-content";
@@ -112,6 +113,18 @@ export function NoticesManagerClient({ notices }: { notices: NoticeData[] }) {
     });
   };
 
+  const handleTogglePublish = (id: string, currentPublished: boolean) => {
+    startTransition(async () => {
+      const res = await togglePublishNoticeAction(id, !currentPublished);
+      if (res.success) {
+        setFeedback({
+          type: "success",
+          message: !currentPublished ? "নোটিশ সফলভাবে প্রকাশিত হয়েছে।" : "নোটিশ অপ্রকাশিত (Draft) করা হয়েছে।",
+        });
+      }
+    });
+  };
+
   return (
     <div className="space-y-6">
       {feedback && (
@@ -175,7 +188,16 @@ export function NoticesManagerClient({ notices }: { notices: NoticeData[] }) {
                     <Pin className="w-2.5 h-2.5 fill-amber-700" /> পিন করা
                   </span>
                 )}
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800">
+                <span
+                  className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                    n.isPublished
+                      ? "bg-emerald-100 text-emerald-800"
+                      : "bg-rose-100 text-rose-800 border border-rose-200"
+                  }`}
+                >
+                  {n.isPublished ? "প্রকাশিত" : "অপ্রকাশিত (ড্রাফট)"}
+                </span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">
                   {n.category}
                 </span>
                 <span className="text-xs text-slate-400">
@@ -190,15 +212,30 @@ export function NoticesManagerClient({ notices }: { notices: NoticeData[] }) {
             </div>
 
             <div className="flex sm:flex-col items-end gap-2 shrink-0">
-              <button
-                onClick={() => handleTogglePin(n.id, n.isPinned)}
-                disabled={isPending}
-                className={`px-3 py-1 text-xs rounded-lg font-medium transition ${
-                  n.isPinned ? "bg-amber-100 text-amber-900" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                }`}
-              >
-                {n.isPinned ? "আনপিন করুন" : "পিন করুন"}
-              </button>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => handleTogglePublish(n.id, n.isPublished)}
+                  disabled={isPending}
+                  className={`px-2.5 py-1 text-xs rounded-lg font-medium transition ${
+                    n.isPublished
+                      ? "bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-700"
+                      : "bg-emerald-700 text-white hover:bg-emerald-800"
+                  }`}
+                  title={n.isPublished ? "নোটিশটি অপ্রকাশিত করুন" : "নোটিশটি ওয়েবসাইটে প্রকাশ করুন"}
+                >
+                  {n.isPublished ? "আনপাবলিশ" : "পাবলিশ করুন"}
+                </button>
+                <button
+                  onClick={() => handleTogglePin(n.id, n.isPinned)}
+                  disabled={isPending}
+                  className={`px-2.5 py-1 text-xs rounded-lg font-medium transition ${
+                    n.isPinned ? "bg-amber-100 text-amber-900 border border-amber-300" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                  title={n.isPinned ? "আনপিন করুন" : "শীর্ষে পিন করুন"}
+                >
+                  {n.isPinned ? "আনপিন" : "পিন"}
+                </button>
+              </div>
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => handleOpenEdit(n)}
@@ -255,7 +292,7 @@ export function NoticesManagerClient({ notices }: { notices: NoticeData[] }) {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
                     ক্যাটাগরি
@@ -271,7 +308,7 @@ export function NoticesManagerClient({ notices }: { notices: NoticeData[] }) {
                   </select>
                 </div>
 
-                <div className="flex items-center gap-2 pt-6">
+                <div className="flex items-center gap-2 pt-1 sm:pt-6">
                   <input
                     type="checkbox"
                     id="isPinned"
@@ -280,7 +317,21 @@ export function NoticesManagerClient({ notices }: { notices: NoticeData[] }) {
                     className="w-4 h-4 text-emerald-600 rounded-sm"
                   />
                   <label htmlFor="isPinned" className="text-xs font-semibold text-slate-700">
-                    শীর্ষে পিন করে রাখুন
+                    শীর্ষে পিন
+                  </label>
+                </div>
+
+                <div className="flex items-center gap-2 pt-1 sm:pt-6">
+                  <input
+                    type="checkbox"
+                    id="isPublished"
+                    name="isPublished"
+                    value="true"
+                    defaultChecked={true}
+                    className="w-4 h-4 text-emerald-600 rounded-sm"
+                  />
+                  <label htmlFor="isPublished" className="text-xs font-semibold text-slate-700">
+                    সবার জন্য দৃশ্যমান (Live)
                   </label>
                 </div>
               </div>
@@ -438,7 +489,7 @@ export function NoticesManagerClient({ notices }: { notices: NoticeData[] }) {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
                     ক্যাটাগরি
@@ -455,7 +506,7 @@ export function NoticesManagerClient({ notices }: { notices: NoticeData[] }) {
                   </select>
                 </div>
 
-                <div className="flex items-center gap-2 pt-6">
+                <div className="flex items-center gap-2 pt-1 sm:pt-6">
                   <input
                     type="checkbox"
                     id="edit_isPinned"
@@ -465,7 +516,21 @@ export function NoticesManagerClient({ notices }: { notices: NoticeData[] }) {
                     className="w-4 h-4 text-emerald-600 rounded-sm"
                   />
                   <label htmlFor="edit_isPinned" className="text-xs font-semibold text-slate-700">
-                    শীর্ষে পিন করে রাখুন
+                    শীর্ষে পিন
+                  </label>
+                </div>
+
+                <div className="flex items-center gap-2 pt-1 sm:pt-6">
+                  <input
+                    type="checkbox"
+                    id="edit_isPublished"
+                    name="isPublished"
+                    value="true"
+                    defaultChecked={editingNotice.isPublished}
+                    className="w-4 h-4 text-emerald-600 rounded-sm"
+                  />
+                  <label htmlFor="edit_isPublished" className="text-xs font-semibold text-slate-700">
+                    সবার জন্য দৃশ্যমান (Live)
                   </label>
                 </div>
               </div>
