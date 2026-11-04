@@ -135,7 +135,7 @@ export default async function FundsPage() {
                       className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl transition shadow-2xs"
                     >
                       {myCommittedAmount !== undefined
-                        ? "প্রতিশ্রুতি পরিচালনা ও চাঁদা এন্ট্রি দিন"
+                        ? "চাঁদা এন্ট্রি ও পরিচালনা"
                         : "শর্তাবলী দেখুন ও প্রতিশ্রুতি দিন"}{" "}
                       <ArrowRight className="w-3.5 h-3.5" />
                     </Link>

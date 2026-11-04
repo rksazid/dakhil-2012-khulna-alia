@@ -336,7 +336,7 @@ export function FundCommitmentCard({
             </div>
 
             {/* Action Buttons */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+            <div className="grid grid-cols-2 gap-2 pt-1">
               <button
                 type="button"
                 onClick={() => {
@@ -347,10 +347,11 @@ export function FundCommitmentCard({
                   setCustomAmountVal(String(commitment.committedAmount));
                   setIsEditing(true);
                 }}
-                className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl transition"
+                title="প্রতিশ্রুতি পরিবর্তন বা বাতিল করুন"
+                className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 px-2 bg-slate-100 hover:bg-slate-200/90 active:scale-[0.98] text-slate-700 hover:text-slate-900 text-xs font-bold rounded-xl transition border border-slate-200/70 whitespace-nowrap shadow-2xs"
               >
-                <Edit2 className="w-3.5 h-3.5 text-emerald-700" />
-                প্রতিশ্রুতি এডিট / পরিবর্তন
+                <Edit2 className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                <span>প্রতিশ্রুতি এডিট</span>
               </button>
 
               <button
@@ -359,10 +360,11 @@ export function FundCommitmentCard({
                   setPayAmount(commitment.committedAmount);
                   setIsPayModalOpen(true);
                 }}
-                className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 px-3 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold rounded-xl transition shadow-xs"
+                title="চাঁদা প্রদান তথ্য এন্ট্রি দিন"
+                className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 px-2 bg-emerald-700 hover:bg-emerald-800 active:scale-[0.98] text-white text-xs font-bold rounded-xl transition shadow-xs whitespace-nowrap"
               >
-                <CreditCard className="w-3.5 h-3.5" />
-                চাঁদা প্রদান করেছি (এন্ট্রি দিন)
+                <CreditCard className="w-3.5 h-3.5 shrink-0" />
+                <span>চাঁদা এন্ট্রি দিন</span>
               </button>
             </div>
           </div>
