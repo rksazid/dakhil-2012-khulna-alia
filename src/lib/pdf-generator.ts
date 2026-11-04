@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma";
 import { formatBengaliDate, formatBengaliDateTime, formatCurrency, toBengaliNumber } from "@/lib/utils";
 import { PaymentStatus } from "@prisma/client";
+import QRCode from "qrcode";
 
 interface ReceiptPdfResult {
   buffer: Buffer;
@@ -33,6 +34,11 @@ export function generateReceiptHtml(data: {
   approvalDate?: string | null;
   verifiedByName?: string | null;
   note?: string | null;
+  contactAddress?: string;
+  contactPhone?: string | null;
+  contactEmail?: string | null;
+  verificationUrl: string;
+  qrCodeDataUrl?: string;
 }): string {
   const isApproved = data.status === PaymentStatus.VERIFIED;
   const isPending = data.status === PaymentStatus.PENDING;
@@ -386,7 +392,9 @@ export function generateReceiptHtml(data: {
               <td>
                 <div class="org-title">দাখিল ২০১২ ব্যাচ — খুলনা আলিয়া মাদ্রাসা</div>
                 <div class="org-sub">বন্ধু কল্যাণ তহবিল ও সেন্ট্রাল একাউন্টস ম্যানেজমেন্ট পোর্টাল</div>
-                <div class="org-contact">খুলনা আলিয়া মাদ্রাসা চত্বর, খুলনা | contact@dakhil2012khulna.org</div>
+                <div class="org-contact">
+                  ${data.contactAddress || "খুলনা আলিয়া মাদ্রাসা চত্বর, খুলনা"}${data.contactPhone ? ` | হেল্পলাইন: ${data.contactPhone}` : ""}${data.contactEmail ? ` | ${data.contactEmail}` : ""}
+                </div>
               </td>
             </tr>
           </table>
@@ -503,20 +511,35 @@ export function generateReceiptHtml(data: {
       </div>
     </div>
 
-    <!-- Signatures and Digital Verification Seal -->
+    <!-- Signatures and Digital Verification QR Code -->
     <table class="footer-table">
       <tr>
         <td class="sig-block">
-          <div style="height: 35px;"></div>
-          <div class="sig-line">অনুদান প্রদানকারীর স্বাক্ষর</div>
-        </td>
-        <td class="sig-block">
-          <div class="seal-box">
-            দাখিল ২০১২<br>
-            খুলনা আলিয়া<br>
-            ★ ডিজিটাল সীল ★<br>
-            ${isApproved ? "VERIFIED" : isRejected ? "REJECTED" : "PENDING"}
+          <div style="font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 4px; min-height: 20px;">
+            ${data.donorName}
           </div>
+          <div class="sig-line">অনলাইন অনুদানকারী (ডিজিটাল সম্মতি)</div>
+        </td>
+        <td class="sig-block" style="text-align: center; vertical-align: middle;">
+          ${
+            data.qrCodeDataUrl
+              ? `
+            <div style="display: inline-block; padding: 4px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
+              <img src="${data.qrCodeDataUrl}" alt="ভেরিফিকেশন কিউআর কোড" style="width: 80px; height: 80px; display: block;" />
+            </div>
+            <div style="font-size: 9.5px; font-weight: 700; color: #047857; margin-top: 3px; letter-spacing: 0.3px;">
+              ক্যামেরায় স্ক্যান করে সত্যতা যাচাই করুন
+            </div>
+          `
+              : `
+            <div class="seal-box">
+              দাখিল ২০১২<br>
+              খুলনা আলিয়া<br>
+              ★ ডিজিটাল সীল ★<br>
+              ${isApproved ? "VERIFIED" : isRejected ? "REJECTED" : "PENDING"}
+            </div>
+          `
+          }
         </td>
         <td class="sig-block">
           <div style="font-size: 12px; font-weight: 700; color: #047857; margin-bottom: 4px;">
@@ -529,8 +552,8 @@ export function generateReceiptHtml(data: {
 
     <!-- Disclaimer -->
     <div class="disclaimer">
-      এটি একটি কম্পিউটার উৎপাদিত ডিজিটাল মানি রিসিপ্ট। এই রশিদের যাবতীয় তথ্য দাখিল ২০১২ ব্যাচ কল্যাণ পোর্টালের ডাটাবেসে স্থায়ীভাবে সংরক্ষিত রয়েছে।<br>
-      সত্যতা যাচাই করতে ভিজিট করুন: https://dakhil2012khulna.org | ভেরিফিকেশন আইডি: ${data.receiptNo}
+      এটি একটি কম্পিউটার উৎপাদিত অফিসিয়াল ডিজিটাল মানি রিসিপ্ট। এই রশিদের যাবতীয় লেনদেন রেকর্ড কেন্দ্রীয় পোর্টালে স্থায়ীভাবে সংরক্ষিত রয়েছে।<br>
+      অনলাইনে তাৎক্ষণিক সত্যতা যাচাই করতে ভিজিট করুন: <a href="${data.verificationUrl}" style="color: #047857; font-weight: 600; text-decoration: none;">${data.verificationUrl}</a> | ভেরিফিকেশন আইডি: <strong style="font-family: monospace;">${data.receiptNo}</strong>
     </div>
   </div>
 </body>
@@ -538,17 +561,43 @@ export function generateReceiptHtml(data: {
 }
 
 export async function generateReceiptPdfBuffer(contributionId: string): Promise<ReceiptPdfResult> {
-  const contribution = await prisma.monthlyContribution.findUnique({
-    where: { id: contributionId },
-    include: {
-      fund: true,
-      user: true,
-      verifiedBy: { select: { id: true, name: true, role: true } },
-    },
-  });
+  const [contribution, settingsList] = await Promise.all([
+    prisma.monthlyContribution.findUnique({
+      where: { id: contributionId },
+      include: {
+        fund: true,
+        user: true,
+        verifiedBy: { select: { id: true, name: true, role: true } },
+      },
+    }),
+    prisma.siteSetting.findMany({
+      where: { key: { in: ["contact_email", "contact_phone"] } },
+    }),
+  ]);
 
   if (!contribution) {
     throw new Error("অনুদানের তথ্য পাওয়া যায়নি।");
+  }
+
+  const settingsMap = Object.fromEntries(settingsList.map((s) => [s.key, s.value]));
+  const contactPhone = settingsMap["contact_phone"] || "+8801776333338";
+  const contactEmail = settingsMap["contact_email"] || null;
+
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://dakhil2012-alia.vercel.app";
+  const verificationUrl = `${baseUrl.replace(/\/+$/, "")}/verify/receipt/${contribution.id}`;
+
+  let qrCodeDataUrl: string | undefined = undefined;
+  try {
+    qrCodeDataUrl = await QRCode.toDataURL(verificationUrl, {
+      margin: 1,
+      width: 160,
+      color: {
+        dark: "#064e3b",
+        light: "#ffffff",
+      },
+    });
+  } catch (qrErr) {
+    console.warn("Failed to generate receipt QR code:", qrErr);
   }
 
   const receiptNo = `RCPT-${contribution.monthYear.replace(/[^a-zA-Z0-9\u0980-\u09FF]/g, "")}-${contribution.id.slice(-6).toUpperCase()}`;
@@ -578,6 +627,11 @@ export async function generateReceiptPdfBuffer(contributionId: string): Promise<
         })`
       : null,
     note: contribution.note,
+    contactAddress: "খুলনা আলিয়া মাদ্রাসা চত্বর, খুলনা",
+    contactPhone,
+    contactEmail,
+    verificationUrl,
+    qrCodeDataUrl,
   });
 
   // Call PDF service endpoints with primary (Vercel) and fallback (Render)

@@ -24,12 +24,23 @@ export function formatCurrency(amount: NumericLike): string {
   return `৳ ${toBengaliNumber(formatted)}`;
 }
 
-// Format Date to friendly Bengali text
+// Format Date to friendly Bengali text in Asia/Dhaka (GMT+6)
 export function formatBengaliDate(date: Date | string | null | undefined): string {
   if (!date) return "";
   const d = new Date(date);
-  const day = toBengaliNumber(d.getDate());
-  const year = toBengaliNumber(d.getFullYear());
+  if (isNaN(d.getTime())) return "";
+
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Dhaka",
+    day: "numeric",
+    month: "numeric",
+    year: "numeric",
+  }).formatToParts(d);
+
+  const dayVal = parts.find((p) => p.type === "day")?.value || "1";
+  const monthVal = parseInt(parts.find((p) => p.type === "month")?.value || "1", 10) - 1;
+  const yearVal = parts.find((p) => p.type === "year")?.value || "2026";
+
   const bengaliMonths = [
     "জানুয়ারি",
     "ফেব্রুয়ারি",
@@ -44,18 +55,39 @@ export function formatBengaliDate(date: Date | string | null | undefined): strin
     "নভেম্বর",
     "ডিসেম্বর",
   ];
-  const month = bengaliMonths[d.getMonth()];
-  return `${day} ${month}, ${year}`;
+  return `${toBengaliNumber(dayVal)} ${bengaliMonths[monthVal]}, ${toBengaliNumber(yearVal)}`;
 }
 
-// Format Date and Time in Bengali
+// Format Date and Time in Bengali in Asia/Dhaka (GMT+6)
 export function formatBengaliDateTime(date: Date | string | null | undefined): string {
   if (!date) return "";
   const d = new Date(date);
+  if (isNaN(d.getTime())) return "";
+
   const dateStr = formatBengaliDate(d);
-  let hours = d.getHours();
-  const minutes = d.getMinutes().toString().padStart(2, "0");
-  const period = hours >= 12 ? "অপরাহ্ন" : "পূর্বাহ্ন";
-  hours = hours % 12 || 12;
-  return `${dateStr} | ${toBengaliNumber(hours)}:${toBengaliNumber(minutes)} ${period}`;
+
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Dhaka",
+    hour: "numeric",
+    minute: "numeric",
+    hour12: false,
+  }).formatToParts(d);
+
+  const rawHour = parseInt(parts.find((p) => p.type === "hour")?.value || "0", 10);
+  const rawMinute = parts.find((p) => p.type === "minute")?.value || "00";
+
+  let period = "রাত";
+  if (rawHour >= 4 && rawHour < 6) period = "ভোর";
+  else if (rawHour >= 6 && rawHour < 12) period = "সকাল";
+  else if (rawHour >= 12 && rawHour < 15) period = "দুপুর";
+  else if (rawHour >= 15 && rawHour < 18) period = "বিকাল";
+  else if (rawHour >= 18 && rawHour < 20) period = "সন্ধ্যা";
+
+  let hour12 = rawHour % 12;
+  if (hour12 === 0) hour12 = 12;
+
+  const hoursBn = toBengaliNumber(hour12);
+  const minutesBn = toBengaliNumber(rawMinute.padStart(2, "0"));
+
+  return `${dateStr} | ${period} ${hoursBn}:${minutesBn}`;
 }

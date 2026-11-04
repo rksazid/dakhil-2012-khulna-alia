@@ -2,18 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { generateReceiptPdfBuffer } from "@/lib/pdf-generator";
-import { Role } from "@prisma/client";
+import { Role, PaymentStatus } from "@prisma/client";
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getSession();
-    if (!session || !session.userId) {
-      return NextResponse.json({ error: "অননুমোদিত এক্সেস। অনুগ্রহ করে লগইন করুন।" }, { status: 401 });
-    }
-
     const { id } = await params;
     if (!id) {
       return NextResponse.json({ error: "রশিদ আইডি প্রদান করা হয়নি।" }, { status: 400 });
@@ -26,6 +21,7 @@ export async function GET(
         id: true,
         userId: true,
         fundId: true,
+        status: true,
       },
     });
 
@@ -33,28 +29,39 @@ export async function GET(
       return NextResponse.json({ error: "অনুদানের তথ্য পাওয়া যায়নি।" }, { status: 404 });
     }
 
-    // Permission check: Member himself OR Super Admin OR Fund Manager of this fund
-    const isOwner = session.userId === contribution.userId;
-    const isSuperAdmin = session.role === Role.SUPER_ADMIN;
+    // Public verification allowance: If this receipt is officially VERIFIED,
+    // anyone with the direct receipt link/QR code can view and download the official PDF receipt.
+    const isVerifiedPublicReceipt = contribution.status === PaymentStatus.VERIFIED;
 
-    let isManager = false;
-    if (!isOwner && !isSuperAdmin) {
-      const managerRecord = await prisma.fundManager.findUnique({
-        where: {
-          fundId_userId: {
-            fundId: contribution.fundId,
-            userId: session.userId,
+    if (!isVerifiedPublicReceipt) {
+      const session = await getSession();
+      if (!session || !session.userId) {
+        return NextResponse.json({ error: "অননুমোদিত এক্সেস। অনুগ্রহ করে লগইন করুন।" }, { status: 401 });
+      }
+
+      // Permission check: Member himself OR Super Admin OR Fund Manager of this fund
+      const isOwner = session.userId === contribution.userId;
+      const isSuperAdmin = session.role === Role.SUPER_ADMIN;
+
+      let isManager = false;
+      if (!isOwner && !isSuperAdmin) {
+        const managerRecord = await prisma.fundManager.findUnique({
+          where: {
+            fundId_userId: {
+              fundId: contribution.fundId,
+              userId: session.userId,
+            },
           },
-        },
-      });
-      isManager = !!managerRecord;
-    }
+        });
+        isManager = !!managerRecord;
+      }
 
-    if (!isOwner && !isSuperAdmin && !isManager) {
-      return NextResponse.json(
-        { error: "এই রশিদটি দেখার বা ডাউনলোড করার অনুমতি আপনার নেই।" },
-        { status: 403 }
-      );
+      if (!isOwner && !isSuperAdmin && !isManager) {
+        return NextResponse.json(
+          { error: "এই রশিদটি দেখার বা ডাউনলোড করার অনুমতি আপনার নেই।" },
+          { status: 403 }
+        );
+      }
     }
 
     const searchParams = req.nextUrl.searchParams;
