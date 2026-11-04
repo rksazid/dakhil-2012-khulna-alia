@@ -12,6 +12,7 @@ import {
   Receipt,
   Users,
   Bell,
+  Image as ImageIcon,
   History,
   Settings,
   ChevronLeft,
@@ -57,6 +58,7 @@ export function AdminSidebar({ user, pendingPaymentsCount }: AdminSidebarProps) 
       superOnly: true,
     },
     { name: "নোটিশ বোর্ড", href: "/admin/notices", icon: Bell },
+    { name: "ফটো অ্যালবাম ও গ্যালারি", href: "/admin/gallery", icon: ImageIcon },
     {
       name: "অডিট ট্রেইল ও লগ",
       href: "/admin/logs",
