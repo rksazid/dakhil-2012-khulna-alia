@@ -1,10 +1,10 @@
 import Link from "next/link";
-import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
-import { ForumFeedClient, ForumPostItem } from "./forum-feed-client";
-import { MessageSquare, Users, LogIn, UserPlus, Sparkles, ShieldCheck } from "lucide-react";
+import { ForumFeedClient } from "./forum-feed-client";
+import { getForumFeed } from "@/lib/forum";
+import { MessageSquare, LogIn, UserPlus, ShieldCheck } from "lucide-react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -12,27 +12,7 @@ export const metadata: Metadata = {
   description: "খুলনা আলিয়া মাদ্রাসা দাখিল ২০১২ ব্যাচের সকল সহপাঠী ও বন্ধুদের উন্মুক্ত আলোচনা, স্মৃতিচারণ ও বার্তা বিনিময় ফোরাম।",
 };
 
-const authorSelect = {
-  id: true,
-  name: true,
-  phone: true,
-  email: true,
-  avatarUrl: true,
-  thumbnailUrl: true,
-  bannerUrl: true,
-  bio: true,
-  bloodGroup: true,
-  studentGroup: true,
-  classRoll: true,
-  classroom: true,
-  occupation: true,
-  workplace: true,
-  presentAddress: true,
-  permanentAddress: true,
-  role: true,
-  showPhoneInDirectory: true,
-  showEmailInDirectory: true,
-};
+export const dynamic = "force-dynamic";
 
 export default async function ForumPage() {
   const user = await getCurrentUser();
@@ -85,23 +65,8 @@ export default async function ForumPage() {
     );
   }
 
-  // Fetch initial posts for logged-in user
-  const rawPosts = await prisma.forumPost.findMany({
-    where: { parentId: null },
-    orderBy: [{ isPinned: "desc" }, { createdAt: "desc" }],
-    take: 50,
-    include: {
-      author: { select: authorSelect },
-      replies: {
-        orderBy: { createdAt: "asc" },
-        include: {
-          author: { select: authorSelect },
-        },
-      },
-    },
-  });
-
-  const totalPostsCount = await prisma.forumPost.count();
+  // Fetch initial posts with complete recursive thread trees
+  const initialPosts = await getForumFeed();
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
@@ -128,7 +93,7 @@ export default async function ForumPage() {
             সহপাঠীদের উন্মুক্ত মতামত ও বার্তা ওয়াল
           </h1>
           <p className="text-xs sm:text-sm text-emerald-200/90 max-w-2xl leading-relaxed">
-            বন্ধুদের খোঁজ-খবর, স্মৃতিচারণ, মতামত বা যেকোনো কল্যাণমূলক আলোচনা এখানে সবার সাথে শেয়ার করুন এবং সরাসরি উত্তর দিন।
+            বন্ধুদের খোঁজ-খবর, স্মৃতিচারণ, মতামত বা যেকোনো কল্যাণমূলক আলোচনা এখানে সবার সাথে শেয়ার করুন এবং সরাসরি বহুমাত্রিক থ্রেডে উত্তর দিন।
           </p>
         </div>
       </div>
@@ -136,11 +101,12 @@ export default async function ForumPage() {
       {/* Main Forum Body */}
       <main className="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-6 py-8">
         <ForumFeedClient
-          initialPosts={rawPosts as unknown as ForumPostItem[]}
+          initialPosts={initialPosts}
           currentUser={{
             id: user.id,
             name: user.name,
             role: user.role,
+            userType: user.userType,
             avatarUrl: user.avatarUrl,
             thumbnailUrl: user.thumbnailUrl,
           }}
@@ -151,4 +117,3 @@ export default async function ForumPage() {
     </div>
   );
 }
-

@@ -50,6 +50,7 @@ export async function createForumPostAction(formData: FormData) {
             avatarUrl: true,
             thumbnailUrl: true,
             role: true,
+            userType: true,
             studentGroup: true,
             classRoll: true,
             occupation: true,
