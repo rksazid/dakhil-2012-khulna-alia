@@ -57,6 +57,13 @@ export default async function DashboardPage() {
     },
   });
 
+  // 4. Fetch user's personal notifications & updates
+  const notifications = await prisma.notification.findMany({
+    where: { userId: user.id },
+    orderBy: { createdAt: "desc" },
+    take: 50,
+  });
+
   // Aggregates
   const totalVerified = contributions
     .filter((c) => c.status === "VERIFIED")
@@ -168,6 +175,7 @@ export default async function DashboardPage() {
             amountPaid: Number(c.amountPaid),
           }))}
           funds={allFunds}
+          notifications={notifications}
         />
       </main>
 

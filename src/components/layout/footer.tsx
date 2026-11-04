@@ -81,6 +81,11 @@ export async function Footer(props?: FooterProps) {
                 </Link>
               </li>
               <li>
+                <Link href="/forum" className="hover:text-emerald-400 transition">
+                  কমিউনিটি ফোরাম ও আড্ডা
+                </Link>
+              </li>
+              <li>
                 <Link href="/notices" className="hover:text-emerald-400 transition">
                   অফিসিয়াল নোটিশ বোর্ড
                 </Link>

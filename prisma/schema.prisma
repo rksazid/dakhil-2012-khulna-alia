@@ -72,6 +72,8 @@ model User {
   approvedExpenses     FundExpense[]
   activities           ActivityLog[]
   notices              Notice[]
+  forumPosts           ForumPost[]            @relation("UserForumPosts")
+  notifications        Notification[]         @relation("UserNotifications")
 
   @@index([role, isActive])
   @@index([phone])
@@ -225,4 +227,43 @@ model GalleryItem {
   eventDate String?
   category  String?
   createdAt DateTime @default(now())
+}
+
+enum NotificationType {
+  PAYMENT_VERIFIED
+  PAYMENT_REJECTED
+  FORUM_REPLY
+  NOTICE
+  GENERAL
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String           @db.Text
+  link      String?
+  type      NotificationType @default(GENERAL)
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  @@index([userId, isRead, createdAt])
+}
+
+model ForumPost {
+  id        String      @id @default(cuid())
+  content   String      @db.Text
+  authorId  String
+  author    User        @relation("UserForumPosts", fields: [authorId], references: [id], onDelete: Cascade)
+  parentId  String?
+  parent    ForumPost?  @relation("PostReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   ForumPost[] @relation("PostReplies")
+  isPinned  Boolean     @default(false)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@index([parentId, createdAt])
+  @@index([authorId])
+  @@index([isPinned, createdAt])
 }

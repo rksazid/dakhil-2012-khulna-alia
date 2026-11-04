@@ -3,8 +3,10 @@
 import prisma from "@/lib/prisma";
 import { requireAuth, canManageFund } from "@/lib/auth";
 import { logActivity } from "@/lib/activity-logger";
-import { PaymentMethod, PaymentStatus, Role, Prisma } from "@prisma/client";
+import { PaymentMethod, PaymentStatus, Role, Prisma, NotificationType } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { createNotificationHelper } from "./notification-actions";
+import { formatCurrency } from "@/lib/utils";
 
 export interface RecordContributionInput {
   fundId: string;
@@ -231,6 +233,24 @@ export async function verifyContributionAction(
         });
       }
     });
+
+    if (oldStatus !== PaymentStatus.VERIFIED && status === PaymentStatus.VERIFIED) {
+      await createNotificationHelper({
+        userId: contribution.userId,
+        title: "অনুদানের চাঁদা যাচাই ও অনুমোদিত",
+        message: `${contribution.fund.title} তহবিলে আপনার ${contribution.monthYear} মাসের ${formatCurrency(Number(contribution.amountPaid))} অনুদান সফলভাবে যাচাই ও ভেরিফাই করা হয়েছে। ডিজিটাল মানি রিসিপ্ট প্রস্তুত।`,
+        link: "/dashboard",
+        type: NotificationType.PAYMENT_VERIFIED,
+      });
+    } else if (status === PaymentStatus.REJECTED) {
+      await createNotificationHelper({
+        userId: contribution.userId,
+        title: "অনুদানের চাঁদা যাচাই বাতিল",
+        message: `${contribution.fund.title} তহবিলের জন্য প্রেরিত আপনার ${contribution.monthYear} মাসের অনুদানটি তথ্য অমিলের কারণে বাতিল করা হয়েছে। প্রয়োজনে পরিচালকদের সাথে যোগাযোগ করুন।`,
+        link: "/dashboard",
+        type: NotificationType.PAYMENT_REJECTED,
+      });
+    }
 
     await logActivity({
       action: "VERIFY_PAYMENT",

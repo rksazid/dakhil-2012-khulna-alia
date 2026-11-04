@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { SessionPayload } from "@/lib/auth";
 import { logoutAction } from "@/actions/auth-actions";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import {
   Menu,
   X,
@@ -16,6 +17,7 @@ import {
   LogOut,
   LogIn,
   UserPlus,
+  MessageSquare,
 } from "lucide-react";
 
 interface NavbarProps {
@@ -34,6 +36,7 @@ export function Navbar({ session }: NavbarProps) {
     { label: "হোম", href: "/" },
     { label: "তহবিলসমূহ", href: "/funds", icon: HeartHandshake },
     { label: "সদস্য ডিরেক্টরি", href: "/members", icon: Users },
+    { label: "ফোরাম ও আড্ডা", href: "/forum", icon: MessageSquare },
     { label: "নোটিশ ও বিজ্ঞপ্তি", href: "/notices", icon: Bell },
     { label: "স্মৃতি ও অ্যালবাম", href: "/gallery", icon: ImageIcon },
   ];
@@ -74,6 +77,8 @@ export function Navbar({ session }: NavbarProps) {
           <div className="hidden md:flex items-center gap-3">
             {session ? (
               <div className="flex items-center gap-2">
+                <NotificationBell />
+
                 {session.role === "SUPER_ADMIN" || session.role === "FUND_MANAGER" ? (
                   <Link
                     href="/admin"
@@ -129,7 +134,8 @@ export function Navbar({ session }: NavbarProps) {
           </div>
 
           {/* Mobile Menu Button */}
-          <div className="flex items-center gap-2 md:hidden">
+          <div className="flex items-center gap-1.5 md:hidden">
+            {session && <NotificationBell />}
             {session && (
               <Link
                 href="/dashboard"

@@ -1,12 +1,17 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { formatCurrency, toBengaliNumber, formatBengaliDate } from "@/lib/utils";
 import { getDefaultRollingMonths } from "@/lib/months";
 import { PaymentMethod, PaymentStatus, CommitmentStatus } from "@prisma/client";
 import { recordMonthlyContributionAction } from "@/actions/ledger-actions";
 import { createOrUpdateCommitmentAction } from "@/actions/fund-actions";
 import { updateProfileAction } from "@/actions/auth-actions";
+import {
+  markNotificationAsReadAction,
+  markAllNotificationsAsReadAction,
+} from "@/actions/notification-actions";
 import { FileUploader } from "@/components/ui/file-uploader";
 import {
   CreditCard,
@@ -26,6 +31,10 @@ import {
   Hash,
   School,
   ExternalLink,
+  Bell,
+  MessageSquare,
+  AlertCircle,
+  Sparkles,
 } from "lucide-react";
 
 interface FundItem {
@@ -84,6 +93,15 @@ interface MemberDashboardClientProps {
   commitments: CommitmentItem[];
   contributions: ContributionItem[];
   funds: FundItem[];
+  notifications?: Array<{
+    id: string;
+    title: string;
+    message: string;
+    link: string | null;
+    type: string;
+    isRead: boolean;
+    createdAt: string | Date;
+  }>;
 }
 
 export function MemberDashboardClient({
@@ -91,8 +109,15 @@ export function MemberDashboardClient({
   commitments,
   contributions,
   funds,
+  notifications = [],
 }: MemberDashboardClientProps) {
-  const [activeTab, setActiveTab] = useState<"history" | "commitments" | "profile">("history");
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const tabFromUrl = searchParams.get("tab");
+  const [activeTab, setActiveTab] = useState<"history" | "commitments" | "notifications" | "profile">(
+    tabFromUrl === "notifications" ? "notifications" : "history"
+  );
+  const [userNotifications, setUserNotifications] = useState(notifications);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isCommitModalOpen, setIsCommitModalOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -108,6 +133,27 @@ export function MemberDashboardClient({
     paymentMethod: string;
     transactionId?: string | null;
   } | null>(null);
+
+  const unreadNotificationsCount = userNotifications.filter((n) => !n.isRead).length;
+
+  const handleMarkAllNotificationsRead = () => {
+    startTransition(async () => {
+      setUserNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+      await markAllNotificationsAsReadAction();
+    });
+  };
+
+  const handleNotificationItemClick = async (notif: (typeof userNotifications)[0]) => {
+    if (!notif.isRead) {
+      setUserNotifications((prev) =>
+        prev.map((n) => (n.id === notif.id ? { ...n, isRead: true } : n))
+      );
+      await markNotificationAsReadAction(notif.id);
+    }
+    if (notif.link) {
+      router.push(notif.link);
+    }
+  };
 
   // Payment form states
   const [payFundId, setPayFundId] = useState(funds[0]?.id || "");
@@ -253,6 +299,22 @@ export function MemberDashboardClient({
             }`}
           >
             প্রোফাইল সেটিংস
+          </button>
+          <button
+            onClick={() => setActiveTab("notifications")}
+            className={`px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1.5 ${
+              activeTab === "notifications"
+                ? "bg-emerald-700 text-white shadow-xs"
+                : "text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            <Bell className="w-3.5 h-3.5" />
+            <span>নোটিফিকেশন ও আপডেট</span>
+            {unreadNotificationsCount > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-red-600 text-white font-bold">
+                {toBengaliNumber(unreadNotificationsCount)}
+              </span>
+            )}
           </button>
         </div>
 
@@ -659,6 +721,94 @@ export function MemberDashboardClient({
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* Tab 4: Notifications & Personal Updates */}
+      {activeTab === "notifications" && (
+        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs space-y-4 p-5 sm:p-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+            <div>
+              <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+                <Bell className="w-4 h-4 text-emerald-700" />
+                ব্যক্তিগত অ্যাক্টিভিটি ও নোটিফিকেশন আপডেট
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                আপনার চাঁদা ভেরিফিকেশন, অনুমোদন, ফোরাম রিপ্লাই ও ব্যাচ সংক্রান্ত সকল ব্যক্তিগত বার্তা
+              </p>
+            </div>
+
+            {userNotifications.some((n) => !n.isRead) && (
+              <button
+                onClick={handleMarkAllNotificationsRead}
+                disabled={isPending}
+                className="px-3 py-1.5 text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-xl transition flex items-center gap-1.5 disabled:opacity-50"
+              >
+                <Check className="w-3.5 h-3.5" /> সব পঠিত চিহ্নিত করুন
+              </button>
+            )}
+          </div>
+
+          {userNotifications.length === 0 ? (
+            <div className="py-12 text-center space-y-2">
+              <Bell className="w-10 h-10 text-slate-300 mx-auto" />
+              <p className="text-sm font-semibold text-slate-700">কোনো নোটিফিকেশন নেই</p>
+              <p className="text-xs text-slate-400">
+                আপনার অনুদান অনুমোদিত হলে বা ফোরামে আপনার বার্তায় কেউ উত্তর দিলে এখানে নোটিফিকেশন দেখতে পাবেন।
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {userNotifications.map((notif) => (
+                <div
+                  key={notif.id}
+                  onClick={() => handleNotificationItemClick(notif)}
+                  className={`py-4 px-3 sm:px-4 rounded-xl flex items-start justify-between gap-3 transition cursor-pointer hover:bg-slate-50 ${
+                    !notif.isRead ? "bg-emerald-50/60 border border-emerald-100" : ""
+                  }`}
+                >
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div className="mt-0.5 p-2 rounded-xl bg-white border border-slate-200 shadow-2xs">
+                      {notif.type === "PAYMENT_VERIFIED" ? (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      ) : notif.type === "PAYMENT_REJECTED" ? (
+                        <AlertCircle className="w-4 h-4 text-red-500" />
+                      ) : notif.type === "FORUM_REPLY" ? (
+                        <MessageSquare className="w-4 h-4 text-blue-600" />
+                      ) : (
+                        <Bell className="w-4 h-4 text-amber-500" />
+                      )}
+                    </div>
+
+                    <div className="space-y-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h4 className="text-xs sm:text-sm font-bold text-slate-900">
+                          {notif.title}
+                        </h4>
+                        {!notif.isRead && (
+                          <span className="px-2 py-0.2 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                            নতুন
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-slate-600 leading-relaxed">
+                        {notif.message}
+                      </p>
+                      <span className="text-[10.5px] text-slate-400 block font-mono">
+                        {formatBengaliDate(notif.createdAt)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {notif.link && (
+                    <span className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 shrink-0 flex items-center gap-1">
+                      দেখুন <ExternalLink className="w-3 h-3" />
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
