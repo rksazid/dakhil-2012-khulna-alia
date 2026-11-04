@@ -59,12 +59,12 @@ export default async function FundsPage() {
                 <div className="h-2 bg-emerald-600" />
                 <div className="p-6 flex-1 flex flex-col justify-between space-y-5">
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-semibold bg-emerald-50 text-emerald-800 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[11.5px] font-bold bg-emerald-50 text-emerald-800 px-3 py-1 rounded-full border border-emerald-200 whitespace-nowrap">
                         {toBengaliNumber(fund._count.commitments)} জন প্রতিশ্রুতিবদ্ধ
                       </span>
                       <span
-                        className={`text-[11px] font-bold px-2 py-0.5 rounded-md ${
+                        className={`text-[10.5px] font-bold px-2.5 py-0.5 rounded-md ${
                           fund.isActive ? "bg-emerald-100 text-emerald-800" : "bg-slate-200 text-slate-700"
                         }`}
                       >

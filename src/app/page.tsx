@@ -5,6 +5,7 @@ import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { formatCurrency, toBengaliNumber, formatBengaliDate } from "@/lib/utils";
 import { MarkdownContent } from "@/components/ui/markdown-content";
+import { HomepageMembersClient } from "@/components/home/homepage-members-client";
 import {
   HeartHandshake,
   Users,
@@ -101,8 +102,13 @@ export default async function HomePage() {
       bloodGroup: true,
       studentGroup: true,
       classRoll: true,
+      classroom: true,
       occupation: true,
       workplace: true,
+      bio: true,
+      presentAddress: true,
+      permanentAddress: true,
+      role: true,
     },
   });
 
@@ -260,12 +266,12 @@ export default async function HomePage() {
                     <div className="h-2 bg-emerald-600 group-hover:bg-amber-500 transition-colors" />
                     <div className="p-6 flex-1 flex flex-col justify-between space-y-5">
                       <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-semibold bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-200">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[11.5px] font-bold bg-emerald-50 text-emerald-800 px-3 py-1 rounded-full border border-emerald-200 whitespace-nowrap">
                             {toBengaliNumber(fund._count.commitments)} জন প্রতিশ্রুতিবদ্ধ
                           </span>
-                          <span className="text-xs font-mono text-slate-400">
-                            #{fund.slug}
+                          <span className="text-[10.5px] font-bold text-emerald-700 bg-emerald-100/60 px-2.5 py-0.5 rounded-md">
+                            সক্রিয় তহবিল
                           </span>
                         </div>
                         <h3 className="text-lg font-bold text-slate-900 group-hover:text-emerald-800 transition">
@@ -473,57 +479,7 @@ export default async function HomePage() {
               </Link>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {showcaseMembers.map((member) => (
-                <div
-                  key={member.id}
-                  className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs hover:shadow-md transition flex items-center gap-3.5"
-                >
-                  {member.avatarUrl ? (
-                    <img
-                      src={member.avatarUrl}
-                      alt={member.name}
-                      className="w-13 h-13 rounded-xl object-cover border border-emerald-100 shrink-0 shadow-2xs"
-                    />
-                  ) : (
-                    <div className="w-13 h-13 rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-800 text-white font-bold text-base flex items-center justify-center shrink-0 shadow-2xs">
-                      {member.name.charAt(0)}
-                    </div>
-                  )}
-
-                  <div className="min-w-0 flex-1 space-y-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <h4 className="font-bold text-slate-900 text-xs sm:text-sm truncate">
-                        {member.name}
-                      </h4>
-                      {member.studentGroup && (
-                        <span className="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 shrink-0">
-                          {member.studentGroup === "SCIENCE" ? "বিজ্ঞান" : "মানবিক"}
-                        </span>
-                      )}
-                    </div>
-
-                    <p className="text-[11px] text-slate-500 truncate">
-                      {member.occupation || "দাখিল ২০১২ ব্যাচমেট"}
-                    </p>
-
-                    <div className="flex items-center gap-2 pt-0.5 text-[11px]">
-                      {member.email ? (
-                        <a
-                          href={`mailto:${member.email}`}
-                          className="text-emerald-700 hover:underline font-mono truncate max-w-[150px]"
-                          title={member.email}
-                        >
-                          {member.email}
-                        </a>
-                      ) : (
-                        <span className="text-slate-400 font-mono text-[10px]">{member.phone}</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <HomepageMembersClient members={showcaseMembers} />
           </section>
         )}
 

@@ -36,6 +36,7 @@ export default async function MembersPage() {
       occupation: true,
       workplace: true,
       presentAddress: true,
+      permanentAddress: true,
       role: true,
       showPhoneInDirectory: true,
       showEmailInDirectory: true,
