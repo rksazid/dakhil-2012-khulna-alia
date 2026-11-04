@@ -166,12 +166,12 @@ export function MemberDirectoryClient({ members }: { members: MemberItem[] }) {
                     className="relative cursor-pointer group/avatar"
                     title="প্রোফাইল বড় করে দেখুন"
                   >
-                    {member.avatarUrl ? (
+                    {member.thumbnailUrl || member.avatarUrl ? (
                       <div className="w-24 h-24 sm:w-26 sm:h-26 rounded-2xl overflow-hidden border-4 border-white shadow-md bg-slate-100 transition-transform duration-200 group-hover/avatar:scale-105">
                         <img
-                          src={member.avatarUrl}
+                          src={member.thumbnailUrl || member.avatarUrl!}
                           alt={member.name}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover [image-rendering:-webkit-optimize-contrast]"
                         />
                       </div>
                     ) : (

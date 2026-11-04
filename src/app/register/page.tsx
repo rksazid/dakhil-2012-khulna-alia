@@ -9,6 +9,7 @@ import { UserPlus, Lock, Phone, User, Mail, Briefcase, MapPin, Droplet, Graduati
 export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState("");
+  const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [isPending, startTransition] = useTransition();
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -274,11 +275,15 @@ export default function RegisterPage() {
               <FileUploader
                 folder="avatars"
                 label="প্রোফাইল ছবি (ঐচ্ছিক — ব্যাচমেট ডিরেক্টরিতে প্রদর্শনের জন্য)"
-                onUploadComplete={setAvatarUrl}
+                onUploadComplete={(url, thumb) => {
+                  setAvatarUrl(url);
+                  setThumbnailUrl(thumb || url);
+                }}
                 initialUrl={avatarUrl}
                 accept="image/*"
               />
               <input type="hidden" name="avatarUrl" value={avatarUrl} />
+              <input type="hidden" name="thumbnailUrl" value={thumbnailUrl} />
             </div>
 
             <button

@@ -36,6 +36,7 @@ export interface LedgerMember {
   name: string;
   phone: string;
   avatarUrl?: string | null;
+  thumbnailUrl?: string | null;
   committedAmount?: number | null;
   contributions: Record<string, LedgerContribution>;
 }

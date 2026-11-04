@@ -71,6 +71,7 @@ export default async function AdminLedgerPage({ searchParams }: AdminLedgerPageP
       name: true,
       phone: true,
       avatarUrl: true,
+      thumbnailUrl: true,
       commitments: {
         where: { fundId: selectedFund.id },
         select: { committedAmount: true },
@@ -111,6 +112,7 @@ export default async function AdminLedgerPage({ searchParams }: AdminLedgerPageP
       name: m.name,
       phone: m.phone,
       avatarUrl: m.avatarUrl,
+      thumbnailUrl: m.thumbnailUrl,
       committedAmount: m.commitments[0]?.committedAmount
         ? Number(m.commitments[0].committedAmount)
         : null,

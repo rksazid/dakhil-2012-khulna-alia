@@ -68,6 +68,7 @@ export async function registerAction(formData: FormData) {
     const classRoll = (formData.get("classRoll") as string)?.trim() || null;
     const classroom = (formData.get("classroom") as string)?.trim() || null;
     const avatarUrl = (formData.get("avatarUrl") as string)?.trim() || null;
+    const thumbnailUrl = (formData.get("thumbnailUrl") as string)?.trim() || null;
     const occupation = (formData.get("occupation") as string)?.trim() || null;
     const workplace = (formData.get("workplace") as string)?.trim() || null;
     const presentAddress = (formData.get("presentAddress") as string)?.trim() || null;
@@ -112,6 +113,7 @@ export async function registerAction(formData: FormData) {
         email,
         passwordHash,
         avatarUrl,
+        thumbnailUrl,
         bloodGroup,
         studentGroup,
         classRoll,
@@ -176,6 +178,7 @@ export async function updateProfileAction(formData: FormData) {
     const permanentAddress = (formData.get("permanentAddress") as string)?.trim() || null;
     const bio = (formData.get("bio") as string)?.trim() || null;
     const avatarUrl = (formData.get("avatarUrl") as string)?.trim() || user.avatarUrl;
+    const thumbnailUrl = (formData.get("thumbnailUrl") as string)?.trim() || (user as { thumbnailUrl?: string | null }).thumbnailUrl || null;
     const bannerUrl = (formData.get("bannerUrl") as string)?.trim() || null;
     const showPhoneInDirectory = formData.get("showPhoneInDirectory") === "true";
     const showEmailInDirectory = formData.get("showEmailInDirectory") === "true";
@@ -203,6 +206,7 @@ export async function updateProfileAction(formData: FormData) {
         permanentAddress,
         bio,
         avatarUrl,
+        thumbnailUrl,
         bannerUrl,
         showPhoneInDirectory,
         showEmailInDirectory,

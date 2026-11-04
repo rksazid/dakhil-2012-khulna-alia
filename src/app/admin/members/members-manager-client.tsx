@@ -38,6 +38,7 @@ export interface MemberData {
   email: string | null;
   phone: string;
   avatarUrl: string | null;
+  thumbnailUrl?: string | null;
   role: Role;
   isActive: boolean;
   bloodGroup: string | null;
@@ -74,7 +75,9 @@ export function MembersManagerClient({
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<MemberData | null>(null);
   const [addAvatarUrl, setAddAvatarUrl] = useState("");
+  const [addThumbnailUrl, setAddThumbnailUrl] = useState("");
   const [editAvatarUrl, setEditAvatarUrl] = useState("");
+  const [editThumbnailUrl, setEditThumbnailUrl] = useState("");
   const [isPending, startTransition] = useTransition();
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
@@ -182,6 +185,7 @@ export function MembersManagerClient({
           <button
             onClick={() => {
               setAddAvatarUrl("");
+              setAddThumbnailUrl("");
               setIsAddModalOpen(true);
             }}
             className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-xs transition"
@@ -250,11 +254,11 @@ export function MembersManagerClient({
                 <tr key={m.id} className="hover:bg-slate-50">
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-2.5">
-                      {m.avatarUrl ? (
+                      {m.thumbnailUrl || m.avatarUrl ? (
                         <img
-                          src={m.avatarUrl}
+                          src={m.thumbnailUrl || m.avatarUrl!}
                           alt={m.name}
-                          className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0 shadow-2xs"
+                          className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0 shadow-2xs [image-rendering:-webkit-optimize-contrast]"
                         />
                       ) : (
                         <div className="w-9 h-9 rounded-full bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center shrink-0 text-xs">
@@ -336,6 +340,7 @@ export function MembersManagerClient({
                         onClick={() => {
                           setEditingMember(m);
                           setEditAvatarUrl(m.avatarUrl || "");
+                          setEditThumbnailUrl(m.thumbnailUrl || "");
                         }}
                         className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition"
                         title="সদস্য তথ্য সম্পাদনা করুন"
@@ -621,11 +626,15 @@ export function MembersManagerClient({
                 <FileUploader
                   folder="avatars"
                   label="সদস্যের প্রোফাইল ছবি (ঐচ্ছিক)"
-                  onUploadComplete={setAddAvatarUrl}
+                  onUploadComplete={(url, thumb) => {
+                    setAddAvatarUrl(url);
+                    setAddThumbnailUrl(thumb || url);
+                  }}
                   initialUrl={addAvatarUrl}
                   accept="image/*"
                 />
                 <input type="hidden" name="avatarUrl" value={addAvatarUrl} />
+                <input type="hidden" name="thumbnailUrl" value={addThumbnailUrl} />
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
@@ -880,11 +889,15 @@ export function MembersManagerClient({
                 <FileUploader
                   folder="avatars"
                   label="প্রোফাইল ছবি পরিবর্তন / আপলোড"
-                  onUploadComplete={setEditAvatarUrl}
+                  onUploadComplete={(url, thumb) => {
+                    setEditAvatarUrl(url);
+                    setEditThumbnailUrl(thumb || url);
+                  }}
                   initialUrl={editAvatarUrl}
                   accept="image/*"
                 />
                 <input type="hidden" name="avatarUrl" value={editAvatarUrl} />
+                <input type="hidden" name="thumbnailUrl" value={editThumbnailUrl} />
               </div>
 
               <div className="flex items-center gap-2 pt-1">

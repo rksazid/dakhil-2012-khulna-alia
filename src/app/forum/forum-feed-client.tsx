@@ -46,6 +46,7 @@ interface ForumFeedClientProps {
     name: string;
     role: string;
     avatarUrl?: string | null;
+    thumbnailUrl?: string | null;
   };
 }
 
@@ -250,11 +251,11 @@ export function ForumFeedClient({ initialPosts, currentUser }: ForumFeedClientPr
         className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-md space-y-4"
       >
         <div className="flex items-start gap-3">
-          {currentUser.avatarUrl ? (
+          {currentUser.thumbnailUrl || currentUser.avatarUrl ? (
             <img
-              src={currentUser.avatarUrl}
+              src={currentUser.thumbnailUrl || currentUser.avatarUrl!}
               alt={currentUser.name}
-              className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl object-cover border border-slate-200 shrink-0 shadow-2xs"
+              className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl object-cover border border-slate-200 shrink-0 shadow-2xs [image-rendering:-webkit-optimize-contrast]"
             />
           ) : (
             <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-emerald-700 text-white font-bold text-base flex items-center justify-center shrink-0 shadow-2xs">
@@ -345,11 +346,11 @@ export function ForumFeedClient({ initialPosts, currentUser }: ForumFeedClientPr
                       className="cursor-pointer group relative shrink-0"
                       title="প্রোফাইল দেখুন"
                     >
-                      {post.author.avatarUrl ? (
+                      {post.author.thumbnailUrl || post.author.avatarUrl ? (
                         <img
-                          src={post.author.avatarUrl}
+                          src={post.author.thumbnailUrl || post.author.avatarUrl!}
                           alt={post.author.name}
-                          className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl object-cover border-2 border-white shadow-sm ring-1 ring-slate-200 group-hover:scale-105 transition"
+                          className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl object-cover border-2 border-white shadow-sm ring-1 ring-slate-200 group-hover:scale-105 transition [image-rendering:-webkit-optimize-contrast]"
                         />
                       ) : (
                         <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-emerald-700 to-emerald-950 text-white font-bold text-base flex items-center justify-center border-2 border-white shadow-sm group-hover:scale-105 transition">
@@ -489,11 +490,11 @@ export function ForumFeedClient({ initialPosts, currentUser }: ForumFeedClientPr
                               onClick={() => setSelectedMember(reply.author)}
                               className="cursor-pointer group relative shrink-0"
                             >
-                              {reply.author.avatarUrl ? (
+                              {reply.author.thumbnailUrl || reply.author.avatarUrl ? (
                                 <img
-                                  src={reply.author.avatarUrl}
+                                  src={reply.author.thumbnailUrl || reply.author.avatarUrl!}
                                   alt={reply.author.name}
-                                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl object-cover border border-slate-200"
+                                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl object-cover border border-slate-200 [image-rendering:-webkit-optimize-contrast]"
                                 />
                               ) : (
                                 <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-emerald-700 text-white font-bold text-xs flex items-center justify-center">
@@ -584,3 +585,4 @@ export function ForumFeedClient({ initialPosts, currentUser }: ForumFeedClientPr
     </div>
   );
 }
+

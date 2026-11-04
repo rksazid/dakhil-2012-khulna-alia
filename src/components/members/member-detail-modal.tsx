@@ -25,6 +25,7 @@ export interface MemberDetailData {
   email?: string | null;
   phone: string;
   avatarUrl?: string | null;
+  thumbnailUrl?: string | null;
   bannerUrl?: string | null;
   bio?: string | null;
   bloodGroup?: string | null;
@@ -140,9 +141,9 @@ export function MemberDetailModal({ member, onClose }: MemberDetailModalProps) {
                 {member.avatarUrl ? (
                   <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-3xl overflow-hidden border-4 border-white shadow-2xl bg-white aspect-square shrink-0 ring-1 ring-slate-900/10">
                     <img
-                      src={member.avatarUrl}
+                      src={member.thumbnailUrl || member.avatarUrl}
                       alt={member.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 [image-rendering:-webkit-optimize-contrast]"
                     />
                     <a
                       href={member.avatarUrl}

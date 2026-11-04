@@ -48,6 +48,7 @@ export async function createForumPostAction(formData: FormData) {
             id: true,
             name: true,
             avatarUrl: true,
+            thumbnailUrl: true,
             role: true,
             studentGroup: true,
             classRoll: true,
@@ -147,3 +148,4 @@ export async function togglePinForumPostAction(postId: string) {
     return { success: false, error: "পিন স্ট্যাটাস পরিবর্তন ব্যর্থ হয়েছে।" };
   }
 }
+

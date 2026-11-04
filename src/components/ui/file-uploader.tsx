@@ -4,11 +4,84 @@ import { useState, useRef } from "react";
 import { Upload, X, Check, Image as ImageIcon, Loader2 } from "lucide-react";
 
 interface FileUploaderProps {
-  onUploadComplete: (url: string) => void;
+  onUploadComplete: (url: string, thumbnailUrl?: string) => void;
   folder?: "receipts" | "avatars" | "banners" | "gallery" | "uploads";
   label?: string;
   initialUrl?: string | null;
   accept?: string;
+}
+
+/**
+ * Generates a high-quality, crisp 300x300 square-cropped thumbnail for avatars.
+ * This eliminates the blurry/fuzzy downscaling artifacts that occur when mobile
+ * browsers downscale 12-48 megapixel photos to 80-96px containers.
+ */
+async function generateSquareThumbnail(
+  file: File,
+  size = 300,
+  quality = 0.88
+): Promise<File | null> {
+  if (
+    !file.type.startsWith("image/") ||
+    file.type === "image/svg+xml" ||
+    file.type === "image/gif"
+  ) {
+    return null;
+  }
+
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const canvas = document.createElement("canvas");
+          canvas.width = size;
+          canvas.height = size;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) {
+            resolve(null);
+            return;
+          }
+
+          // Center crop to a 1:1 square
+          const minDim = Math.min(img.width, img.height);
+          const sx = Math.round((img.width - minDim) / 2);
+          const sy = Math.round((img.height - minDim) / 2);
+
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = "high";
+          ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, size, size);
+
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                const thumbFile = new File(
+                  [blob],
+                  `thumb_${file.name.replace(/\.[^.]+$/, ".jpg")}`,
+                  {
+                    type: "image/jpeg",
+                    lastModified: Date.now(),
+                  }
+                );
+                resolve(thumbFile);
+              } else {
+                resolve(null);
+              }
+            },
+            "image/jpeg",
+            quality
+          );
+        } catch {
+          resolve(null);
+        }
+      };
+      img.onerror = () => resolve(null);
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = () => resolve(null);
+    reader.readAsDataURL(file);
+  });
 }
 
 /**
@@ -110,6 +183,18 @@ export function FileUploader({
       formData.append("file", fileToUpload);
       formData.append("folder", folder);
 
+      // If uploading an avatar, generate a crisp 300x300 square thumbnail
+      if (folder === "avatars") {
+        try {
+          const thumbnailFile = await generateSquareThumbnail(originalFile, 300, 0.88);
+          if (thumbnailFile) {
+            formData.append("thumbnail", thumbnailFile);
+          }
+        } catch (thumbErr) {
+          console.warn("Avatar thumbnail generation skipped:", thumbErr);
+        }
+      }
+
       // 3. Send upload request
       const res = await fetch("/api/upload", {
         method: "POST",
@@ -118,7 +203,7 @@ export function FileUploader({
 
       // 4. Safe text-first response reading (handles non-JSON HTML/text errors such as HTTP 413)
       const text = await res.text();
-      let data: { success?: boolean; error?: string; url?: string } = {};
+      let data: { success?: boolean; error?: string; url?: string; thumbnailUrl?: string } = {};
       try {
         data = JSON.parse(text);
       } catch {
@@ -137,7 +222,7 @@ export function FileUploader({
 
       if (data.url) {
         setPreviewUrl(data.url);
-        onUploadComplete(data.url);
+        onUploadComplete(data.url, data.thumbnailUrl || data.url);
       }
     } catch (err: unknown) {
       console.error("Upload handler error:", err);

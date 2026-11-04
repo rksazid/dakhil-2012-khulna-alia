@@ -18,6 +18,7 @@ const authorSelect = {
   phone: true,
   email: true,
   avatarUrl: true,
+  thumbnailUrl: true,
   bannerUrl: true,
   bio: true,
   bloodGroup: true,
@@ -112,6 +113,7 @@ export default async function ForumPage() {
           email: user.email,
           role: user.role,
           avatarUrl: user.avatarUrl,
+          thumbnailUrl: user.thumbnailUrl,
         }}
       />
 
@@ -140,6 +142,7 @@ export default async function ForumPage() {
             name: user.name,
             role: user.role,
             avatarUrl: user.avatarUrl,
+            thumbnailUrl: user.thumbnailUrl,
           }}
         />
       </main>
@@ -148,3 +151,4 @@ export default async function ForumPage() {
     </div>
   );
 }
+

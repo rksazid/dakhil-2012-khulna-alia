@@ -17,6 +17,7 @@ export interface SessionPayload {
   email: string | null;
   role: Role;
   avatarUrl: string | null;
+  thumbnailUrl?: string | null;
 }
 
 export async function hashPassword(password: string): Promise<string> {
@@ -64,6 +65,7 @@ export async function getCurrentUser() {
       email: true,
       role: true,
       avatarUrl: true,
+      thumbnailUrl: true,
       bannerUrl: true,
       bio: true,
       bloodGroup: true,

@@ -10,6 +10,7 @@ const authorSelect = {
   phone: true,
   email: true,
   avatarUrl: true,
+  thumbnailUrl: true,
   bannerUrl: true,
   bio: true,
   bloodGroup: true,

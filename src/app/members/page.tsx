@@ -28,6 +28,7 @@ export default async function MembersPage() {
       email: true,
       phone: true,
       avatarUrl: true,
+      thumbnailUrl: true,
       bannerUrl: true,
       bio: true,
       bloodGroup: true,

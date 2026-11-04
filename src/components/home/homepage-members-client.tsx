@@ -55,12 +55,12 @@ export function HomepageMembersClient({
                 className="cursor-pointer group/avatar relative"
                 title="প্রোফাইল বড় করে দেখুন"
               >
-                {member.avatarUrl ? (
+                {member.thumbnailUrl || member.avatarUrl ? (
                   <div className="w-20 h-20 sm:w-22 sm:h-22 rounded-2xl overflow-hidden border-4 border-white shadow-md bg-slate-100 group-hover/avatar:scale-105 transition-transform duration-200">
                     <img
-                      src={member.avatarUrl}
+                      src={member.thumbnailUrl || member.avatarUrl!}
                       alt={member.name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover [image-rendering:-webkit-optimize-contrast]"
                     />
                   </div>
                 ) : (

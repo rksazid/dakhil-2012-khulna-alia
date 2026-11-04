@@ -226,3 +226,4 @@ export function NotificationBell({ initialUnreadCount = 0 }: { initialUnreadCoun
     </div>
   );
 }
+

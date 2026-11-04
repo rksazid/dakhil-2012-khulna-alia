@@ -145,6 +145,7 @@ export default async function HomePage() {
       email: true,
       phone: true,
       avatarUrl: true,
+      thumbnailUrl: true,
       bannerUrl: true,
       bloodGroup: true,
       studentGroup: true,

@@ -88,6 +88,7 @@ interface MemberDashboardClientProps {
     classRoll?: string | null;
     classroom?: string | null;
     avatarUrl: string | null;
+    thumbnailUrl?: string | null;
     bannerUrl?: string | null;
   };
   commitments: CommitmentItem[];
@@ -164,6 +165,7 @@ export function MemberDashboardClient({
   const [payReceiptUrl, setPayReceiptUrl] = useState("");
   const [payNote, setPayNote] = useState("");
   const [profileAvatarUrl, setProfileAvatarUrl] = useState(user.avatarUrl || "");
+  const [profileThumbnailUrl, setProfileThumbnailUrl] = useState(user.thumbnailUrl || "");
   const [profileBannerUrl, setProfileBannerUrl] = useState(user.bannerUrl || "");
 
   // Commitment form states
@@ -693,10 +695,14 @@ export function MemberDashboardClient({
                 <FileUploader
                   folder="avatars"
                   label="প্রোফাইল ছবি"
-                  onUploadComplete={setProfileAvatarUrl}
+                  onUploadComplete={(url, thumb) => {
+                    setProfileAvatarUrl(url);
+                    setProfileThumbnailUrl(thumb || url);
+                  }}
                   initialUrl={profileAvatarUrl}
                 />
                 <input type="hidden" name="avatarUrl" value={profileAvatarUrl} />
+                <input type="hidden" name="thumbnailUrl" value={profileThumbnailUrl} />
               </div>
 
               <div>

@@ -85,6 +85,7 @@ export default async function DashboardPage() {
           email: user.email,
           role: user.role,
           avatarUrl: user.avatarUrl,
+          thumbnailUrl: user.thumbnailUrl,
         }}
       />
 

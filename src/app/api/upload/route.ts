@@ -6,6 +6,7 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
+    const thumbnail = formData.get("thumbnail") as File | null;
     const folder = (formData.get("folder") as string) || "uploads";
 
     if (!file) {
@@ -47,9 +48,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    let thumbnailUrl = result.url;
+    if (thumbnail) {
+      const thumbResult = await uploadToVercelBlob(
+        thumbnail,
+        `thumb_${thumbnail.name}`,
+        `${targetFolder}/thumbs`
+      );
+      if (thumbResult.success && thumbResult.url) {
+        thumbnailUrl = thumbResult.url;
+      }
+    }
+
     return NextResponse.json({
       success: true,
       url: result.url,
+      thumbnailUrl,
     });
   } catch (error: unknown) {
     console.error("Upload route error:", error);

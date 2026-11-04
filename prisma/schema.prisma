@@ -46,6 +46,7 @@ model User {
   phone                String                 @unique
   passwordHash         String
   avatarUrl            String?
+  thumbnailUrl         String?
   bannerUrl            String?
   batchYear            Int                    @default(2012)
   bio                  String?
