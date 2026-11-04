@@ -88,3 +88,4 @@ clearDatabase()
   .finally(async () => {
     await prisma.$disconnect();
   });
+

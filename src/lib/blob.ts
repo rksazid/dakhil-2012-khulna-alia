@@ -8,7 +8,7 @@ export interface UploadResult {
 
 /**
  * Uploads a file to Vercel Public Object Storage (Vercel Blob)
- * @param file File or Buffer to upload
+ * @param file File, Buffer, or Blob to upload
  * @param filename File name (e.g. receipt-123.jpg)
  * @param folder Subfolder name (e.g. receipts, avatars, banners)
  */
@@ -22,16 +22,16 @@ export async function uploadToVercelBlob(
     const cleanFilename = filename.replace(/[^a-zA-Z0-9.-]/g, "_");
     const path = `${folder}/${Date.now()}-${cleanFilename}`;
 
-    // If Vercel Blob token is configured, use official Vercel Blob store
-    if (token) {
+    // If Vercel Blob token is configured or running on Vercel
+    if (token || process.env.VERCEL) {
       const blob = await put(path, file, {
         access: "public",
-        token,
+        ...(token ? { token } : {}),
       });
       return { success: true, url: blob.url };
     }
 
-    // If running in development without a BLOB_READ_WRITE_TOKEN,
+    // In local development without BLOB_READ_WRITE_TOKEN,
     // convert to base64 Data URL so local testing works seamlessly
     if (file instanceof File || file instanceof Blob) {
       const arrayBuffer = await file.arrayBuffer();
@@ -53,4 +53,3 @@ export async function uploadToVercelBlob(
     };
   }
 }
-

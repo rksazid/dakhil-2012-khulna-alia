@@ -4,14 +4,6 @@ import { getSession } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getSession();
-    if (!session) {
-      return NextResponse.json(
-        { success: false, error: "অননুমোদিত অ্যাক্সেস। অনুগ্রহ করে লগইন করুন।" },
-        { status: 401 }
-      );
-    }
-
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
     const folder = (formData.get("folder") as string) || "uploads";
@@ -23,15 +15,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Limit file size to 10MB
-    if (file.size > 10 * 1024 * 1024) {
+    // Allowed folder names
+    const allowedFolders = ["avatars", "receipts", "banners", "gallery", "uploads"];
+    const targetFolder = allowedFolders.includes(folder) ? folder : "uploads";
+
+    // Authentication check:
+    // Avatars can be uploaded during public registration or by authenticated users.
+    // Receipts, banners, and general gallery uploads require an active session.
+    const session = await getSession();
+    if (!session && targetFolder !== "avatars") {
       return NextResponse.json(
-        { success: false, error: "ফাইলের সাইজ সর্বোচ্চ ১০ মেগাবাইট হতে পারবে।" },
-        { status: 400 }
+        { success: false, error: "অননুমোদিত অ্যাক্সেস। অনুগ্রহ করে লগইন করুন।" },
+        { status: 401 }
       );
     }
 
-    const result = await uploadToVercelBlob(file, file.name, folder);
+    // Limit file size to 4.5MB (Vercel serverless request body boundary)
+    if (file.size > 4.5 * 1024 * 1024) {
+      return NextResponse.json(
+        { success: false, error: "ফাইলের সাইজ সর্বোচ্চ ৪.৫ মেগাবাইট হতে পারবে।" },
+        { status: 413 }
+      );
+    }
+
+    const result = await uploadToVercelBlob(file, file.name, targetFolder);
 
     if (!result.success) {
       return NextResponse.json(
@@ -52,4 +59,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
