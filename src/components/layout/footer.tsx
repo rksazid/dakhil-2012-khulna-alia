@@ -1,7 +1,39 @@
 import Link from "next/link";
 import { Heart, ShieldCheck, Mail, Phone, MapPin } from "lucide-react";
+import prisma from "@/lib/prisma";
 
-export function Footer() {
+export interface FooterProps {
+  contactEmail?: string;
+  contactPhone?: string;
+  batchMotto?: string;
+}
+
+export async function Footer(props?: FooterProps) {
+  let { contactEmail, contactPhone, batchMotto } = props || {};
+
+  // If any settings are not passed as props, fetch dynamically from DB
+  if (!contactEmail || !contactPhone || !batchMotto) {
+    try {
+      const settings = await prisma.siteSetting.findMany({
+        where: {
+          key: { in: ["contact_email", "contact_phone", "batch_motto"] },
+        },
+      });
+      const map = settings.reduce<Record<string, string>>((acc, s) => {
+        acc[s.key] = s.value;
+        return acc;
+      }, {});
+
+      contactEmail = contactEmail || map["contact_email"] || "support@dakhil2012khulna.org";
+      contactPhone = contactPhone || map["contact_phone"] || "+880 1711-000001";
+      batchMotto = batchMotto || map["batch_motto"] || "বন্ধুত্বে প্রীতি, সেবায় ঐক্য — খুলনা আলিয়া ২০১২";
+    } catch {
+      contactEmail = contactEmail || "support@dakhil2012khulna.org";
+      contactPhone = contactPhone || "+880 1711-000001";
+      batchMotto = batchMotto || "বন্ধুত্বে প্রীতি, সেবায় ঐক্য — খুলনা আলিয়া ২০১২";
+    }
+  }
+
   return (
     <footer className="bg-slate-900 text-slate-300 pt-12 pb-8 border-t border-slate-800 no-print">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -16,6 +48,13 @@ export function Footer() {
                 দাখিল ২০১২ ব্যাচ
               </span>
             </div>
+
+            {batchMotto && (
+              <p className="text-xs font-semibold text-emerald-400 italic">
+                “{batchMotto}”
+              </p>
+            )}
+
             <p className="text-xs text-slate-400 leading-relaxed">
               খুলনা আলিয়া মাদ্রাসা দাখিল ২০১২ ব্যাচের সকল বন্ধুদের ভ্রাতৃত্ব, পারস্পরিক কল্যাণ ও স্থায়ী সদকায়ে যারিয়াহর ডিজিটাল স্বচ্ছ প্ল্যাটফর্ম।
             </p>
@@ -77,14 +116,28 @@ export function Footer() {
                 <MapPin className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                 <span>খুলনা আলিয়া মাদ্রাসা চত্বর, খুলনা</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Phone className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                <span>+৮৮০ ১৭১১-০০০০০১ (সমন্বয়ক)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Mail className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                <span>contact@dakhil2012khulna.org</span>
-              </div>
+              {contactPhone && (
+                <div className="flex items-center gap-2">
+                  <Phone className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  <a
+                    href={`tel:${contactPhone.replace(/[\s-]/g, "")}`}
+                    className="hover:text-emerald-400 transition font-mono"
+                  >
+                    {contactPhone}
+                  </a>
+                </div>
+              )}
+              {contactEmail && (
+                <div className="flex items-center gap-2">
+                  <Mail className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  <a
+                    href={`mailto:${contactEmail}`}
+                    className="hover:text-emerald-400 transition font-mono truncate block"
+                  >
+                    {contactEmail}
+                  </a>
+                </div>
+              )}
             </div>
           </div>
         </div>

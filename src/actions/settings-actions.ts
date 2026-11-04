@@ -30,6 +30,7 @@ export async function updateSiteSettingsAction(formData: FormData) {
       },
     });
 
+    revalidatePath("/", "layout");
     revalidatePath("/");
     revalidatePath("/admin/settings");
     return { success: true };

@@ -61,6 +61,7 @@ import {
   Calendar,
   Layers,
   FileText,
+  Mail,
 } from "lucide-react";
 
 
@@ -81,6 +82,9 @@ export default async function HomePage() {
   const marqueeNotice =
     settings["marquee_notice"] ||
     "📢 দাখিল ২০১২ ব্যাচের সকল বন্ধুদের প্রোফাইল হালনাগাদ এবং কল্যাণ ফান্ডের মাসিক চাঁদা নিয়মিত পরিশোধের আহ্বান জানানো হচ্ছে।";
+  const contactEmail = settings["contact_email"] || "support@dakhil2012khulna.org";
+  const contactPhone = settings["contact_phone"] || "+880 1711-000001";
+  const batchMotto = settings["batch_motto"] || "বন্ধুত্বে প্রীতি, সেবায় ঐক্য — খুলনা আলিয়া ২০১২";
 
   // 2. Compute Transparency Financial Stats
   const activeFunds = await prisma.fund.findMany({
@@ -184,9 +188,9 @@ export default async function HomePage() {
         <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px]" />
         
         <div className="max-w-5xl mx-auto text-center relative z-10 space-y-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-700/60 border border-emerald-500/40 text-xs text-emerald-200 backdrop-blur-xs">
-            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            <span>দাখিল ২০১২ অ্যালামনাই পোর্টাল ও কল্যাণ তহবিল</span>
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-700/60 border border-emerald-500/40 text-xs font-semibold text-emerald-100 backdrop-blur-xs shadow-xs">
+            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+            <span>{batchMotto}</span>
           </div>
 
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight">
@@ -574,9 +578,48 @@ export default async function HomePage() {
             </div>
           </section>
         )}
+        {/* Official Helpline / Contact Quick Banner */}
+        <section className="bg-gradient-to-r from-emerald-950 via-emerald-900 to-teal-950 rounded-3xl p-6 sm:p-8 text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl border border-emerald-800/80">
+          <div className="space-y-1.5 text-center md:text-left">
+            <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-amber-300">
+              <PhoneCall className="w-3.5 h-3.5" /> জরুরি যোগাযোগ ও সহায়তা
+            </span>
+            <h3 className="text-xl sm:text-2xl font-black text-white">
+              যেকোনো তথ্যে বা প্রয়োজনে যোগাযোগ করুন
+            </h3>
+            <p className="text-xs text-emerald-200/90 max-w-xl">
+              ফান্ডিং, চাঁদা ভেরিফিকেশন অথবা ব্যাচ সংক্রান্ত যেকোনো তথ্যের জন্য অফিসিয়াল হটলাইন বা ইমেইলে সরাসরি যোগাযোগ করুন।
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-3 shrink-0">
+            {contactPhone && (
+              <a
+                href={`tel:${contactPhone.replace(/[\s-]/g, "")}`}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs sm:text-sm transition shadow-md"
+              >
+                <PhoneCall className="w-4 h-4" />
+                <span className="font-mono">{contactPhone}</span>
+              </a>
+            )}
+            {contactEmail && (
+              <a
+                href={`mailto:${contactEmail}`}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 font-medium text-xs sm:text-sm transition backdrop-blur-xs font-mono"
+              >
+                <Mail className="w-4 h-4 text-emerald-300" />
+                <span>{contactEmail}</span>
+              </a>
+            )}
+          </div>
+        </section>
       </main>
 
-      <Footer />
+      <Footer
+        contactEmail={contactEmail}
+        contactPhone={contactPhone}
+        batchMotto={batchMotto}
+      />
     </div>
   );
 }
