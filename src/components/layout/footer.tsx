@@ -40,9 +40,13 @@ export async function Footer(props?: FooterProps) {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           {/* Brand info */}
           <div className="space-y-3 md:col-span-1">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white font-bold text-sm">
-                ১২
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-full overflow-hidden shrink-0 shadow-sm">
+                <img
+                  src="/logo.png"
+                  alt="দাখিল ২০১২ ব্যাচ লোগো"
+                  className="w-full h-full object-cover"
+                />
               </div>
               <span className="font-bold text-white text-base">
                 দাখিল ২০১২ ব্যাচ

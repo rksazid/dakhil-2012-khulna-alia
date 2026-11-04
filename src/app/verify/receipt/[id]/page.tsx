@@ -141,8 +141,12 @@ export default async function ReceiptVerificationPage({ params }: Props) {
         {/* Brand Header */}
         <div className="text-center space-y-2">
           <Link href="/" className="inline-flex items-center gap-2.5 group">
-            <div className="w-11 h-11 rounded-2xl bg-emerald-700 flex items-center justify-center text-white font-black text-lg shadow-md group-hover:bg-emerald-800 transition">
-              ১২
+            <div className="w-12 h-12 rounded-full overflow-hidden shadow-md group-hover:scale-105 transition-transform shrink-0">
+              <img
+                src="/logo.png"
+                alt="দাখিল ২০১২ ব্যাচ লোগো"
+                className="w-full h-full object-cover"
+              />
             </div>
             <div className="text-left">
               <span className="block text-base font-extrabold text-slate-900 tracking-tight leading-tight">
@@ -409,3 +413,4 @@ export default async function ReceiptVerificationPage({ params }: Props) {
     </div>
   );
 }
+

@@ -2,6 +2,8 @@ import prisma from "@/lib/prisma";
 import { formatBengaliDate, formatBengaliDateTime, formatCurrency, toBengaliNumber } from "@/lib/utils";
 import { PaymentStatus } from "@prisma/client";
 import QRCode from "qrcode";
+import fs from "fs";
+import path from "path";
 
 interface ReceiptPdfResult {
   buffer: Buffer;
@@ -39,6 +41,7 @@ export function generateReceiptHtml(data: {
   contactEmail?: string | null;
   verificationUrl: string;
   qrCodeDataUrl?: string;
+  logoBase64?: string;
 }): string {
   const isApproved = data.status === PaymentStatus.VERIFIED;
   const isPending = data.status === PaymentStatus.PENDING;
@@ -388,7 +391,13 @@ export function generateReceiptHtml(data: {
         <td style="vertical-align: middle;">
           <table>
             <tr>
-              <td><div class="logo-badge">১২</div></td>
+              <td>
+                ${
+                  data.logoBase64
+                    ? `<img src="${data.logoBase64}" alt="লোগো" style="width: 52px; height: 52px; border-radius: 50%; vertical-align: middle; margin-right: 12px; display: inline-block;" />`
+                    : `<div class="logo-badge">১২</div>`
+                }
+              </td>
               <td>
                 <div class="org-title">দাখিল ২০১২ ব্যাচ — খুলনা আলিয়া মাদ্রাসা</div>
                 <div class="org-sub">বন্ধু কল্যাণ তহবিল ও সেন্ট্রাল একাউন্টস ম্যানেজমেন্ট পোর্টাল</div>
@@ -600,6 +609,17 @@ export async function generateReceiptPdfBuffer(contributionId: string): Promise<
     console.warn("Failed to generate receipt QR code:", qrErr);
   }
 
+  let logoBase64: string | undefined = undefined;
+  try {
+    const logoPath = path.join(process.cwd(), "public", "logo.png");
+    if (fs.existsSync(logoPath)) {
+      const buf = fs.readFileSync(logoPath);
+      logoBase64 = `data:image/png;base64,${buf.toString("base64")}`;
+    }
+  } catch (logoErr) {
+    console.warn("Failed to read logo for receipt:", logoErr);
+  }
+
   const receiptNo = `RCPT-${contribution.monthYear.replace(/[^a-zA-Z0-9\u0980-\u09FF]/g, "")}-${contribution.id.slice(-6).toUpperCase()}`;
   const amountPaidNum = Number(contribution.amountPaid);
   const amountPaidFormatted = formatCurrency(amountPaidNum);
@@ -632,6 +652,7 @@ export async function generateReceiptPdfBuffer(contributionId: string): Promise<
     contactEmail,
     verificationUrl,
     qrCodeDataUrl,
+    logoBase64,
   });
 
   // Call PDF service endpoints with primary (Vercel) and fallback (Render)

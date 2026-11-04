@@ -47,8 +47,12 @@ export function Navbar({ session }: NavbarProps) {
         <div className="flex items-center justify-between h-16">
           {/* Brand Logo */}
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-emerald-700 flex items-center justify-center text-white font-bold text-lg shadow-xs group-hover:bg-emerald-800 transition">
-              ১২
+            <div className="w-10 h-10 rounded-full overflow-hidden shadow-xs shrink-0 group-hover:scale-105 transition-transform">
+              <img
+                src="/logo.png"
+                alt="দাখিল ২০১২ ব্যাচ লোগো"
+                className="w-full h-full object-cover"
+              />
             </div>
             <div>
               <span className="font-bold text-slate-900 text-base leading-tight block group-hover:text-emerald-800 transition">

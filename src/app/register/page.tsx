@@ -42,9 +42,13 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-xl text-center space-y-2">
-        <Link href="/" className="inline-flex items-center gap-2">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-700 flex items-center justify-center text-white font-black text-xl shadow-md">
-            ১২
+        <Link href="/" className="inline-flex items-center gap-2 group">
+          <div className="w-16 h-16 rounded-full overflow-hidden shadow-lg group-hover:scale-105 transition-transform">
+            <img
+              src="/logo.png"
+              alt="দাখিল ২০১২ ব্যাচ লোগো"
+              className="w-full h-full object-cover"
+            />
           </div>
         </Link>
         <h2 className="text-2xl font-bold tracking-tight text-slate-900">

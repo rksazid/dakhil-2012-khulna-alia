@@ -84,15 +84,27 @@ export function AdminSidebar({ user, pendingPaymentsCount }: AdminSidebarProps) 
     >
       {/* Top Header */}
       <div className="h-16 px-4 flex items-center justify-between border-b border-slate-800">
-        {!collapsed && (
-          <Link href="/admin" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center font-bold text-white text-sm">
-              ১২
+        {!collapsed ? (
+          <Link href="/admin" className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 shadow-xs">
+              <img
+                src="/logo.png"
+                alt="দাখিল ২০১২ ব্যাচ লোগো"
+                className="w-full h-full object-cover"
+              />
             </div>
             <div>
               <p className="font-bold text-sm text-white leading-tight">অ্যাডমিন প্যানেল</p>
               <p className="text-[10px] text-emerald-400 font-medium">দাখিল ২০১২ ব্যাচ</p>
             </div>
+          </Link>
+        ) : (
+          <Link href="/admin" className="w-8 h-8 rounded-full overflow-hidden shrink-0 shadow-xs">
+            <img
+              src="/logo.png"
+              alt="দাখিল ২০১২ ব্যাচ লোগো"
+              className="w-full h-full object-cover"
+            />
           </Link>
         )}
 
