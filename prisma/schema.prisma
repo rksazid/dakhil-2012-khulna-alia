@@ -63,6 +63,7 @@ model User {
   userType             String                 @default("BATCH_MEMBER") // "BATCH_MEMBER", "TEACHER", "WELL_WISHER"
   role                 Role                   @default(MEMBER)
   isActive             Boolean                @default(true)
+  isClaimed            Boolean                @default(true) // false if offline placeholder member added by admin
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
 

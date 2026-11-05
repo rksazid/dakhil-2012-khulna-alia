@@ -290,7 +290,13 @@ export function SpreadsheetLedger({
                       </div>
                       <div className="min-w-0">
                         <p className="font-semibold text-slate-900 truncate">{member.name}</p>
-                        <p className="text-[11px] text-slate-500 font-mono">{member.phone}</p>
+                        {member.phone.startsWith("offline_") ? (
+                          <span className="text-[10px] text-amber-800 font-sans font-medium bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200">
+                            অফলাইন সদস্য
+                          </span>
+                        ) : (
+                          <p className="text-[11px] text-slate-500 font-mono">{member.phone}</p>
+                        )}
                       </div>
                     </div>
                   </td>

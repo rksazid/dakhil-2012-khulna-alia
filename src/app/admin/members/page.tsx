@@ -22,6 +22,7 @@ export default async function AdminMembersPage() {
       role: true,
       userType: true,
       isActive: true,
+      isClaimed: true,
       bloodGroup: true,
       studentGroup: true,
       classRoll: true,

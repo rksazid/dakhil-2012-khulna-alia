@@ -330,3 +330,165 @@ export async function toggleMemberActiveAction(userId: string, isActive: boolean
     return { success: false, error: "সদস্য স্ট্যাটাস পরিবর্তন ব্যর্থ হয়েছে।" };
   }
 }
+
+export async function createOfflineMemberAction(formData: FormData) {
+  try {
+    const admin = await requireRole([Role.SUPER_ADMIN, Role.FUND_MANAGER]);
+
+    const name = (formData.get("name") as string)?.trim();
+    const userType = (formData.get("userType") as string)?.trim() || "BATCH_MEMBER";
+    const initialFundId = (formData.get("initialFundId") as string)?.trim() || null;
+    const initialCommitment = parseFloat(formData.get("initialCommitment") as string) || 0;
+    const note = (formData.get("note") as string)?.trim() || null;
+
+    if (!name) {
+      return { success: false, error: "সদস্যের নাম আবশ্যক।" };
+    }
+
+    const pseudoPhone = `offline_${Date.now().toString().slice(-6)}_${Math.floor(Math.random() * 1000)}`;
+    const dummyHash = await hashPassword("Offline123!");
+
+    const user = await prisma.user.create({
+      data: {
+        name,
+        phone: pseudoPhone,
+        passwordHash: dummyHash,
+        batchYear: 2012,
+        role: Role.MEMBER,
+        userType,
+        isActive: true,
+        isClaimed: false,
+        bio: note,
+        showPhoneInDirectory: false,
+      },
+    });
+
+    if (initialFundId && initialCommitment > 0) {
+      await prisma.fundCommitment.create({
+        data: {
+          fundId: initialFundId,
+          userId: user.id,
+          committedAmount: initialCommitment,
+          startMonth: "অক্টোবর-২৬",
+          status: "ACTIVE",
+        },
+      });
+    }
+
+    await logActivity({
+      action: "CREATE_OFFLINE_MEMBER",
+      entityType: "USER",
+      entityId: user.id,
+      performedByUserId: admin.id,
+      details: {
+        name: user.name,
+        userType: user.userType,
+        initialCommitment,
+        summary: `নতুন অফলাইন সদস্য "${user.name}" তালিকায় যুক্ত করা হয়েছে।`,
+      },
+    });
+
+    revalidatePath("/admin/members");
+    revalidatePath("/admin/ledger");
+    revalidatePath("/members");
+
+    return { success: true, user };
+  } catch (err: unknown) {
+    console.error("Create offline member error:", err);
+    return { success: false, error: "অফলাইন সদস্য তৈরি করতে ব্যর্থ হয়েছে।" };
+  }
+}
+
+export async function mergeMembersAction(sourceUserId: string, targetUserId: string) {
+  try {
+    const admin = await requireRole([Role.SUPER_ADMIN]);
+
+    if (sourceUserId === targetUserId) {
+      return { success: false, error: "একই অ্যাকাউন্ট নিজের সাথে মার্জ করা যাবে না।" };
+    }
+
+    const sourceUser = await prisma.user.findUnique({
+      where: { id: sourceUserId },
+      include: {
+        commitments: true,
+        contributions: true,
+      },
+    });
+
+    const targetUser = await prisma.user.findUnique({
+      where: { id: targetUserId },
+      include: {
+        commitments: true,
+        contributions: true,
+      },
+    });
+
+    if (!sourceUser || !targetUser) {
+      return { success: false, error: "উৎস বা গন্তব্য অ্যাকাউন্ট খুঁজে পাওয়া যায়নি।" };
+    }
+
+    // 1. Reassign monthly contributions
+    await prisma.monthlyContribution.updateMany({
+      where: { userId: sourceUserId },
+      data: { userId: targetUserId },
+    });
+
+    // 2. Handle commitments
+    for (const sc of sourceUser.commitments) {
+      const existingTc = targetUser.commitments.find((tc) => tc.fundId === sc.fundId);
+      if (!existingTc) {
+        await prisma.fundCommitment.update({
+          where: { id: sc.id },
+          data: { userId: targetUserId },
+        });
+      } else {
+        const sourceAmt = Number(sc.committedAmount);
+        const targetAmt = Number(existingTc.committedAmount);
+        if (sourceAmt > targetAmt) {
+          await prisma.fundCommitment.update({
+            where: { id: existingTc.id },
+            data: { committedAmount: sourceAmt },
+          });
+        }
+        await prisma.fundCommitment.delete({ where: { id: sc.id } });
+      }
+    }
+
+    // 3. Move forum posts if any
+    await prisma.forumPost.updateMany({
+      where: { authorId: sourceUserId },
+      data: { authorId: targetUserId },
+    });
+
+    // 4. Delete the source (offline/placeholder) user
+    await prisma.user.delete({
+      where: { id: sourceUserId },
+    });
+
+    // 5. Activity log
+    await logActivity({
+      action: "MERGE_USER_ACCOUNT",
+      entityType: "USER",
+      entityId: targetUserId,
+      performedByUserId: admin.id,
+      details: {
+        sourceName: sourceUser.name,
+        sourcePhone: sourceUser.phone,
+        targetName: targetUser.name,
+        targetPhone: targetUser.phone,
+        contributionsMoved: sourceUser.contributions.length,
+        summary: `অফলাইন সদস্য "${sourceUser.name}"-এর সকল চাঁদা ও রেকর্ড নিবন্ধিত সদস্য "${targetUser.name}" (${targetUser.phone})-এর সাথে সফলভাবে মার্জ করা হয়েছে।`,
+      },
+    });
+
+    revalidatePath("/admin/members");
+    revalidatePath("/admin/ledger");
+    revalidatePath("/members");
+    revalidatePath("/funds");
+
+    return { success: true };
+  } catch (err: unknown) {
+    console.error("Merge members error:", err);
+    return { success: false, error: "অ্যাকাউন্ট মার্জ করতে ব্যর্থ হয়েছে।" };
+  }
+}
