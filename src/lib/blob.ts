@@ -1,4 +1,4 @@
-import { put } from "@vercel/blob";
+import { put, del } from "@vercel/blob";
 
 export interface UploadResult {
   success: boolean;
@@ -10,7 +10,7 @@ export interface UploadResult {
  * Uploads a file to Vercel Public Object Storage (Vercel Blob)
  * @param file File, Buffer, or Blob to upload
  * @param filename File name (e.g. receipt-123.jpg)
- * @param folder Subfolder name (e.g. receipts, avatars, banners)
+ * @param folder Subfolder name (e.g. receipts, avatars, banners, gallery)
  */
 export async function uploadToVercelBlob(
   file: File | Buffer | Blob,
@@ -51,5 +51,41 @@ export async function uploadToVercelBlob(
       success: false,
       error: error instanceof Error ? error.message : "ফাইল আপলোড ব্যর্থ হয়েছে।",
     };
+  }
+}
+
+/**
+ * Permanently deletes files from Vercel Blob Object Storage to release space and bandwidth.
+ * Safely ignores base64 data URLs, local static files, and external links.
+ * @param urlOrUrls A single URL string or an array of URL strings to delete
+ */
+export async function deleteFromVercelBlob(
+  urlOrUrls: string | string[] | null | undefined
+): Promise<boolean> {
+  if (!urlOrUrls) return true;
+
+  try {
+    const token = process.env.BLOB_READ_WRITE_TOKEN;
+    const urls = (Array.isArray(urlOrUrls) ? urlOrUrls : [urlOrUrls])
+      .filter(
+        (u): u is string =>
+          typeof u === "string" &&
+          u.trim().length > 0 &&
+          u.includes("blob.vercel-storage.com")
+      );
+
+    if (urls.length === 0) {
+      return true;
+    }
+
+    await del(urls, {
+      ...(token ? { token } : {}),
+    });
+
+    return true;
+  } catch (error: unknown) {
+    console.warn("Vercel Blob delete warning:", error);
+    // Return false but do not crash the caller
+    return false;
   }
 }

@@ -3,6 +3,7 @@
 import prisma from "@/lib/prisma";
 import { requireRole, hashPassword } from "@/lib/auth";
 import { logActivity } from "@/lib/activity-logger";
+import { deleteFromVercelBlob } from "@/lib/blob";
 import { Role, CommitmentStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
@@ -212,6 +213,21 @@ export async function updateMemberDetailsAction(userId: string, formData: FormDa
       where: { id: userId },
       data: updateData,
     });
+
+    // Delete any replaced avatar, thumbnail, or banner from Vercel Object Storage
+    const urlsToDelete: string[] = [];
+    if (oldUser.avatarUrl && avatarUrl && oldUser.avatarUrl !== avatarUrl) {
+      urlsToDelete.push(oldUser.avatarUrl);
+    }
+    if (oldUser.thumbnailUrl && thumbnailUrl && oldUser.thumbnailUrl !== thumbnailUrl) {
+      urlsToDelete.push(oldUser.thumbnailUrl);
+    }
+    if (oldUser.bannerUrl && bannerUrl && oldUser.bannerUrl !== bannerUrl) {
+      urlsToDelete.push(oldUser.bannerUrl);
+    }
+    if (urlsToDelete.length > 0) {
+      await deleteFromVercelBlob(urlsToDelete);
+    }
 
     const beforeDiff: Record<string, unknown> = {};
     const afterDiff: Record<string, unknown> = {};
@@ -464,6 +480,18 @@ export async function mergeMembersAction(sourceUserId: string, targetUserId: str
     await prisma.user.delete({
       where: { id: sourceUserId },
     });
+
+    // Delete any unneeded orphaned media files belonging to the deleted source user
+    const sourceUrls = [sourceUser.avatarUrl, sourceUser.thumbnailUrl, sourceUser.bannerUrl].filter(
+      (u): u is string => typeof u === "string" && u.length > 0
+    );
+    const targetUrls = [targetUser.avatarUrl, targetUser.thumbnailUrl, targetUser.bannerUrl].filter(
+      (u): u is string => typeof u === "string" && u.length > 0
+    );
+    const unneededUrls = sourceUrls.filter((u) => !targetUrls.includes(u));
+    if (unneededUrls.length > 0) {
+      await deleteFromVercelBlob(unneededUrls);
+    }
 
     // 5. Activity log
     await logActivity({

@@ -3,6 +3,7 @@
 import prisma from "@/lib/prisma";
 import { requireAuth, canManageFund } from "@/lib/auth";
 import { logActivity } from "@/lib/activity-logger";
+import { deleteFromVercelBlob } from "@/lib/blob";
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
@@ -110,6 +111,10 @@ export async function deleteExpenseAction(expenseId: string) {
         where: { id: expenseId },
       });
     });
+
+    if (expense.receiptUrl) {
+      await deleteFromVercelBlob(expense.receiptUrl);
+    }
 
     await logActivity({
       action: "DELETE_EXPENSE",

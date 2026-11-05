@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { Upload, X, Check, Image as ImageIcon, Loader2 } from "lucide-react";
+import { deleteBlobFileAction } from "@/actions/blob-actions";
 
 interface FileUploaderProps {
   onUploadComplete: (url: string, thumbnailUrl?: string) => void;
@@ -233,10 +234,16 @@ export function FileUploader({
   };
 
   const handleClear = () => {
+    const toDelete = previewUrl;
     setPreviewUrl(null);
     onUploadComplete("");
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
+    }
+    if (toDelete && toDelete.includes("blob.vercel-storage.com")) {
+      deleteBlobFileAction(toDelete).catch((err) => {
+        console.warn("Could not delete cleared blob file:", err);
+      });
     }
   };
 

@@ -3,6 +3,7 @@
 import prisma from "@/lib/prisma";
 import { requireAuth, canManageFund } from "@/lib/auth";
 import { logActivity } from "@/lib/activity-logger";
+import { deleteFromVercelBlob } from "@/lib/blob";
 import { PaymentMethod, PaymentStatus, Role, Prisma, NotificationType } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { createNotificationHelper } from "./notification-actions";
@@ -94,6 +95,11 @@ export async function recordMonthlyContributionAction(data: RecordContributionIn
             where: { id: data.fundId },
             data: { currentBalance: { increment: balanceDiff } },
           });
+        }
+
+        // Clean up replaced receipt from Vercel Object Storage
+        if (existing.receiptUrl && data.receiptUrl && data.receiptUrl !== existing.receiptUrl) {
+          await deleteFromVercelBlob(existing.receiptUrl);
         }
       } else {
         // Create brand new entry
@@ -314,6 +320,10 @@ export async function deleteContributionAction(contributionId: string) {
         where: { id: contributionId },
       });
     });
+
+    if (contribution.receiptUrl) {
+      await deleteFromVercelBlob(contribution.receiptUrl);
+    }
 
     await logActivity({
       action: "DELETE_PAYMENT",

@@ -23,6 +23,7 @@ import {
   updateGalleryItemAction,
   deleteGalleryItemAction,
 } from "@/actions/gallery-actions";
+import { deleteBlobFileAction } from "@/actions/blob-actions";
 import { toBengaliNumber } from "@/lib/utils";
 
 export interface GalleryItemData {
@@ -687,6 +688,9 @@ export function GalleryManagerClient({
                                 setCreateImages((prev) => prev.filter((_, i) => i !== idx));
                                 if (createCoverUrl === imgUrl) {
                                   setCreateCoverUrl(createImages[idx === 0 ? 1 : 0] || "");
+                                }
+                                if (imgUrl.includes("blob.vercel-storage.com")) {
+                                  deleteBlobFileAction(imgUrl).catch(() => {});
                                 }
                               }}
                               className="absolute top-1 right-1 p-1 bg-red-600/80 hover:bg-red-600 text-white rounded-md transition"

@@ -3,6 +3,7 @@
 import prisma from "@/lib/prisma";
 import { requireAuth, requireRole, canManageFund } from "@/lib/auth";
 import { logActivity } from "@/lib/activity-logger";
+import { deleteFromVercelBlob } from "@/lib/blob";
 import { Role, CommitmentStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
@@ -108,6 +109,10 @@ export async function updateFundAction(fundId: string, formData: FormData) {
         bankDetails,
       },
     });
+
+    if (oldFund.bannerImageUrl && bannerImageUrl && oldFund.bannerImageUrl !== bannerImageUrl) {
+      await deleteFromVercelBlob(oldFund.bannerImageUrl);
+    }
 
     await logActivity({
       action: "EDIT_FUND",

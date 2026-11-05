@@ -9,6 +9,7 @@ import {
   getCurrentUser,
   requireAuth,
 } from "@/lib/auth";
+import { deleteFromVercelBlob } from "@/lib/blob";
 import { Role } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
@@ -216,6 +217,23 @@ export async function updateProfileAction(formData: FormData) {
         showEmailInDirectory,
       },
     });
+
+    // Delete any replaced avatars, thumbnails, or banners from Vercel Object Storage
+    const urlsToDelete: string[] = [];
+    if (user.avatarUrl && avatarUrl && user.avatarUrl !== avatarUrl) {
+      urlsToDelete.push(user.avatarUrl);
+    }
+    const oldThumb = (user as { thumbnailUrl?: string | null }).thumbnailUrl;
+    if (oldThumb && thumbnailUrl && oldThumb !== thumbnailUrl) {
+      urlsToDelete.push(oldThumb);
+    }
+    const oldBanner = (user as { bannerUrl?: string | null }).bannerUrl;
+    if (oldBanner && bannerUrl && oldBanner !== bannerUrl) {
+      urlsToDelete.push(oldBanner);
+    }
+    if (urlsToDelete.length > 0) {
+      await deleteFromVercelBlob(urlsToDelete);
+    }
 
     await setSessionCookie({
       userId: user.id,

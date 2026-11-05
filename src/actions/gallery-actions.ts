@@ -3,6 +3,7 @@
 import prisma from "@/lib/prisma";
 import { requireRole } from "@/lib/auth";
 import { logActivity } from "@/lib/activity-logger";
+import { deleteFromVercelBlob } from "@/lib/blob";
 import { Role } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
@@ -134,6 +135,10 @@ export async function updateGalleryItemAction(id: string, formData: FormData) {
       imageUrl = "/logo.png";
     }
 
+    const oldItem = await prisma.galleryItem.findUnique({
+      where: { id },
+    });
+
     const item = await prisma.galleryItem.update({
       where: { id },
       data: {
@@ -146,6 +151,16 @@ export async function updateGalleryItemAction(id: string, formData: FormData) {
         googlePhotosUrl,
       },
     });
+
+    // Permanently remove any unlinked images from Vercel Object Storage (Blob)
+    if (oldItem) {
+      const oldUrls = [oldItem.imageUrl, ...(oldItem.images || [])];
+      const currentUrls = [imageUrl, ...images];
+      const removedUrls = oldUrls.filter((u) => u && !currentUrls.includes(u));
+      if (removedUrls.length > 0) {
+        await deleteFromVercelBlob(removedUrls);
+      }
+    }
 
     await logActivity({
       action: "UPDATE_GALLERY_ALBUM",
@@ -187,6 +202,12 @@ export async function deleteGalleryItemAction(id: string) {
     await prisma.galleryItem.delete({
       where: { id },
     });
+
+    // Permanently remove image assets from Vercel Object Storage (Blob)
+    const urlsToDelete = [item.imageUrl, ...(item.images || [])].filter(Boolean);
+    if (urlsToDelete.length > 0) {
+      await deleteFromVercelBlob(urlsToDelete);
+    }
 
     await logActivity({
       action: "DELETE_GALLERY_ALBUM",
