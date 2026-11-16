@@ -8,7 +8,7 @@ import { MessageSquare, LogIn, UserPlus, ShieldCheck } from "lucide-react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "কমিউনিটি ফোরাম ও আড্ডা — দাখিল ২০১২ ব্যাচ",
+  title: "কমিউনিটি ফোরাম ও আড্ডা • দাখিল ২০১২ ব্যাচ",
   description: "খুলনা আলিয়া মাদ্রাসা দাখিল ২০১২ ব্যাচের সকল সহপাঠী ও বন্ধুদের উন্মুক্ত আলোচনা, স্মৃতিচারণ ও বার্তা বিনিময় ফোরাম।",
 };
 

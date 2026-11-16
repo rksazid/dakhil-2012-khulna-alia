@@ -74,7 +74,7 @@ export function SettingsClient({
             </label>
             <input
               name="hero_title"
-              defaultValue={initialSettings["hero_title"] || "দাখিল ২০১২ ব্যাচ — খুলনা আলিয়া"}
+              defaultValue={initialSettings["hero_title"] || "দাখিল ২০১২ ব্যাচ • খুলনা আলিয়া"}
               required
               className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl"
             />
@@ -169,7 +169,7 @@ export function SettingsClient({
             </label>
             <input
               name="batch_motto"
-              defaultValue={initialSettings["batch_motto"] || "বন্ধুত্বে প্রীতি, সেবায় ঐক্য — খুলনা আলিয়া ২০১২"}
+              defaultValue={initialSettings["batch_motto"] || "বন্ধুত্বে প্রীতি, সেবায় ঐক্য • খুলনা আলিয়া ২০১২"}
               className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl"
             />
           </div>

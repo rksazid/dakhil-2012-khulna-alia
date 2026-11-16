@@ -52,7 +52,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const amountStr = formatCurrency(Number(contribution.amountPaid));
 
   return {
-    title: `${isApproved ? "✓ যাচাইকৃত রশিদ" : "রশিদ যাচাই"} — ${contribution.user.name} | ${contribution.fund.title}`,
+    title: `${isApproved ? "✓ যাচাইকৃত রশিদ" : "রশিদ যাচাই"} • ${contribution.user.name} | ${contribution.fund.title}`,
     description: `দাখিল ২০১২ ব্যাচ খুলনা আলিয়া মাদ্রাসা ডিজিটাল অনুদান রশিদ। অনুদানদাতা: ${contribution.user.name}, পরিমাণ: ${amountStr}, অনুদানের মাস: ${contribution.monthYear}।`,
   };
 }
@@ -153,7 +153,7 @@ export default async function ReceiptVerificationPage({ params }: Props) {
                 দাখিল ২০১২ ব্যাচ
               </span>
               <span className="block text-[11px] font-semibold text-emerald-800">
-                খুলনা আলিয়া মাদ্রাসা — সেন্ট্রাল পোর্টাল
+                খুলনা আলিয়া মাদ্রাসা • সেন্ট্রাল পোর্টাল
               </span>
             </div>
           </Link>

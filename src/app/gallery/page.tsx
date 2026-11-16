@@ -7,7 +7,7 @@ import { Image as ImageIcon } from "lucide-react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "স্মৃতি ও ছবির অ্যালবাম — দাখিল ২০১২ ব্যাচ",
+  title: "স্মৃতি ও ছবির অ্যালবাম • দাখিল ২০১২ ব্যাচ",
   description: "খুলনা আলিয়া মাদ্রাসা দাখিল ২০১২ ব্যাচের সোনালী স্মৃতি, পুনর্মিলনী ও বন্ধুদের আনন্দঘন মুহূর্তসমূহের ছবির সংগ্রহশালা।",
 };
 

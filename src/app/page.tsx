@@ -22,10 +22,10 @@ export async function generateMetadata(): Promise<Metadata> {
     "খুলনা আলিয়া মাদ্রাসা দাখিল ২০১২ ব্যাচের অফিসিয়াল পোর্টাল ও কল্যাণ ফান্ড ম্যানেজমেন্ট সিস্টেম।";
 
   return {
-    title: "দাখিল ২০১২ ব্যাচ — খুলনা আলিয়া মাদ্রাসা | পোর্টাল ও কল্যাণ ফান্ড",
+    title: "দাখিল ২০১২ ব্যাচ • খুলনা আলিয়া মাদ্রাসা | পোর্টাল ও কল্যাণ ফান্ড",
     description,
     openGraph: {
-      title: "দাখিল ২০১২ ব্যাচ — খুলনা আলিয়া মাদ্রাসা",
+      title: "দাখিল ২০১২ ব্যাচ • খুলনা আলিয়া মাদ্রাসা",
       description,
       url: "https://dakhil2012-alia.vercel.app",
       siteName: "দাখিল ২০১২ ব্যাচ খুলনা আলিয়া",
@@ -42,7 +42,7 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     twitter: {
       card: "summary_large_image",
-      title: "দাখিল ২০১২ ব্যাচ — খুলনা আলিয়া মাদ্রাসা",
+      title: "দাখিল ২০১২ ব্যাচ • খুলনা আলিয়া মাদ্রাসা",
       description,
       images: [bannerImage],
     },
@@ -75,7 +75,7 @@ export default async function HomePage() {
     return acc;
   }, {});
 
-  const heroTitle = settings["hero_title"] || "দাখিল ২০১২ ব্যাচ — খুলনা আলিয়া";
+  const heroTitle = settings["hero_title"] || "দাখিল ২০১২ ব্যাচ • খুলনা আলিয়া";
   const heroSubtitle =
     settings["hero_subtitle"] ||
     "একযুগের ভ্রাতৃত্ব, আত্মিক বন্ধন ও পারস্পরিক কল্যাণে অটুট ঐক্য। শতভাগ স্বচ্ছতা ও দায়িত্বশীলতায় পরিচালিত আমাদের কল্যাণ ফান্ড।";
@@ -84,7 +84,7 @@ export default async function HomePage() {
     "📢 দাখিল ২০১২ ব্যাচের সকল বন্ধুদের প্রোফাইল হালনাগাদ এবং কল্যাণ ফান্ডের মাসিক চাঁদা নিয়মিত পরিশোধের আহ্বান জানানো হচ্ছে।";
   const contactEmail = settings["contact_email"] || "support@dakhil2012khulna.org";
   const contactPhone = settings["contact_phone"] || "+880 1711-000001";
-  const batchMotto = settings["batch_motto"] || "বন্ধুত্বে প্রীতি, সেবায় ঐক্য — খুলনা আলিয়া ২০১২";
+  const batchMotto = settings["batch_motto"] || "বন্ধুত্বে প্রীতি, সেবায় ঐক্য • খুলনা আলিয়া ২০১২";
 
   // 2. Compute Transparency Financial Stats
   const activeFunds = await prisma.fund.findMany({

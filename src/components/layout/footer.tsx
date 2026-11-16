@@ -26,11 +26,11 @@ export async function Footer(props?: FooterProps) {
 
       contactEmail = contactEmail || map["contact_email"] || "support@dakhil2012khulna.org";
       contactPhone = contactPhone || map["contact_phone"] || "+880 1711-000001";
-      batchMotto = batchMotto || map["batch_motto"] || "বন্ধুত্বে প্রীতি, সেবায় ঐক্য — খুলনা আলিয়া ২০১২";
+      batchMotto = batchMotto || map["batch_motto"] || "বন্ধুত্বে প্রীতি, সেবায় ঐক্য • খুলনা আলিয়া ২০১২";
     } catch {
       contactEmail = contactEmail || "support@dakhil2012khulna.org";
       contactPhone = contactPhone || "+880 1711-000001";
-      batchMotto = batchMotto || "বন্ধুত্বে প্রীতি, সেবায় ঐক্য — খুলনা আলিয়া ২০১২";
+      batchMotto = batchMotto || "বন্ধুত্বে প্রীতি, সেবায় ঐক্য • খুলনা আলিয়া ২০১২";
     }
   }
 

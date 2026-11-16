@@ -44,7 +44,7 @@ export default function LoginPage() {
           সদস্য পোর্টালে লগইন
         </h2>
         <p className="text-xs text-slate-500">
-          দাখিল ২০১২ ব্যাচ — খুলনা আলিয়া মাদ্রাসা
+          দাখিল ২০১২ ব্যাচ • খুলনা আলিয়া মাদ্রাসা
         </p>
       </div>
 
