@@ -314,3 +314,70 @@ export async function deleteCommitmentAction(fundId: string) {
     return { success: false, error: "প্রতিশ্রুতি বাতিল করতে সমস্যা হয়েছে।" };
   }
 }
+
+/**
+ * Allows Super Admin or Fund Manager to set/edit another user's (online or offline) monthly commitment (ওয়াদা)
+ */
+export async function adminUpdateUserCommitmentAction(
+  fundId: string,
+  targetUserId: string,
+  committedAmount: number,
+  startMonth?: string
+) {
+  try {
+    const admin = await requireRole([Role.SUPER_ADMIN, Role.FUND_MANAGER]);
+
+    const targetUser = await prisma.user.findUnique({
+      where: { id: targetUserId },
+      select: { id: true, name: true, phone: true },
+    });
+    if (!targetUser) {
+      return { success: false, error: "সদস্য খুঁজে পাওয়া যায়নি।" };
+    }
+
+    const commitment = await prisma.fundCommitment.upsert({
+      where: {
+        fundId_userId: { fundId, userId: targetUserId },
+      },
+      create: {
+        fundId,
+        userId: targetUserId,
+        committedAmount,
+        startMonth: startMonth || "অক্টোবর-২৪",
+        status: CommitmentStatus.ACTIVE,
+      },
+      update: {
+        committedAmount,
+        status: CommitmentStatus.ACTIVE,
+        ...(startMonth ? { startMonth } : {}),
+      },
+    });
+
+    await logActivity({
+      action: "UPDATE_COMMITMENT",
+      entityType: "FUND",
+      entityId: fundId,
+      fundId,
+      performedByUserId: admin.id,
+      details: {
+        targetUserName: targetUser.name,
+        targetUserId,
+        committedAmount,
+        summary: `অ্যাডমিন দ্বারা "${targetUser.name}"-এর মাসিক ওয়াদা ৳${committedAmount} টাকায় হালনাগাদ করা হয়েছে।`,
+      },
+    });
+
+    revalidatePath("/admin/ledger");
+    revalidatePath("/admin/members");
+    revalidatePath("/funds");
+    revalidatePath(`/funds/${fundId}`);
+    revalidatePath("/dashboard");
+    return {
+      success: true,
+      committedAmount: Number(commitment.committedAmount),
+    };
+  } catch (err: unknown) {
+    console.error("Admin update commitment error:", err);
+    return { success: false, error: "প্রতিশ্রুতি বা ওয়াদা আপডেট করতে ব্যর্থ হয়েছে।" };
+  }
+}

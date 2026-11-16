@@ -4,6 +4,7 @@ import { useState, useTransition, useEffect } from "react";
 import { formatCurrency, toBengaliNumber } from "@/lib/utils";
 import { PaymentMethod, PaymentStatus } from "@prisma/client";
 import { updateLedgerCellAction } from "@/actions/ledger-actions";
+import { adminUpdateUserCommitmentAction } from "@/actions/fund-actions";
 import {
   getNextMonthYear,
   sortMonthYears,
@@ -19,6 +20,9 @@ import {
   Plus,
   Edit2,
   CalendarPlus,
+  HeartHandshake,
+  X,
+  Loader2,
 } from "lucide-react";
 
 export interface LedgerContribution {
@@ -35,6 +39,7 @@ export interface LedgerMember {
   id: string;
   name: string;
   phone: string;
+  isClaimed?: boolean;
   avatarUrl?: string | null;
   thumbnailUrl?: string | null;
   committedAmount?: number | null;
@@ -58,9 +63,16 @@ export function SpreadsheetLedger({
 }: SpreadsheetLedgerProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [monthsList, setMonthsList] = useState<string[]>(months);
+  const [membersList, setMembersList] = useState<LedgerMember[]>(members);
   const [isAddMonthModalOpen, setIsAddMonthModalOpen] = useState(false);
   const [customMonthIndex, setCustomMonthIndex] = useState<number>(0);
   const [customYear, setCustomYear] = useState<number>(2027);
+
+  // Commitment Edit States
+  const [editingCommitmentMember, setEditingCommitmentMember] = useState<LedgerMember | null>(null);
+  const [commitmentInput, setCommitmentInput] = useState<string>("500");
+  const [commitmentFeedback, setCommitmentFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [isCommitmentPending, startCommitmentTransition] = useTransition();
 
   // Sync if prop updates
   useEffect(() => {
@@ -69,6 +81,10 @@ export function SpreadsheetLedger({
       return sortMonthYears(Array.from(merged));
     });
   }, [months]);
+
+  useEffect(() => {
+    setMembersList(members);
+  }, [members]);
 
   const lastMonth = monthsList[monthsList.length - 1] || "মার্চ-২৭";
   const nextMonth = getNextMonthYear(lastMonth);
@@ -88,6 +104,37 @@ export function SpreadsheetLedger({
     setIsAddMonthModalOpen(false);
   };
 
+  const openCommitmentModal = (member: LedgerMember) => {
+    if (!canEdit) return;
+    setEditingCommitmentMember(member);
+    setCommitmentInput(member.committedAmount ? String(member.committedAmount) : "500");
+    setCommitmentFeedback(null);
+  };
+
+  const handleSaveCommitment = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingCommitmentMember) return;
+    const amount = parseFloat(commitmentInput);
+    if (isNaN(amount) || amount < 0) {
+      setCommitmentFeedback({ type: "error", message: "সঠিক টাকার পরিমাণ লিখুন।" });
+      return;
+    }
+
+    startCommitmentTransition(async () => {
+      const res = await adminUpdateUserCommitmentAction(fundId, editingCommitmentMember.id, amount);
+      if (res.success) {
+        setMembersList((prev) =>
+          prev.map((m) =>
+            m.id === editingCommitmentMember.id ? { ...m, committedAmount: amount } : m
+          )
+        );
+        setEditingCommitmentMember(null);
+      } else {
+        setCommitmentFeedback({ type: "error", message: res.error || "আপডেট ব্যর্থ হয়েছে।" });
+      }
+    });
+  };
+
   const [selectedCell, setSelectedCell] = useState<{
     member: LedgerMember;
     month: string;
@@ -100,7 +147,7 @@ export function SpreadsheetLedger({
   const [editStatus, setEditStatus] = useState<PaymentStatus>(PaymentStatus.VERIFIED);
   const [isPending, startTransition] = useTransition();
 
-  const filteredMembers = members.filter(
+  const filteredMembers = membersList.filter(
     (m) =>
       m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       m.phone.includes(searchQuery)
@@ -109,7 +156,7 @@ export function SpreadsheetLedger({
   // Calculate Column Totals (Verified amounts only)
   const columnTotals: Record<string, number> = {};
   monthsList.forEach((m) => {
-    columnTotals[m] = members.reduce((sum, member) => {
+    columnTotals[m] = membersList.reduce((sum, member) => {
       const c = member.contributions[m];
       return c && c.status === PaymentStatus.VERIFIED ? sum + Number(c.amountPaid) : sum;
     }, 0);
@@ -289,10 +336,17 @@ export function SpreadsheetLedger({
                         {member.name.charAt(0)}
                       </div>
                       <div className="min-w-0">
-                        <p className="font-semibold text-slate-900 truncate">{member.name}</p>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <p className="font-semibold text-slate-900 truncate">{member.name}</p>
+                          {(member.isClaimed === false || member.phone.startsWith("offline_")) && (
+                            <span className="text-[9px] px-1.5 py-0.2 rounded font-bold bg-amber-100 text-amber-900 border border-amber-300 shrink-0">
+                              অফলাইন
+                            </span>
+                          )}
+                        </div>
                         {member.phone.startsWith("offline_") ? (
                           <span className="text-[10px] text-amber-800 font-sans font-medium bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200">
-                            অফলাইন সদস্য
+                            নম্বর যুক্ত নেই
                           </span>
                         ) : (
                           <p className="text-[11px] text-slate-500 font-mono">{member.phone}</p>
@@ -302,8 +356,23 @@ export function SpreadsheetLedger({
                   </td>
 
                   {/* Monthly Commitment */}
-                  <td className="py-2.5 px-3 text-center text-slate-700 font-medium border-r border-slate-100">
-                    {member.committedAmount ? formatCurrency(member.committedAmount) : "—"}
+                  <td
+                    onClick={() => openCommitmentModal(member)}
+                    className={`py-2.5 px-3 text-center border-r border-slate-100 ${
+                      canEdit
+                        ? "cursor-pointer hover:bg-emerald-50/70 transition group"
+                        : "text-slate-700 font-medium"
+                    }`}
+                    title={canEdit ? "মাসিক ওয়াদা পরিবর্তন করতে ক্লিক করুন" : undefined}
+                  >
+                    <div className="inline-flex items-center justify-center gap-1.5">
+                      <span className="font-semibold text-slate-800">
+                        {member.committedAmount ? formatCurrency(member.committedAmount) : "—"}
+                      </span>
+                      {canEdit && (
+                        <Edit2 className="w-3 h-3 text-slate-300 group-hover:text-emerald-700 opacity-60 group-hover:opacity-100 transition" />
+                      )}
+                    </div>
                   </td>
 
                   {/* Dynamic Month Cells */}
@@ -565,6 +634,100 @@ export function SpreadsheetLedger({
                   className="px-4 py-2 text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl shadow-xs"
                 >
                   কলাম যুক্ত করুন
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* Modal 3: Commitment / Pledge Edit Modal */}
+      {editingCommitmentMember && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-sm w-full p-5 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                  <HeartHandshake className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">
+                    মাসিক ওয়াদা / প্রতিশ্রুতি পরিবর্তন
+                  </h3>
+                  <p className="text-[11px] text-slate-500 truncate max-w-[200px]">
+                    {editingCommitmentMember.name} • {fundTitle}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingCommitmentMember(null)}
+                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {commitmentFeedback && (
+              <div
+                className={`p-2.5 rounded-xl text-xs font-semibold ${
+                  commitmentFeedback.type === "success"
+                    ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                    : "bg-red-50 text-red-800 border border-red-200"
+                }`}
+              >
+                {commitmentFeedback.message}
+              </div>
+            )}
+
+            <form onSubmit={handleSaveCommitment} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  প্রতি মাসে প্রতিশ্রুত টাকার পরিমাণ (৳)
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  step={50}
+                  required
+                  value={commitmentInput}
+                  onChange={(e) => setCommitmentInput(e.target.value)}
+                  className="w-full px-3 py-2 text-sm font-bold font-mono border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500"
+                  placeholder="যেমন: 500"
+                  autoFocus
+                />
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {[100, 200, 300, 500, 1000, 2000].map((amt) => (
+                    <button
+                      key={amt}
+                      type="button"
+                      onClick={() => setCommitmentInput(String(amt))}
+                      className={`px-2 py-1 text-xs rounded-lg border transition font-mono ${
+                        commitmentInput === String(amt)
+                          ? "bg-emerald-600 text-white border-emerald-600 font-bold"
+                          : "bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200"
+                      }`}
+                    >
+                      ৳{toBengaliNumber(amt)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setEditingCommitmentMember(null)}
+                  className="px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition"
+                >
+                  বাতিল
+                </button>
+                <button
+                  type="submit"
+                  disabled={isCommitmentPending}
+                  className="px-4 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition shadow-xs flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  {isCommitmentPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  সংরক্ষণ করুন
                 </button>
               </div>
             </form>

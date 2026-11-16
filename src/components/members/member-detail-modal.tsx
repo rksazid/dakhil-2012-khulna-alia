@@ -40,6 +40,7 @@ export interface MemberDetailData {
   userType?: string | null;
   showPhoneInDirectory?: boolean;
   showEmailInDirectory?: boolean;
+  isClaimed?: boolean;
 }
 
 interface MemberDetailModalProps {
@@ -190,6 +191,12 @@ export function MemberDetailModal({ member, onClose }: MemberDetailModalProps) {
                   ) : (
                     <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
                       দাখিল ২০১২ ব্যাচ
+                    </span>
+                  )}
+
+                  {(member.isClaimed === false || member.phone.startsWith("offline_")) && (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300">
+                      অফলাইন সদস্য
                     </span>
                   )}
                 </div>
@@ -356,12 +363,19 @@ export function MemberDetailModal({ member, onClose }: MemberDetailModalProps) {
                       মোবাইল নম্বর যুক্ত নেই (অফলাইন সদস্য)
                     </span>
                   ) : (
-                    <a
-                      href={`tel:${member.phone}`}
-                      className="text-xs sm:text-sm font-bold font-mono text-emerald-700 hover:underline"
-                    >
-                      {member.phone}
-                    </a>
+                    <div className="flex items-center gap-2 flex-wrap mt-0.5">
+                      <a
+                        href={`tel:${member.phone}`}
+                        className="text-xs sm:text-sm font-bold font-mono text-emerald-700 hover:underline"
+                      >
+                        {member.phone}
+                      </a>
+                      {member.isClaimed === false && (
+                        <span className="text-[10px] font-bold text-amber-900 bg-amber-100 border border-amber-300 px-1.5 py-0.2 rounded">
+                          অফলাইন সদস্য
+                        </span>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>

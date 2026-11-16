@@ -58,6 +58,7 @@ export interface MemberData {
   bio: string | null;
   createdAt: Date;
   managedFunds: { fund: { title: string } }[];
+  commitments?: { id: string; fundId: string; committedAmount: number | unknown }[];
   _count: { commitments: number; contributions: number };
 }
 
@@ -89,7 +90,22 @@ export function MembersManagerClient({
   const [addThumbnailUrl, setAddThumbnailUrl] = useState("");
   const [editAvatarUrl, setEditAvatarUrl] = useState("");
   const [editThumbnailUrl, setEditThumbnailUrl] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [editIsClaimed, setEditIsClaimed] = useState(true);
+  const [editCommitment, setEditCommitment] = useState("");
   const [isPending, startTransition] = useTransition();
+
+  const handleOpenEdit = (m: MemberData) => {
+    setEditingMember(m);
+    setEditAvatarUrl(m.avatarUrl || "");
+    setEditThumbnailUrl(m.thumbnailUrl || "");
+    setEditPhone(m.phone.startsWith("offline_") ? "" : m.phone);
+    setEditIsClaimed(m.isClaimed !== false && !m.phone.startsWith("offline_"));
+    const initialCommit = m.commitments && m.commitments.length > 0
+      ? Number(m.commitments[0].committedAmount)
+      : "";
+    setEditCommitment(initialCommit ? String(initialCommit) : "");
+  };
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   const filtered = members.filter((m) => {
@@ -332,7 +348,9 @@ export function MembersManagerClient({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filtered.map((m) => (
+              {filtered.map((m) => {
+                const isMemberOffline = m.isClaimed === false || m.phone.startsWith("offline_");
+                return (
                 <tr key={m.id} className="hover:bg-slate-50">
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-2.5">
@@ -350,9 +368,14 @@ export function MembersManagerClient({
                       <div>
                         <p className="font-bold text-slate-900">{m.name}</p>
                         <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
-                          {m.phone.startsWith("offline_") && (
+                          {isMemberOffline && (
                             <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
                               অফলাইন সদস্য
+                            </span>
+                          )}
+                          {m.commitments && m.commitments.length > 0 && Number(m.commitments[0].committedAmount) > 0 && (
+                            <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                              ওয়াদা: ৳{toBengaliNumber(Number(m.commitments[0].committedAmount))}
                             </span>
                           )}
                           {m.userType === "TEACHER" ? (
@@ -438,7 +461,7 @@ export function MembersManagerClient({
 
                   <td className="py-3 px-4 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      {m.phone.startsWith("offline_") && (
+                      {isMemberOffline && (
                         <button
                           onClick={() => {
                             setMergingSource(m);
@@ -452,11 +475,7 @@ export function MembersManagerClient({
                       )}
 
                       <button
-                        onClick={() => {
-                          setEditingMember(m);
-                          setEditAvatarUrl(m.avatarUrl || "");
-                          setEditThumbnailUrl(m.thumbnailUrl || "");
-                        }}
+                        onClick={() => handleOpenEdit(m)}
                         className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition"
                         title="সদস্য তথ্য সম্পাদনা করুন"
                       >
@@ -477,7 +496,8 @@ export function MembersManagerClient({
                     </div>
                   </td>
                 </tr>
-              ))}
+              );
+              })}
             </tbody>
           </table>
         </div>
@@ -815,6 +835,50 @@ export function MembersManagerClient({
             </div>
 
             <form onSubmit={handleEditSubmit} className="space-y-4 py-4">
+              {/* Account Type Selector: Offline vs Registered */}
+              <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                  অ্যাকাউন্টের ধরন (Account Status)
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <label className={`flex items-center gap-2 p-2 rounded-xl border text-xs font-bold cursor-pointer transition ${
+                    !editIsClaimed
+                      ? "bg-amber-50 text-amber-900 border-amber-300 shadow-2xs"
+                      : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
+                  }`}>
+                    <input
+                      type="radio"
+                      name="isClaimed"
+                      value="false"
+                      checked={!editIsClaimed}
+                      onChange={() => setEditIsClaimed(false)}
+                      className="text-amber-600"
+                    />
+                    <span>অফলাইন সদস্য</span>
+                  </label>
+                  <label className={`flex items-center gap-2 p-2 rounded-xl border text-xs font-bold cursor-pointer transition ${
+                    editIsClaimed
+                      ? "bg-emerald-50 text-emerald-900 border-emerald-300 shadow-2xs"
+                      : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
+                  }`}>
+                    <input
+                      type="radio"
+                      name="isClaimed"
+                      value="true"
+                      checked={editIsClaimed}
+                      onChange={() => setEditIsClaimed(true)}
+                      className="text-emerald-600"
+                    />
+                    <span>নিবন্ধিত অ্যাকাউন্ট</span>
+                  </label>
+                </div>
+                <p className="text-[10px] text-slate-500 mt-1.5">
+                  {!editIsClaimed
+                    ? "অফলাইন সদস্য: মোবাইল নম্বর থাকলেও বা না থাকলেও তিনি ওয়েবসাইটে নিজে একাউন্ট খোলেননি।"
+                    : "নিবন্ধিত অ্যাকাউন্ট: সদস্য মোবাইল নম্বর ও পাসওয়ার্ড দিয়ে ওয়েবসাইটে লগইন করতে পারেন।"}
+                </p>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
@@ -829,17 +893,86 @@ export function MembersManagerClient({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    মোবাইল নম্বর *
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-semibold text-slate-700">
+                      মোবাইল নম্বর {editIsClaimed ? "*" : "(ঐচ্ছিক)"}
+                    </label>
+                    {editPhone && !editIsClaimed && (
+                      <button
+                        type="button"
+                        onClick={() => setEditPhone("")}
+                        className="text-[11px] text-red-600 hover:text-red-700 font-semibold"
+                      >
+                        নম্বর মুছে ফেলুন
+                      </button>
+                    )}
+                  </div>
                   <input
                     name="phone"
-                    defaultValue={editingMember.phone}
-                    required
+                    value={editPhone}
+                    onChange={(e) => setEditPhone(e.target.value)}
+                    required={editIsClaimed}
+                    placeholder={editIsClaimed ? "017XXXXXXXX" : "মোবাইল নম্বর (না থাকলে খালি রাখুন)"}
                     className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl font-mono"
                   />
+                  {!editIsClaimed && (
+                    <p className="text-[10px] text-slate-500 mt-1">
+                      মোবাইল নম্বর খালি রাখলে সিস্টেমে কোনো নম্বর সংরক্ষিত থাকবে না।
+                    </p>
+                  )}
                 </div>
               </div>
+
+              {/* Monthly Fund Commitment / Pledge */}
+              {activeFunds.length > 0 && (
+                <div className="bg-emerald-50/60 p-3.5 rounded-2xl border border-emerald-200 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-emerald-950 flex items-center gap-1.5">
+                      <HeartHandshake className="w-4 h-4 text-emerald-700" />
+                      মাসিক তহবিল ওয়াদা / প্রতিশ্রুতি (টাকা)
+                    </label>
+                    <span className="text-[11px] font-semibold text-emerald-800 bg-white px-2 py-0.5 rounded-md border border-emerald-200">
+                      {activeFunds[0].title}
+                    </span>
+                  </div>
+                  <input
+                    type="hidden"
+                    name="commitmentFundId"
+                    value={activeFunds[0].id}
+                  />
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                    <input
+                      type="number"
+                      min={0}
+                      step={50}
+                      name="committedAmount"
+                      value={editCommitment}
+                      onChange={(e) => setEditCommitment(e.target.value)}
+                      placeholder="যেমন: 500"
+                      className="flex-1 px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl bg-white font-mono font-bold"
+                    />
+                    <div className="flex items-center gap-1 flex-wrap">
+                      {[100, 200, 300, 500, 1000].map((amt) => (
+                        <button
+                          key={amt}
+                          type="button"
+                          onClick={() => setEditCommitment(String(amt))}
+                          className={`px-2.5 py-1.5 text-xs rounded-lg border transition font-mono ${
+                            editCommitment === String(amt)
+                              ? "bg-emerald-700 text-white border-emerald-700 font-bold"
+                              : "bg-white hover:bg-emerald-100 text-slate-700 border-emerald-200"
+                          }`}
+                        >
+                          ৳{toBengaliNumber(amt)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-emerald-800">
+                    এখানে যে পরিমাণ সেট করবেন, তা লেজারে এই সদস্যের মাসিক ওয়াদা হিসেবে গণনা করা হবে।
+                  </p>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
@@ -1259,7 +1392,7 @@ export function MembersManagerClient({
                 >
                   <option value="">নিবন্ধিত সদস্য নির্বাচন করুন...</option>
                   {members
-                    .filter((m) => !m.phone.startsWith("offline_") && m.id !== mergingSource.id)
+                    .filter((m) => m.isClaimed !== false && !m.phone.startsWith("offline_") && m.id !== mergingSource.id)
                     .map((m) => (
                       <option key={m.id} value={m.id}>
                         {m.name} ({m.phone}) {m.classRoll ? `- রোল #${m.classRoll}` : ""}

@@ -123,7 +123,10 @@ export async function updateMemberDetailsAction(userId: string, formData: FormDa
     }
 
     const name = (formData.get("name") as string)?.trim() || oldUser.name;
-    const phone = (formData.get("phone") as string)?.trim() || oldUser.phone;
+    const rawPhone = (formData.get("phone") as string)?.trim();
+    const rawIsClaimed = formData.get("isClaimed");
+    const commitmentFundId = (formData.get("commitmentFundId") as string)?.trim();
+    const committedAmountRaw = formData.get("committedAmount") as string;
     const email = (formData.get("email") as string)?.trim() || null;
     const role = (formData.get("role") as Role) || oldUser.role;
     const userType = (formData.get("userType") as string)?.trim() || oldUser.userType;
@@ -142,8 +145,34 @@ export async function updateMemberDetailsAction(userId: string, formData: FormDa
     const newPassword = (formData.get("newPassword") as string)?.trim();
     const isActive = formData.get("isActive") === "true";
 
-    // Validate phone uniqueness if changed
-    if (phone !== oldUser.phone) {
+    // Determine account claimed / offline status
+    let isClaimed = oldUser.isClaimed;
+    if (rawIsClaimed !== null && rawIsClaimed !== undefined) {
+      isClaimed = rawIsClaimed === "true";
+    }
+
+    // Determine phone number
+    let phone: string;
+    if (!isClaimed) {
+      // Offline placeholder member:
+      // If phone is left empty or removed by admin, assign a clean pseudo-phone so unique constraint passes
+      if (!rawPhone || rawPhone.startsWith("offline_")) {
+        phone = oldUser.phone.startsWith("offline_")
+          ? oldUser.phone
+          : `offline_${Date.now().toString().slice(-6)}_${Math.floor(Math.random() * 1000)}`;
+      } else {
+        phone = rawPhone;
+      }
+    } else {
+      // Registered member: requires a valid phone number
+      if (!rawPhone) {
+        return { success: false, error: "নিবন্ধিত অ্যাকাউন্টের জন্য মোবাইল নম্বর আবশ্যক।" };
+      }
+      phone = rawPhone;
+    }
+
+    // Validate phone uniqueness if changed and not a pseudo-phone
+    if (phone !== oldUser.phone && !phone.startsWith("offline_")) {
       const existingPhone = await prisma.user.findUnique({ where: { phone } });
       if (existingPhone && existingPhone.id !== userId) {
         return { success: false, error: "এই মোবাইল নম্বরটি অন্য একজন সদস্যের অ্যাকাউন্টে রয়েছে।" };
@@ -178,6 +207,7 @@ export async function updateMemberDetailsAction(userId: string, formData: FormDa
       permanentAddress: string | null;
       bio: string | null;
       isActive: boolean;
+      isClaimed: boolean;
       passwordHash?: string;
     } = {
       name,
@@ -198,6 +228,7 @@ export async function updateMemberDetailsAction(userId: string, formData: FormDa
       permanentAddress,
       bio,
       isActive,
+      isClaimed,
     };
 
     if (newPassword && newPassword.length >= 6) {
@@ -213,6 +244,29 @@ export async function updateMemberDetailsAction(userId: string, formData: FormDa
       where: { id: userId },
       data: updateData,
     });
+
+    // Update or set monthly fund commitment if provided
+    if (commitmentFundId && committedAmountRaw !== null && committedAmountRaw !== undefined && committedAmountRaw !== "") {
+      const parsedAmount = parseFloat(committedAmountRaw);
+      if (!isNaN(parsedAmount) && parsedAmount >= 0) {
+        await prisma.fundCommitment.upsert({
+          where: {
+            fundId_userId: { fundId: commitmentFundId, userId },
+          },
+          create: {
+            fundId: commitmentFundId,
+            userId,
+            committedAmount: parsedAmount,
+            startMonth: "অক্টোবর-২৪",
+            status: CommitmentStatus.ACTIVE,
+          },
+          update: {
+            committedAmount: parsedAmount,
+            status: CommitmentStatus.ACTIVE,
+          },
+        });
+      }
+    }
 
     // Delete any replaced avatar, thumbnail, or banner from Vercel Object Storage
     const urlsToDelete: string[] = [];
@@ -232,6 +286,10 @@ export async function updateMemberDetailsAction(userId: string, formData: FormDa
     const beforeDiff: Record<string, unknown> = {};
     const afterDiff: Record<string, unknown> = {};
     if (oldUser.name !== name) { beforeDiff["নাম"] = oldUser.name; afterDiff["নাম"] = name; }
+    if (oldUser.isClaimed !== isClaimed) {
+      beforeDiff["অ্যাকাউন্টের ধরন"] = oldUser.isClaimed ? "নিবন্ধিত" : "অফলাইন";
+      afterDiff["অ্যাকাউন্টের ধরন"] = isClaimed ? "নিবন্ধিত" : "অফলাইন";
+    }
     if (oldUser.phone !== phone) { beforeDiff["মোবাইল"] = oldUser.phone; afterDiff["মোবাইল"] = phone; }
     if (oldUser.email !== email) { beforeDiff["ইমেইল"] = oldUser.email || "—"; afterDiff["ইমেইল"] = email || "—"; }
     if (oldUser.role !== role) { beforeDiff["রোল"] = oldUser.role; afterDiff["রোল"] = role; }

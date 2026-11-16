@@ -244,6 +244,11 @@ export function MemberDirectoryClient({ members }: { members: MemberItem[] }) {
                         ({member.classroom})
                       </span>
                     )}
+                    {(member.isClaimed === false || member.phone.startsWith("offline_")) && (
+                      <span className="px-2 py-0.5 rounded-md text-[10.5px] bg-amber-100 text-amber-900 font-bold border border-amber-300">
+                        অফলাইন সদস্য
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>

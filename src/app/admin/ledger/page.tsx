@@ -70,6 +70,7 @@ export default async function AdminLedgerPage({ searchParams }: AdminLedgerPageP
       id: true,
       name: true,
       phone: true,
+      isClaimed: true,
       avatarUrl: true,
       thumbnailUrl: true,
       commitments: {
@@ -111,6 +112,7 @@ export default async function AdminLedgerPage({ searchParams }: AdminLedgerPageP
       id: m.id,
       name: m.name,
       phone: m.phone,
+      isClaimed: m.isClaimed,
       avatarUrl: m.avatarUrl,
       thumbnailUrl: m.thumbnailUrl,
       committedAmount: m.commitments[0]?.committedAmount

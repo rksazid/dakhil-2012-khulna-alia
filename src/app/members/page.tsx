@@ -43,6 +43,7 @@ export default async function MembersPage() {
       userType: true,
       showPhoneInDirectory: true,
       showEmailInDirectory: true,
+      isClaimed: true,
     },
     orderBy: [{ role: "asc" }, { name: "asc" }],
   });

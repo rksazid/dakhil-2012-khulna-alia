@@ -157,6 +157,7 @@ export default async function HomePage() {
       presentAddress: true,
       permanentAddress: true,
       role: true,
+      isClaimed: true,
     },
   });
 

@@ -36,6 +36,9 @@ export default async function AdminMembersPage() {
       managedFunds: {
         include: { fund: { select: { title: true } } },
       },
+      commitments: {
+        select: { id: true, fundId: true, committedAmount: true },
+      },
       _count: {
         select: { commitments: true, contributions: true },
       },
