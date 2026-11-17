@@ -37,7 +37,7 @@ async function clearDatabase() {
   const defaultSettings = [
     {
       key: "hero_title",
-      value: "দাখিল ২০১২ ব্যাচ — খুলনা আলিয়া",
+      value: "দাখিল ২০১২ ব্যাচ • খুলনা আলিয়া",
       description: "Homepage Hero Title",
     },
     {
@@ -52,7 +52,7 @@ async function clearDatabase() {
     },
     {
       key: "batch_motto",
-      value: "বন্ধুত্বে প্রীতি, সেবায় ঐক্য — খুলনা আলিয়া ২০১২",
+      value: "বন্ধুত্বে প্রীতি, সেবায় ঐক্য • খুলনা আলিয়া ২০১২",
       description: "Batch Motto",
     },
     {

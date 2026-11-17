@@ -1038,7 +1038,7 @@ export function generateLedgerHtml(data: LedgerPdfData): string {
       }
       <div>
         <div class="org-title">দাখিল ২০১২ ব্যাচ • খুলনা আলিয়া মাদ্রাসা</div>
-        <div class="fund-title">${data.fundTitle} — অফিসিয়াল স্প্রেডশিট লেজার</div>
+        <div class="fund-title">${data.fundTitle} • অফিসিয়াল স্প্রেডশিট লেজার</div>
       </div>
     </div>
     <div class="meta-box">
