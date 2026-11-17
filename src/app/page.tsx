@@ -62,6 +62,7 @@ import {
   Layers,
   FileText,
   Mail,
+  Lock,
 } from "lucide-react";
 
 
@@ -119,6 +120,8 @@ export default async function HomePage() {
     (sum, f) => sum + Number(f.currentBalance),
     0
   );
+  const isPublicBalanceVisible = settings["public_fund_balance_visible"] === "true";
+  const canViewFinancials = Boolean(session) || isPublicBalanceVisible;
 
   // 3. Fetch Latest Notices
   const latestNotices = await prisma.notice.findMany({
@@ -157,6 +160,7 @@ export default async function HomePage() {
       presentAddress: true,
       permanentAddress: true,
       role: true,
+      userType: true,
       isClaimed: true,
     },
   });
@@ -247,20 +251,48 @@ export default async function HomePage() {
               <span className="text-[11px] text-emerald-300/80">সদস্য পরিচালিত</span>
             </div>
 
-            <div className="text-center p-3 border-r border-white/10">
+            <div className="text-center p-3 border-r border-white/10 flex flex-col justify-between">
               <span className="block text-xs text-emerald-200 font-medium">সর্বমোট সংগৃহীত</span>
-              <span className="text-2xl sm:text-3xl font-extrabold text-amber-300 mt-1 block">
-                {formatCurrency(totalCollected)}
+              {canViewFinancials ? (
+                <span className="text-2xl sm:text-3xl font-extrabold text-amber-300 mt-1 block">
+                  {formatCurrency(totalCollected)}
+                </span>
+              ) : (
+                <div className="my-auto py-1">
+                  <Link
+                    href="/login"
+                    className="inline-flex items-center justify-center gap-1.5 text-xs sm:text-sm font-bold text-amber-300 hover:text-amber-200 py-1 px-2.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 transition"
+                  >
+                    <Lock className="w-3.5 h-3.5" />
+                    <span>দেখতে লগইন করুন</span>
+                  </Link>
+                </div>
+              )}
+              <span className="text-[11px] text-emerald-300/80 block mt-1">
+                {canViewFinancials ? "যাচাইকৃত জমা" : "সদস্যদের জন্য সংরক্ষিত"}
               </span>
-              <span className="text-[11px] text-emerald-300/80">যাচাইকৃত জমা</span>
             </div>
 
-            <div className="text-center p-3 border-r border-white/10">
+            <div className="text-center p-3 border-r border-white/10 flex flex-col justify-between">
               <span className="block text-xs text-emerald-200 font-medium">কল্যাণে মোট ব্যয়</span>
-              <span className="text-2xl sm:text-3xl font-extrabold text-emerald-100 mt-1 block">
-                {formatCurrency(totalSpent)}
+              {canViewFinancials ? (
+                <span className="text-2xl sm:text-3xl font-extrabold text-emerald-100 mt-1 block">
+                  {formatCurrency(totalSpent)}
+                </span>
+              ) : (
+                <div className="my-auto py-1">
+                  <Link
+                    href="/login"
+                    className="inline-flex items-center justify-center gap-1.5 text-xs sm:text-sm font-bold text-emerald-100 hover:text-white py-1 px-2.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 transition"
+                  >
+                    <Lock className="w-3.5 h-3.5" />
+                    <span>দেখতে লগইন করুন</span>
+                  </Link>
+                </div>
+              )}
+              <span className="text-[11px] text-emerald-300/80 block mt-1">
+                {canViewFinancials ? "সহায়তা ও সেবা" : "সদস্যদের জন্য সংরক্ষিত"}
               </span>
-              <span className="text-[11px] text-emerald-300/80">সহায়তা ও সেবা</span>
             </div>
 
             <div className="text-center p-3">
@@ -333,11 +365,22 @@ export default async function HomePage() {
 
                       <div className="space-y-3 pt-3 border-t border-slate-100">
                         <div>
-                          <div className="flex justify-between text-xs mb-1">
+                          <div className="flex justify-between text-xs mb-1 items-center">
                             <span className="text-slate-500">বর্তমান স্থিতি:</span>
-                            <span className="font-bold text-emerald-800">
-                              {formatCurrency(balance)}
-                            </span>
+                            {canViewFinancials ? (
+                              <span className="font-bold text-emerald-800">
+                                {formatCurrency(balance)}
+                              </span>
+                            ) : (
+                              <Link
+                                href="/login"
+                                className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-800 bg-amber-50 hover:bg-amber-100 px-2 py-0.5 rounded-md border border-amber-200 transition"
+                                title="লগইন করে ব্যালেন্স দেখুন"
+                              >
+                                <Lock className="w-3 h-3 text-amber-600" />
+                                <span>দেখতে লগইন করুন</span>
+                              </Link>
+                            )}
                           </div>
                           {target > 0 && (
                             <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
@@ -349,7 +392,9 @@ export default async function HomePage() {
                           )}
                           {target > 0 && (
                             <div className="flex justify-between text-[11px] text-slate-400 mt-1">
-                              <span>টার্গেট: {formatCurrency(target)}</span>
+                              <span>
+                                {canViewFinancials ? `টার্গেট: ${formatCurrency(target)}` : "লক্ষ্যমাত্রা অর্জনের ধারা"}
+                              </span>
                               <span>{toBengaliNumber(percent)}% সংগৃহীত</span>
                             </div>
                           )}

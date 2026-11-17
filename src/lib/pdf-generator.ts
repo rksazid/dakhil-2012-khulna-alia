@@ -401,7 +401,7 @@ export function generateReceiptHtml(data: {
                 }
               </td>
               <td>
-                <div class="org-title">দাখিল ২০১২ ব্যাচ — খুলনা আলিয়া মাদ্রাসা</div>
+                <div class="org-title">দাখিল ২০১২ ব্যাচ • খুলনা আলিয়া মাদ্রাসা</div>
                 <div class="org-sub">বন্ধু কল্যাণ তহবিল ও সেন্ট্রাল একাউন্টস ম্যানেজমেন্ট পোর্টাল</div>
                 <div class="org-contact">
                   ${data.contactAddress || "খুলনা আলিয়া মাদ্রাসা চত্বর, খুলনা"}${data.contactPhone ? ` | হেল্পলাইন: ${data.contactPhone}` : ""}${data.contactEmail ? ` | ${data.contactEmail}` : ""}

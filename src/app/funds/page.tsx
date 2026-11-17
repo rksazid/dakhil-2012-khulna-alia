@@ -4,13 +4,13 @@ import { getSession } from "@/lib/auth";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { formatCurrency, toBengaliNumber } from "@/lib/utils";
-import { HeartHandshake, PhoneCall, ArrowRight, ShieldCheck, Users } from "lucide-react";
+import { HeartHandshake, PhoneCall, ArrowRight, ShieldCheck, Users, Lock } from "lucide-react";
 
 
 export default async function FundsPage() {
   const session = await getSession();
 
-  const [funds, userCommitments] = await Promise.all([
+  const [funds, userCommitments, balanceSetting] = await Promise.all([
     prisma.fund.findMany({
       orderBy: { createdAt: "asc" },
       include: {
@@ -25,7 +25,12 @@ export default async function FundsPage() {
           select: { fundId: true, committedAmount: true },
         })
       : Promise.resolve([]),
+    prisma.siteSetting.findUnique({
+      where: { key: "public_fund_balance_visible" },
+    }),
   ]);
+
+  const canViewFinancials = Boolean(session) || balanceSetting?.value === "true";
 
   const userCommitmentMap = new Map(
     userCommitments.map((c) => [c.fundId, Number(c.committedAmount)])
@@ -101,11 +106,22 @@ export default async function FundsPage() {
 
                   <div className="space-y-4 pt-4 border-t border-slate-100">
                     <div>
-                      <div className="flex justify-between text-xs mb-1 font-medium">
+                      <div className="flex justify-between text-xs mb-1 font-medium items-center">
                         <span className="text-slate-500">বর্তমান তহবিল স্থিতি:</span>
-                        <span className="font-bold text-emerald-800 text-sm">
-                          {formatCurrency(balance)}
-                        </span>
+                        {canViewFinancials ? (
+                          <span className="font-bold text-emerald-800 text-sm">
+                            {formatCurrency(balance)}
+                          </span>
+                        ) : (
+                          <Link
+                            href="/login"
+                            className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-800 bg-amber-50 hover:bg-amber-100 px-2 py-0.5 rounded-md border border-amber-200 transition"
+                            title="লগইন করে ব্যালেন্স দেখুন"
+                          >
+                            <Lock className="w-3 h-3 text-amber-600" />
+                            <span>দেখতে লগইন করুন</span>
+                          </Link>
+                        )}
                       </div>
                       {target > 0 && (
                         <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
@@ -117,7 +133,9 @@ export default async function FundsPage() {
                       )}
                       {target > 0 && (
                         <div className="flex justify-between text-[11px] text-slate-400 mt-1">
-                          <span>টার্গেট: {formatCurrency(target)}</span>
+                          <span>
+                            {canViewFinancials ? `টার্গেট: ${formatCurrency(target)}` : "লক্ষ্যমাত্রা অর্জনের ধারা"}
+                          </span>
                           <span>{toBengaliNumber(percent)}% সংগৃহীত</span>
                         </div>
                       )}

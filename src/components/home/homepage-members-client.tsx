@@ -9,6 +9,9 @@ import {
   Eye,
   ArrowRight,
   School,
+  CheckCircle2,
+  MapPin,
+  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 import { MemberDetailModal, MemberDetailData } from "@/components/members/member-detail-modal";
@@ -33,15 +36,35 @@ export function HomepageMembersClient({
               className="group relative bg-white rounded-3xl border border-slate-200/80 shadow-xs hover:shadow-xl hover:-translate-y-1 hover:border-emerald-400/80 transition-all duration-300 flex flex-col justify-between overflow-hidden"
             >
               {/* Top decorative gradient bar */}
-              <div className="h-18 bg-gradient-to-r from-emerald-950 via-emerald-800 to-teal-900 relative overflow-hidden">
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white/10 via-transparent to-black/20 pointer-events-none" />
+              <div className="h-20 bg-gradient-to-r from-emerald-950 via-slate-900 to-teal-950 relative overflow-hidden">
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white/10 via-transparent to-black/30 pointer-events-none" />
 
-                {/* Department pill on top left */}
-                {member.studentGroup && (
-                  <span className="absolute top-2.5 left-3 text-[10.5px] font-bold px-2.5 py-0.5 rounded-full bg-white/20 text-white backdrop-blur-xs border border-white/20">
-                    {member.studentGroup === "SCIENCE" ? "বিজ্ঞান" : "মানবিক"}
-                  </span>
-                )}
+                {/* Role & Category tags on top left */}
+                <div className="absolute top-2.5 left-3 flex items-center gap-1.5 flex-wrap">
+                  {member.role === "SUPER_ADMIN" ? (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-950/85 text-amber-300 border border-amber-400/40 shadow-xs backdrop-blur-md">
+                      সুপার অ্যাডমিন
+                    </span>
+                  ) : member.role === "FUND_MANAGER" ? (
+                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 shadow-xs">
+                      ফান্ড ম্যানেজার
+                    </span>
+                  ) : null}
+
+                  {member.userType === "TEACHER" ? (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 shadow-xs border border-amber-300">
+                      সম্মানিত শিক্ষক
+                    </span>
+                  ) : member.userType === "WELL_WISHER" ? (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-400 text-slate-950 shadow-xs border border-teal-300">
+                      শুভাকাঙ্ক্ষী
+                    </span>
+                  ) : member.role !== "SUPER_ADMIN" && member.role !== "FUND_MANAGER" ? (
+                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-white/20 text-white backdrop-blur-xs border border-white/20">
+                      দাখিল ২০১২
+                    </span>
+                  ) : null}
+                </div>
 
                 {/* Blood group tag on top right */}
                 {member.bloodGroup && (
@@ -53,14 +76,14 @@ export function HomepageMembersClient({
               </div>
 
               {/* Avatar overlapping header */}
-              <div className="px-5 -mt-9 flex items-end justify-between">
+              <div className="px-5 -mt-10 flex items-end justify-between">
                 <div
                   onClick={() => setSelectedMember(member)}
                   className="cursor-pointer group/avatar relative"
                   title="প্রোফাইল বড় করে দেখুন"
                 >
                   {member.thumbnailUrl || member.avatarUrl ? (
-                    <div className="w-20 h-20 sm:w-22 sm:h-22 rounded-2xl overflow-hidden border-4 border-white shadow-md bg-slate-100 transition-transform duration-300 group-hover/avatar:scale-105">
+                    <div className="w-20 h-20 sm:w-22 sm:h-22 rounded-2xl overflow-hidden border-4 border-white shadow-md bg-slate-100 transition-transform duration-300 group-hover/avatar:scale-105 relative">
                       <img
                         src={member.thumbnailUrl || member.avatarUrl!}
                         alt={member.name}
@@ -68,9 +91,17 @@ export function HomepageMembersClient({
                       />
                     </div>
                   ) : (
-                    <div className="w-20 h-20 sm:w-22 sm:h-22 rounded-2xl bg-gradient-to-br from-emerald-700 to-emerald-950 text-white font-black text-2xl flex items-center justify-center border-4 border-white shadow-md transition-transform duration-300 group-hover/avatar:scale-105">
+                    <div className="w-20 h-20 sm:w-22 sm:h-22 rounded-2xl bg-gradient-to-br from-emerald-700 to-emerald-950 text-white font-black text-2xl flex items-center justify-center border-4 border-white shadow-md transition-transform duration-300 group-hover/avatar:scale-105 relative">
                       {member.name.charAt(0)}
                     </div>
+                  )}
+                  {member.isClaimed && (
+                    <span
+                      className="absolute -bottom-1 -right-1 p-0.5 bg-emerald-600 text-white rounded-full border-2 border-white shadow-xs"
+                      title="যাচাইকৃত নিবন্ধিত সদস্য"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                    </span>
                   )}
                 </div>
 
@@ -84,6 +115,17 @@ export function HomepageMembersClient({
                   {member.classRoll && (
                     <span className="px-2 py-0.5 rounded-lg text-[10.5px] bg-slate-100/90 text-slate-700 font-mono font-bold border border-slate-200 shadow-2xs">
                       রোল: #{member.classRoll}
+                    </span>
+                  )}
+                  {member.studentGroup && (
+                    <span
+                      className={`px-2 py-0.5 rounded-lg text-[10px] font-bold ${
+                        member.studentGroup === "SCIENCE"
+                          ? "bg-blue-50 text-blue-700 border border-blue-200"
+                          : "bg-amber-50 text-amber-700 border border-amber-200"
+                      }`}
+                    >
+                      {member.studentGroup === "SCIENCE" ? "বিজ্ঞান" : "মানবিক"}
                     </span>
                   )}
                   {member.classroom && (
@@ -112,6 +154,13 @@ export function HomepageMembersClient({
                       {member.workplace && ` (${member.workplace})`}
                     </span>
                   </p>
+
+                  {member.presentAddress && (
+                    <p className="text-xs text-slate-500 flex items-center gap-1.5 truncate">
+                      <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span className="truncate">{member.presentAddress}</span>
+                    </p>
+                  )}
 
                   {member.email && (
                     <p className="text-xs text-slate-500 flex items-center gap-1.5 font-mono truncate">

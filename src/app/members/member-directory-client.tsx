@@ -14,6 +14,7 @@ import {
   School,
   ExternalLink,
   Eye,
+  CheckCircle2,
 } from "lucide-react";
 import { MemberDetailModal, MemberDetailData } from "@/components/members/member-detail-modal";
 
@@ -211,7 +212,7 @@ export function MemberDirectoryClient({ members }: { members: MemberItem[] }) {
                       title="প্রোফাইল বড় করে দেখুন"
                     >
                       {member.thumbnailUrl || member.avatarUrl ? (
-                        <div className="w-22 h-22 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border-4 border-white shadow-md bg-slate-100 transition-transform duration-300 group-hover/avatar:scale-105">
+                        <div className="w-22 h-22 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border-4 border-white shadow-md bg-slate-100 transition-transform duration-300 group-hover/avatar:scale-105 relative">
                           <img
                             src={member.thumbnailUrl || member.avatarUrl!}
                             alt={member.name}
@@ -219,9 +220,17 @@ export function MemberDirectoryClient({ members }: { members: MemberItem[] }) {
                           />
                         </div>
                       ) : (
-                        <div className="w-22 h-22 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br from-emerald-700 to-emerald-950 text-white font-black text-2xl sm:text-3xl flex items-center justify-center border-4 border-white shadow-md transition-transform duration-300 group-hover/avatar:scale-105">
+                        <div className="w-22 h-22 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br from-emerald-700 to-emerald-950 text-white font-black text-2xl sm:text-3xl flex items-center justify-center border-4 border-white shadow-md transition-transform duration-300 group-hover/avatar:scale-105 relative">
                           {member.name.charAt(0)}
                         </div>
+                      )}
+                      {member.isClaimed && (
+                        <span
+                          className="absolute -bottom-1 -right-1 p-0.5 bg-emerald-600 text-white rounded-full border-2 border-white shadow-xs"
+                          title="যাচাইকৃত নিবন্ধিত সদস্য"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                        </span>
                       )}
                     </div>
 

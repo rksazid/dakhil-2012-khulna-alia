@@ -322,7 +322,7 @@ export function FileUploader({
                 ক্লিক করে ছবি বা ফাইল নির্বাচন করুন
               </p>
               <p className="text-[10px] text-slate-400">
-                (JPG, PNG, WebP — স্বয়ংক্রিয়ভাবে অপ্টিমাইজ হয়ে আপলোড হবে)
+                (JPG, PNG, WebP • স্বয়ংক্রিয়ভাবে অপ্টিমাইজ হয়ে আপলোড হবে)
               </p>
             </>
           )}

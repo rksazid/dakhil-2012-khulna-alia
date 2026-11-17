@@ -367,7 +367,7 @@ export function SpreadsheetLedger({
                   >
                     <div className="inline-flex items-center justify-center gap-1.5">
                       <span className="font-semibold text-slate-800">
-                        {member.committedAmount ? formatCurrency(member.committedAmount) : "—"}
+                        {member.committedAmount ? formatCurrency(member.committedAmount) : "-"}
                       </span>
                       {canEdit && (
                         <Edit2 className="w-3 h-3 text-slate-300 group-hover:text-emerald-700 opacity-60 group-hover:opacity-100 transition" />
@@ -408,7 +408,7 @@ export function SpreadsheetLedger({
                             এন্ট্রি
                           </span>
                         ) : (
-                          <span className="text-slate-300">—</span>
+                          <span className="text-slate-300">-</span>
                         )}
                       </td>
                     );
@@ -416,7 +416,7 @@ export function SpreadsheetLedger({
 
                   {canEdit && (
                     <td className="py-2 px-2 text-center border-r border-slate-100 bg-slate-50/30 no-print">
-                      <span className="text-[10px] text-slate-300">—</span>
+                      <span className="text-[10px] text-slate-300">-</span>
                     </td>
                   )}
 
@@ -434,7 +434,7 @@ export function SpreadsheetLedger({
               <td className="py-3 px-4 sticky left-0 z-10 bg-slate-100 border-r border-slate-300">
                 মোট আদায় (মাসিক সংকলন)
               </td>
-              <td className="py-3 px-3 text-center border-r border-slate-300">—</td>
+              <td className="py-3 px-3 text-center border-r border-slate-300">-</td>
               {monthsList.map((month) => (
                 <td
                   key={month}
@@ -445,7 +445,7 @@ export function SpreadsheetLedger({
               ))}
               {canEdit && (
                 <td className="py-3 px-2 text-center border-r border-slate-300 no-print">
-                  <span className="text-slate-400">—</span>
+                  <span className="text-slate-400">-</span>
                 </td>
               )}
               <td className="py-3 px-4 text-right text-emerald-900 font-extrabold bg-slate-200">

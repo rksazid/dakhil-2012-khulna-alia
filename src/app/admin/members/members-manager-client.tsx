@@ -438,12 +438,12 @@ export function MembersManagerClient({
                   </td>
 
                   <td className="py-3 px-3 text-slate-700">
-                    <p className="font-medium">{m.occupation || "—"}</p>
+                    <p className="font-medium">{m.occupation || "-"}</p>
                     {m.workplace && <p className="text-[11px] text-slate-400">{m.workplace}</p>}
                   </td>
 
                   <td className="py-3 px-3 text-slate-600">
-                    <p>{m.presentAddress || "—"}</p>
+                    <p>{m.presentAddress || "-"}</p>
                   </td>
 
                   <td className="py-3 px-3">
@@ -640,7 +640,7 @@ export function MembersManagerClient({
               <div className="p-3 bg-emerald-50/50 rounded-xl border border-emerald-100">
                 <p className="text-xs font-semibold text-emerald-800 mb-2 flex items-center gap-1.5">
                   <GraduationCap className="w-4 h-4 text-emerald-700" />
-                  মাদ্রাসার তথ্য — দাখিল ২০১২ (ঐচ্ছিক)
+                  মাদ্রাসার তথ্য • দাখিল ২০১২ (ঐচ্ছিক)
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                   <div>
@@ -1057,7 +1057,7 @@ export function MembersManagerClient({
               <div className="p-3 bg-emerald-50/50 rounded-xl border border-emerald-100">
                 <p className="text-xs font-semibold text-emerald-800 mb-2 flex items-center gap-1.5">
                   <GraduationCap className="w-4 h-4 text-emerald-700" />
-                  মাদ্রাসার তথ্য — দাখিল ২০১২ (ঐচ্ছিক)
+                  মাদ্রাসার তথ্য • দাখিল ২০১২ (ঐচ্ছিক)
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                   <div>

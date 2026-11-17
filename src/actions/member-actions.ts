@@ -291,19 +291,19 @@ export async function updateMemberDetailsAction(userId: string, formData: FormDa
       afterDiff["অ্যাকাউন্টের ধরন"] = isClaimed ? "নিবন্ধিত" : "অফলাইন";
     }
     if (oldUser.phone !== phone) { beforeDiff["মোবাইল"] = oldUser.phone; afterDiff["মোবাইল"] = phone; }
-    if (oldUser.email !== email) { beforeDiff["ইমেইল"] = oldUser.email || "—"; afterDiff["ইমেইল"] = email || "—"; }
+    if (oldUser.email !== email) { beforeDiff["ইমেইল"] = oldUser.email || "-"; afterDiff["ইমেইল"] = email || "-"; }
     if (oldUser.role !== role) { beforeDiff["রোল"] = oldUser.role; afterDiff["রোল"] = role; }
-    if (oldUser.bloodGroup !== bloodGroup) { beforeDiff["রক্তের গ্রুপ"] = oldUser.bloodGroup || "—"; afterDiff["রক্তের গ্রুপ"] = bloodGroup || "—"; }
-    if (oldUser.studentGroup !== studentGroup) { beforeDiff["বিভাগ"] = oldUser.studentGroup || "—"; afterDiff["বিভাগ"] = studentGroup || "—"; }
-    if (oldUser.classRoll !== classRoll) { beforeDiff["ক্লাস রোল"] = oldUser.classRoll || "—"; afterDiff["ক্লাস রোল"] = classRoll || "—"; }
-    if (oldUser.classroom !== classroom) { beforeDiff["শাখা"] = oldUser.classroom || "—"; afterDiff["শাখা"] = classroom || "—"; }
+    if (oldUser.bloodGroup !== bloodGroup) { beforeDiff["রক্তের গ্রুপ"] = oldUser.bloodGroup || "-"; afterDiff["রক্তের গ্রুপ"] = bloodGroup || "-"; }
+    if (oldUser.studentGroup !== studentGroup) { beforeDiff["বিভাগ"] = oldUser.studentGroup || "-"; afterDiff["বিভাগ"] = studentGroup || "-"; }
+    if (oldUser.classRoll !== classRoll) { beforeDiff["ক্লাস রোল"] = oldUser.classRoll || "-"; afterDiff["ক্লাস রোল"] = classRoll || "-"; }
+    if (oldUser.classroom !== classroom) { beforeDiff["শাখা"] = oldUser.classroom || "-"; afterDiff["শাখা"] = classroom || "-"; }
     if (oldUser.avatarUrl !== avatarUrl) {
       beforeDiff["প্রোফাইল ছবি"] = oldUser.avatarUrl ? "সংযুক্ত ছিল" : "ছিল না";
       afterDiff["প্রোফাইল ছবি"] = avatarUrl ? "নতুন ছবি আপলোড" : "ছবি সরানো হয়েছে";
     }
-    if (oldUser.occupation !== occupation) { beforeDiff["পেশা"] = oldUser.occupation || "—"; afterDiff["পেশা"] = occupation || "—"; }
-    if (oldUser.workplace !== workplace) { beforeDiff["কর্মস্থল"] = oldUser.workplace || "—"; afterDiff["কর্মস্থল"] = workplace || "—"; }
-    if (oldUser.presentAddress !== presentAddress) { beforeDiff["বর্তমান ঠিকানা"] = oldUser.presentAddress || "—"; afterDiff["বর্তমান ঠিকানা"] = presentAddress || "—"; }
+    if (oldUser.occupation !== occupation) { beforeDiff["পেশা"] = oldUser.occupation || "-"; afterDiff["পেশা"] = occupation || "-"; }
+    if (oldUser.workplace !== workplace) { beforeDiff["কর্মস্থল"] = oldUser.workplace || "-"; afterDiff["কর্মস্থল"] = workplace || "-"; }
+    if (oldUser.presentAddress !== presentAddress) { beforeDiff["বর্তমান ঠিকানা"] = oldUser.presentAddress || "-"; afterDiff["বর্তমান ঠিকানা"] = presentAddress || "-"; }
 
     await logActivity({
       action: "UPDATE_USER_DETAILS",

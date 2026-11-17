@@ -20,6 +20,7 @@ import {
   Receipt,
   CreditCard,
   UserCheck,
+  Lock,
 } from "lucide-react";
 
 interface FundDetailPageProps {
@@ -71,6 +72,11 @@ export default async function FundDetailPage({ params }: FundDetailPageProps) {
   const currentBalance = Number(fund.currentBalance);
   const target = Number(fund.targetAmount || 0);
   const percent = target > 0 ? Math.min(Math.round((currentBalance / target) * 100), 100) : 100;
+
+  const balanceSetting = await prisma.siteSetting.findUnique({
+    where: { key: "public_fund_balance_visible" },
+  });
+  const canViewFinancials = Boolean(session) || balanceSetting?.value === "true";
 
   // Check if current user has an active commitment
   let userCommitment = null;
@@ -126,21 +132,48 @@ export default async function FundDetailPage({ params }: FundDetailPageProps) {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-4 max-w-4xl">
             <div className="bg-emerald-800/50 backdrop-blur-xs p-3 rounded-xl border border-emerald-700/60">
               <span className="text-[11px] text-emerald-200 block">বর্তমান তহবিল স্থিতি</span>
-              <span className="text-xl font-bold text-amber-300 block">
-                {formatCurrency(currentBalance)}
-              </span>
+              {canViewFinancials ? (
+                <span className="text-xl font-bold text-amber-300 block">
+                  {formatCurrency(currentBalance)}
+                </span>
+              ) : (
+                <Link
+                  href="/login"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-amber-300 hover:text-amber-200 mt-1"
+                >
+                  <Lock className="w-3.5 h-3.5" /> দেখতে লগইন করুন
+                </Link>
+              )}
             </div>
             <div className="bg-emerald-800/50 backdrop-blur-xs p-3 rounded-xl border border-emerald-700/60">
               <span className="text-[11px] text-emerald-200 block">সর্বমোট আদায়</span>
-              <span className="text-xl font-bold text-white block">
-                {formatCurrency(totalCollected)}
-              </span>
+              {canViewFinancials ? (
+                <span className="text-xl font-bold text-white block">
+                  {formatCurrency(totalCollected)}
+                </span>
+              ) : (
+                <Link
+                  href="/login"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-white/90 hover:text-white mt-1"
+                >
+                  <Lock className="w-3.5 h-3.5" /> দেখতে লগইন করুন
+                </Link>
+              )}
             </div>
             <div className="bg-emerald-800/50 backdrop-blur-xs p-3 rounded-xl border border-emerald-700/60">
               <span className="text-[11px] text-emerald-200 block">মানবিক সহায়তায় ব্যয়</span>
-              <span className="text-xl font-bold text-white block">
-                {formatCurrency(totalSpent)}
-              </span>
+              {canViewFinancials ? (
+                <span className="text-xl font-bold text-emerald-100 block">
+                  {formatCurrency(totalSpent)}
+                </span>
+              ) : (
+                <Link
+                  href="/login"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-100/90 hover:text-white mt-1"
+                >
+                  <Lock className="w-3.5 h-3.5" /> দেখতে লগইন করুন
+                </Link>
+              )}
             </div>
             <div className="bg-emerald-800/50 backdrop-blur-xs p-3 rounded-xl border border-emerald-700/60">
               <span className="text-[11px] text-emerald-200 block">প্রতিশ্রুতিবদ্ধ সদস্য</span>
@@ -153,7 +186,32 @@ export default async function FundDetailPage({ params }: FundDetailPageProps) {
       </div>
 
       {/* Main Content */}
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full space-y-8">
+        {!canViewFinancials && (
+          <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-amber-100 text-amber-900 shrink-0">
+                <ShieldCheck className="w-5 h-5 text-amber-700" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-amber-950">
+                  আর্থিক নিরাপত্তা ও প্রাইভেসি প্রটেকশন
+                </p>
+                <p className="text-[11px] text-amber-800 leading-relaxed">
+                  তহবিলের পুঙ্খানুপুঙ্খ আর্থিক স্থিতি ও মাসিক লেজার স্টেটমেন্ট দেখতে অনুগ্রহ করে আপনার ব্যাচমেট একাউন্টে লগইন করুন।
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/login"
+              className="px-4 py-2 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold shrink-0 transition"
+            >
+              লগইন করুন
+            </Link>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column: Rules, Objectives & Expenses */}
         <div className="lg:col-span-2 space-y-8">
           {/* Rules & Regulations (শর্ত ও নিয়মাবলী) */}
@@ -186,11 +244,26 @@ export default async function FundDetailPage({ params }: FundDetailPageProps) {
                 </h2>
               </div>
               <span className="text-xs text-slate-500 font-medium">
-                সর্বমোট ব্যয়: {formatCurrency(totalSpent)}
+                {canViewFinancials
+                  ? `সর্বমোট ব্যয়: ${formatCurrency(totalSpent)}`
+                  : "ব্যয়ের হিসাব: সংরক্ষিত"}
               </span>
             </div>
 
-            {fund.expenses.length === 0 ? (
+            {!canViewFinancials ? (
+              <div className="py-8 text-center space-y-2 bg-slate-50/80 rounded-xl border border-dashed border-slate-200">
+                <Lock className="w-6 h-6 text-slate-400 mx-auto" />
+                <p className="text-xs font-semibold text-slate-700">
+                  ব্যয়ের পুঙ্খানুপুঙ্খ বিবরণ, রসিদ ও ভাউচার দেখতে লগইন করুন
+                </p>
+                <Link
+                  href="/login"
+                  className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 hover:underline pt-1"
+                >
+                  সদস্য লগইন করুন →
+                </Link>
+              </div>
+            ) : fund.expenses.length === 0 ? (
               <p className="text-xs text-slate-500 py-4 text-center">
                 এই তহবিল থেকে এখনো কোনো খরচ করা হয়নি।
               </p>
@@ -302,6 +375,7 @@ export default async function FundDetailPage({ params }: FundDetailPageProps) {
               </div>
             )}
           </div>
+        </div>
         </div>
       </main>
 

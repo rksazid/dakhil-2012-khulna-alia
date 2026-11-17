@@ -213,7 +213,7 @@ export default function RegisterPage() {
             {userType === "BATCH_MEMBER" && (
               <div className="p-3.5 bg-emerald-50/60 rounded-2xl border border-emerald-100 space-y-2">
                 <p className="text-xs font-bold text-emerald-800">
-                  মাদ্রাসার তথ্য — দাখিল ২০১২ (ঐচ্ছিক)
+                  মাদ্রাসার তথ্য • দাখিল ২০১২ (ঐচ্ছিক)
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
@@ -353,7 +353,7 @@ export default function RegisterPage() {
             <div>
               <FileUploader
                 folder="avatars"
-                label="প্রোফাইল ছবি (ঐচ্ছিক — ব্যাচমেট ডিরেক্টরিতে প্রদর্শনের জন্য)"
+                label="প্রোফাইল ছবি (ঐচ্ছিক • ব্যাচমেট ডিরেক্টরিতে প্রদর্শনের জন্য)"
                 onUploadComplete={(url, thumb) => {
                   setAvatarUrl(url);
                   setThumbnailUrl(thumb || url);

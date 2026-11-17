@@ -351,7 +351,7 @@ export default async function ReceiptVerificationPage({ params }: Props) {
               <div>
                 <span className="text-[11px] text-slate-500 block">TrxID / রেফারেন্স:</span>
                 <span className="text-sm font-mono font-bold text-slate-800">
-                  {contribution.transactionId || "—"}
+                  {contribution.transactionId || "-"}
                 </span>
               </div>
               <div>

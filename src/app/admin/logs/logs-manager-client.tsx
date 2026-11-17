@@ -159,7 +159,7 @@ const FIELD_TRANSLATIONS: Record<string, string> = {
 };
 
 function formatValue(key: string, val: unknown): string {
-  if (val === null || val === undefined || val === "") return "—";
+  if (val === null || val === undefined || val === "") return "-";
   if (typeof val === "boolean") return val ? "সক্রিয় (Active)" : "স্থগিত (Inactive)";
   
   const lowerKey = key.toLowerCase();

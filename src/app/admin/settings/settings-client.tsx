@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { updateSiteSettingsAction } from "@/actions/settings-actions";
-import { Settings, Save, Sparkles, AlertCircle, Layout, Phone, Mail } from "lucide-react";
+import { Settings, Save, Sparkles, AlertCircle, Layout, Phone, Mail, ShieldCheck } from "lucide-react";
 import { FileUploader } from "@/components/ui/file-uploader";
 
 export function SettingsClient({
@@ -127,6 +127,37 @@ export function SettingsClient({
               }
               className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl"
             />
+          </div>
+        </div>
+
+        {/* Financial Privacy Settings */}
+        <div className="space-y-4 pt-4 border-t border-slate-100">
+          <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+            <ShieldCheck className="w-4 h-4 text-emerald-700" />
+            <h3 className="text-sm font-bold text-slate-800">
+              তহবিলের ব্যালেন্স ও আর্থিক গোপনীয়তা নীতি (Financial Privacy)
+            </h3>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              পাবলিক (লগআউট) ভিজিটরদের কাছে তহবিলের ব্যালেন্স প্রদর্শন
+            </label>
+            <p className="text-[11px] text-slate-500 mb-2 leading-relaxed">
+              অনাকাঙ্ক্ষিত নজরদারি ও আর্থিক ঝুঁকি এড়াতে বহিরাগতদের কাছে সঠিক জমার অঙ্ক গোপন রেখে শুধুমাত্র লগইনকৃত ব্যাচমেটদের দেখানো আন্তর্জাতিক বেস্ট-প্র্যাকটিস।
+            </p>
+            <select
+              name="public_fund_balance_visible"
+              defaultValue={initialSettings["public_fund_balance_visible"] || "false"}
+              className="w-full sm:w-auto px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl bg-white font-medium"
+            >
+              <option value="false">
+                🔒 শুধুমাত্র লগইনকৃত সদস্যদের দেখান (প্রস্তাবিত ও সুরক্ষিত)
+              </option>
+              <option value="true">
+                🌐 সবার জন্য উন্মুক্ত রাখুন (পাবলিকলি দৃশ্যমান)
+              </option>
+            </select>
           </div>
         </div>
 
