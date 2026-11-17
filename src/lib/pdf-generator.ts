@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
 import { formatBengaliDate, formatBengaliDateTime, formatCurrency, toBengaliNumber } from "@/lib/utils";
+import { sortMonthYears } from "@/lib/months";
 import { PaymentStatus } from "@prisma/client";
 import QRCode from "qrcode";
 import fs from "fs";
@@ -732,4 +733,690 @@ export async function generateReceiptPdfBuffer(contributionId: string): Promise<
   }
 
   throw lastError || new Error("PDF রশিদ জেনারেট করতে ব্যর্থ হয়েছে।");
+}
+
+// ---------------------------------------------------------------------------
+// Chunked Spreadsheet Ledger HTML & PDF Generator
+// ---------------------------------------------------------------------------
+
+export interface LedgerPdfMember {
+  id: string;
+  name: string;
+  phone: string;
+  classRoll?: string | null;
+  studentGroup?: string | null;
+  committedAmount?: number | null;
+  contributions: Record<string, number>;
+}
+
+export interface LedgerPdfData {
+  fundTitle: string;
+  months: string[];
+  members: LedgerPdfMember[];
+  columnTotals: Record<string, number>;
+  grandTotal: number;
+  lastUpdatedAtFormatted: string;
+  lastUpdatedByName: string;
+  verificationUrl: string;
+  qrCodeDataUrl?: string;
+  logoBase64?: string;
+}
+
+export function generateLedgerHtml(data: LedgerPdfData): string {
+  // Chunk months into groups of 3 or 4 months so each table fits comfortably on A4
+  const chunkSize = 4;
+  const chunks: string[][] = [];
+  for (let i = 0; i < data.months.length; i += chunkSize) {
+    chunks.push(data.months.slice(i, i + chunkSize));
+  }
+
+  // Pre-calculate member grand totals
+  const memberGrandTotals: Record<string, number> = {};
+  const memberLastPaidMonth: Record<string, string> = {};
+
+  data.members.forEach((m) => {
+    let sum = 0;
+    let lastMonth = "-";
+    data.months.forEach((month) => {
+      const paid = m.contributions[month] || 0;
+      if (paid > 0) {
+        sum += paid;
+        lastMonth = month;
+      }
+    });
+    memberGrandTotals[m.id] = sum;
+    memberLastPaidMonth[m.id] = lastMonth;
+  });
+
+  return `<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="utf-8">
+  <title>${data.fundTitle} • অফিসিয়াল স্প্রেডশিট লেজার</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    @page {
+      size: A4 landscape;
+      margin: 10mm;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: "Hind Siliguri", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #ffffff;
+      color: #0f172a;
+      padding: 16px 20px;
+      line-height: 1.4;
+      font-size: 11px;
+    }
+    .header-box {
+      border-bottom: 2px solid #065f46;
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .brand-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-logo {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .brand-badge {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      background: #065f46;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 18px;
+    }
+    .org-title {
+      font-size: 17px;
+      font-weight: 800;
+      color: #065f46;
+      line-height: 1.2;
+    }
+    .fund-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1e293b;
+      margin-top: 2px;
+    }
+    .meta-box {
+      text-align: right;
+      font-size: 10.5px;
+      color: #475569;
+      background: #f8fafc;
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+    }
+    .meta-highlight {
+      color: #065f46;
+      font-weight: 700;
+    }
+
+    /* Section & Chunk Tables */
+    .chunk-section {
+      margin-bottom: 24px;
+      page-break-inside: avoid;
+    }
+    .chunk-heading {
+      font-size: 12px;
+      font-weight: 700;
+      color: #065f46;
+      background: #ecfdf5;
+      padding: 6px 10px;
+      border-left: 4px solid #059669;
+      border-radius: 4px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    table.ledger-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-size: 10.5px;
+      margin-bottom: 8px;
+    }
+    table.ledger-table th, table.ledger-table td {
+      border: 1px solid #cbd5e1;
+      padding: 5px 6px;
+      vertical-align: middle;
+      word-wrap: break-word;
+      overflow: hidden;
+    }
+    table.ledger-table th {
+      background: #064e3b;
+      color: #ffffff;
+      font-weight: 700;
+      text-align: center;
+      font-size: 10.5px;
+    }
+    table.ledger-table tr:nth-child(even) {
+      background: #f8fafc;
+    }
+    .td-sl {
+      width: 4%;
+      text-align: center;
+      font-weight: 600;
+      color: #64748b;
+    }
+    .td-name {
+      width: 22%;
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .td-commit {
+      width: 11%;
+      text-align: center;
+      font-weight: 600;
+      color: #334155;
+    }
+    .td-month {
+      text-align: center;
+    }
+    .td-total {
+      width: 13%;
+      text-align: right;
+      font-weight: 700;
+      color: #065f46;
+      background: #f0fdf4;
+    }
+    .paid-chip {
+      display: inline-block;
+      font-weight: 700;
+      color: #047857;
+    }
+    .unpaid-chip {
+      color: #94a3b8;
+    }
+    .tr-footer {
+      background: #e2e8f0 !important;
+      font-weight: 800;
+      color: #0f172a;
+    }
+    .tr-footer td {
+      font-weight: 800;
+      border-top: 2px solid #0f172a;
+    }
+
+    /* Summary Table */
+    .summary-section {
+      margin-top: 24px;
+      page-break-inside: avoid;
+    }
+    .summary-heading {
+      font-size: 12.5px;
+      font-weight: 800;
+      color: #0f172a;
+      background: #f1f5f9;
+      padding: 6px 10px;
+      border-left: 4px solid #0f172a;
+      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+    .grand-total-banner {
+      background: #064e3b;
+      color: #ffffff;
+      padding: 10px 16px;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    /* Verification & Signatures */
+    .footer-block {
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px dashed #cbd5e1;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      page-break-inside: avoid;
+    }
+    .sig-box {
+      text-align: center;
+      width: 180px;
+    }
+    .sig-line {
+      border-top: 1px solid #475569;
+      padding-top: 4px;
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #334155;
+    }
+    .qr-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .qr-img {
+      width: 58px;
+      height: 58px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 2px;
+    }
+    .qr-text {
+      font-size: 9.5px;
+      color: #64748b;
+      line-height: 1.3;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header-box">
+    <div class="brand-left">
+      ${
+        data.logoBase64
+          ? `<img src="${data.logoBase64}" alt="লোগো" class="brand-logo" />`
+          : `<div class="brand-badge">১২</div>`
+      }
+      <div>
+        <div class="org-title">দাখিল ২০১২ ব্যাচ • খুলনা আলিয়া মাদ্রাসা</div>
+        <div class="fund-title">${data.fundTitle} — অফিসিয়াল স্প্রেডশিট লেজার</div>
+      </div>
+    </div>
+    <div class="meta-box">
+      <div>🕒 সর্বশেষ আপডেট: <span class="meta-highlight">${data.lastUpdatedAtFormatted}</span></div>
+      <div>👤 হালনাগাদ করেছেন: <span class="meta-highlight">${data.lastUpdatedByName}</span></div>
+      <div>তালিকাভুক্ত সদস্য: <strong>${toBengaliNumber(data.members.length)} জন</strong></div>
+    </div>
+  </div>
+
+  <!-- Chunked Tables (3-4 Months per Chunk for Zero Horizontal Clipping) -->
+  ${chunks
+    .map((chunk, chunkIdx) => {
+      const chunkTitle = `খণ্ড ${toBengaliNumber(chunkIdx + 1)}: ${chunk[0]} হতে ${chunk[chunk.length - 1]}`;
+      const colWidthPercent = Math.floor(50 / chunk.length);
+
+      return `
+      <div class="chunk-section">
+        <div class="chunk-heading">
+          <span>${chunkTitle}</span>
+          <span style="font-size: 10px; font-weight: 600; color: #047857;">পৃষ্ঠা খণ্ড ${toBengaliNumber(chunkIdx + 1)}/${toBengaliNumber(chunks.length)}</span>
+        </div>
+        <table class="ledger-table">
+          <thead>
+            <tr>
+              <th class="td-sl">নং</th>
+              <th class="td-name">সদস্যের নাম ও পরিচয়</th>
+              <th class="td-commit">মাসিক ওয়াদা</th>
+              ${chunk
+                .map(
+                  (m) =>
+                    `<th class="td-month" style="width: ${colWidthPercent}%;">${m}</th>`
+                )
+                .join("")}
+              <th class="td-total">এই খণ্ডের মোট</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.members
+              .map((member, idx) => {
+                let memberChunkTotal = 0;
+                const monthTds = chunk.map((m) => {
+                  const paid = member.contributions[m] || 0;
+                  memberChunkTotal += paid;
+                  return `<td class="td-month">${
+                    paid > 0
+                      ? `<span class="paid-chip">৳${toBengaliNumber(paid)}</span>`
+                      : `<span class="unpaid-chip">-</span>`
+                  }</td>`;
+                });
+
+                return `
+                <tr>
+                  <td class="td-sl">${toBengaliNumber(idx + 1)}</td>
+                  <td class="td-name">
+                    ${member.name}
+                    ${
+                      member.classRoll
+                        ? `<span style="font-size: 9px; color: #64748b; font-weight: normal; margin-left: 4px;">(রোল: #${toBengaliNumber(
+                            member.classRoll
+                          )})</span>`
+                        : ""
+                    }
+                  </td>
+                  <td class="td-commit">
+                    ${
+                      member.committedAmount
+                        ? `৳${toBengaliNumber(member.committedAmount)}`
+                        : `<span style="color: #94a3b8;">-</span>`
+                    }
+                  </td>
+                  ${monthTds.join("")}
+                  <td class="td-total">
+                    ${
+                      memberChunkTotal > 0
+                        ? `৳${toBengaliNumber(memberChunkTotal)}`
+                        : `<span style="color: #94a3b8;">-</span>`
+                    }
+                  </td>
+                </tr>
+              `;
+              })
+              .join("")}
+          </tbody>
+          <tfoot>
+            <tr class="tr-footer">
+              <td colspan="3" style="text-align: right; padding-right: 10px;">মোট আদায় (এই খণ্ড):</td>
+              ${chunk
+                .map((m) => {
+                  const total = data.columnTotals[m] || 0;
+                  return `<td class="td-month" style="font-weight: 800; color: #065f46;">৳${toBengaliNumber(
+                    total
+                  )}</td>`;
+                })
+                .join("")}
+              <td class="td-total" style="font-weight: 800; font-size: 11.5px;">
+                ৳${toBengaliNumber(
+                  chunk.reduce((sum, m) => sum + (data.columnTotals[m] || 0), 0)
+                )}
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    `;
+    })
+    .join("")}
+
+  <!-- Grand Summary Table -->
+  <div class="summary-section">
+    <div class="summary-heading">
+      সার্বিক সারসংক্ষেপ ও চূড়ান্ত পরিশোধ স্থিতি (সকল খণ্ড একত্রে)
+    </div>
+    <table class="ledger-table">
+      <thead>
+        <tr>
+          <th style="width: 5%;">নং</th>
+          <th style="width: 32%;">সদস্যের নাম</th>
+          <th style="width: 20%;">মোবাইল নম্বর</th>
+          <th style="width: 15%;">মাসিক ওয়াদা</th>
+          <th style="width: 15%;">সর্বশেষ পেমেন্টের মাস</th>
+          <th style="width: 13%;">সর্বমোট পরিশোধ</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${data.members
+          .map((member, idx) => {
+            const totalPaid = memberGrandTotals[member.id] || 0;
+            const lastMonth = memberLastPaidMonth[member.id] || "-";
+
+            return `
+            <tr>
+              <td style="text-align: center; color: #64748b;">${toBengaliNumber(idx + 1)}</td>
+              <td style="font-weight: 700;">${member.name}</td>
+              <td style="font-family: monospace; font-size: 10px; color: #475569;">
+                ${
+                  member.phone.startsWith("offline_")
+                    ? "সংরক্ষিত নেই"
+                    : member.phone
+                }
+              </td>
+              <td style="text-align: center; font-weight: 600;">
+                ${
+                  member.committedAmount
+                    ? `৳${toBengaliNumber(member.committedAmount)}`
+                    : "-"
+                }
+              </td>
+              <td style="text-align: center; color: #475569; font-size: 10px;">${lastMonth}</td>
+              <td style="text-align: right; font-weight: 800; color: #065f46; background: #f0fdf4;">
+                ৳${toBengaliNumber(totalPaid)}
+              </td>
+            </tr>
+          `;
+          })
+          .join("")}
+      </tbody>
+    </table>
+
+    <div class="grand-total-banner">
+      <span>তহবিলের সর্বমোট আদায়কৃত অর্থ (Grand Total Collection):</span>
+      <span style="font-size: 16px; color: #fef08a;">৳${toBengaliNumber(data.grandTotal)}/-</span>
+    </div>
+  </div>
+
+  <!-- Signatures & Live Verification -->
+  <div class="footer-block">
+    <div class="qr-box">
+      ${
+        data.qrCodeDataUrl
+          ? `<img src="${data.qrCodeDataUrl}" alt="ভেরিফিকেশন কিউআর কোড" class="qr-img" />`
+          : ""
+      }
+      <div class="qr-text">
+        <strong>অনলাইন ভেরিফিকেশন ও লাইভ লেজার</strong><br>
+        ক্যামেরায় স্ক্যান করে সর্বশেষ রিয়েলটাইম আপডেট দেখুন:<br>
+        <span style="font-family: monospace; color: #065f46;">${data.verificationUrl}</span>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 40px;">
+      <div class="sig-box">
+        <div style="min-height: 24px;"></div>
+        <div class="sig-line">ফান্ড ম্যানেজার / হিসাব নিরীক্ষক</div>
+      </div>
+      <div class="sig-box">
+        <div style="min-height: 24px;"></div>
+        <div class="sig-line">সুপার এডমিন / আহ্বায়ক</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+export async function generateLedgerPdfBuffer(token: string): Promise<{ buffer: Buffer; filename: string; html: string }> {
+  const shareLink = await prisma.ledgerShareLink.findUnique({
+    where: { token },
+    include: { fund: true },
+  });
+
+  if (!shareLink || !shareLink.isActive || !shareLink.fund) {
+    throw new Error("শেয়ার লিঙ্কটি সক্রিয় নেই অথবা মুছে ফেলা হয়েছে।");
+  }
+
+  const fund = shareLink.fund;
+
+  // 1. Fetch contributions distinct months
+  const dbContributions = await prisma.monthlyContribution.findMany({
+    where: { fundId: fund.id, status: PaymentStatus.VERIFIED },
+    select: { monthYear: true },
+    distinct: ["monthYear"],
+  });
+
+  const baseMonths = ["অক্টোবর-২৬", "নভেম্বর-২৬", "ডিসেম্বর-২৬", "জানুয়ারি-২৭", "ফেব্রুয়ারি-২৭", "মার্চ-২৭"];
+  const allMonthsSet = new Set<string>([...baseMonths]);
+  dbContributions.forEach((c) => {
+    if (c.monthYear) allMonthsSet.add(c.monthYear);
+  });
+  const months = sortMonthYears(Array.from(allMonthsSet));
+
+  // 2. Fetch all active members and verified contributions
+  const members = await prisma.user.findMany({
+    where: { isActive: true },
+    select: {
+      id: true,
+      name: true,
+      phone: true,
+      classRoll: true,
+      studentGroup: true,
+      commitments: {
+        where: { fundId: fund.id },
+        select: { committedAmount: true },
+      },
+      contributions: {
+        where: { fundId: fund.id, status: PaymentStatus.VERIFIED },
+        select: { monthYear: true, amountPaid: true },
+      },
+    },
+    orderBy: [{ role: "asc" }, { name: "asc" }],
+  });
+
+  // Calculate column totals
+  const columnTotals: Record<string, number> = {};
+  months.forEach((m: string) => {
+    columnTotals[m] = 0;
+  });
+
+  const ledgerPdfMembers: LedgerPdfMember[] = members.map((m) => {
+    const contributionMap: Record<string, number> = {};
+    m.contributions.forEach((c) => {
+      const amt = Number(c.amountPaid);
+      contributionMap[c.monthYear] = amt;
+      columnTotals[c.monthYear] = (columnTotals[c.monthYear] || 0) + amt;
+    });
+
+    return {
+      id: m.id,
+      name: m.name,
+      phone: m.phone,
+      classRoll: m.classRoll,
+      studentGroup: m.studentGroup,
+      committedAmount: m.commitments[0]?.committedAmount
+        ? Number(m.commitments[0].committedAmount)
+        : null,
+      contributions: contributionMap,
+    };
+  });
+
+  const grandTotal = Object.values(columnTotals).reduce((a, b) => a + b, 0);
+
+  // 3. Find latest update time and who updated it
+  const latestActivity = await prisma.activityLog.findFirst({
+    where: {
+      fundId: fund.id,
+      entityType: { in: ["CONTRIBUTION", "MONTHLY_CONTRIBUTION", "PAYMENT", "COMMITMENT", "LEDGER"] },
+    },
+    orderBy: { timestamp: "desc" },
+    include: { performedBy: { select: { name: true, role: true } } },
+  });
+
+  const latestContribution = await prisma.monthlyContribution.findFirst({
+    where: { fundId: fund.id },
+    orderBy: { updatedAt: "desc" },
+    include: { verifiedBy: { select: { name: true, role: true } } },
+  });
+
+  let lastUpdatedAt = shareLink.updatedAt;
+  let lastUpdatedByName = "ফান্ড ম্যানেজমেন্ট টিম";
+
+  if (latestActivity?.timestamp && latestActivity.timestamp > lastUpdatedAt) {
+    lastUpdatedAt = latestActivity.timestamp;
+    if (latestActivity.performedBy?.name) {
+      lastUpdatedByName = latestActivity.performedBy.name;
+    }
+  } else if (latestContribution?.updatedAt && latestContribution.updatedAt > lastUpdatedAt) {
+    lastUpdatedAt = latestContribution.updatedAt;
+    if (latestContribution.verifiedBy?.name) {
+      lastUpdatedByName = latestContribution.verifiedBy.name;
+    }
+  }
+
+  const lastUpdatedAtFormatted = formatBengaliDateTime(lastUpdatedAt);
+
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://dakhil2012-alia.vercel.app";
+  const verificationUrl = `${baseUrl.replace(/\/+$/, "")}/ledger/share/${token}`;
+
+  let qrCodeDataUrl: string | undefined = undefined;
+  try {
+    qrCodeDataUrl = await QRCode.toDataURL(verificationUrl, {
+      margin: 1,
+      width: 140,
+      color: { dark: "#064e3b", light: "#ffffff" },
+    });
+  } catch (qrErr) {
+    console.warn("Failed to generate ledger share QR code:", qrErr);
+  }
+
+  let logoBase64: string | undefined = undefined;
+  try {
+    const logoPath = path.join(process.cwd(), "public", "logo.png");
+    if (fs.existsSync(logoPath)) {
+      const buf = fs.readFileSync(logoPath);
+      logoBase64 = `data:image/png;base64,${buf.toString("base64")}`;
+    }
+  } catch (logoErr) {
+    console.warn("Failed to read logo for ledger:", logoErr);
+  }
+
+  const html = generateLedgerHtml({
+    fundTitle: fund.title,
+    months,
+    members: ledgerPdfMembers,
+    columnTotals,
+    grandTotal,
+    lastUpdatedAtFormatted,
+    lastUpdatedByName,
+    verificationUrl,
+    qrCodeDataUrl,
+    logoBase64,
+  });
+
+  const endpoints = [
+    `${(process.env.PDF_SERVICE_URL || "https://pdf-lagbe.vercel.app").replace(/\/+$/, "")}/api/v1/html-to-pdf`,
+    "https://pdf-lagbe.onrender.com/api/v1/html-to-pdf",
+  ];
+
+  let lastError: unknown = null;
+  for (const endpoint of endpoints) {
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          html,
+          format: "A4",
+          landscape: true,
+          margin: { top: "10mm", right: "10mm", bottom: "10mm", left: "10mm" },
+          printBackground: true,
+        }),
+      });
+
+      if (!response.ok) {
+        lastError = new Error(`PDF API responded with status ${response.status}`);
+        continue;
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+
+      return {
+        buffer,
+        filename: `Ledger-${fund.title.replace(/\s+/g, "_")}-${new Date().toISOString().slice(0, 10)}.pdf`,
+        html,
+      };
+    } catch (err) {
+      lastError = err;
+    }
+  }
+
+  throw lastError || new Error("PDF জেনারেট করতে সমস্যা হয়েছে।");
 }

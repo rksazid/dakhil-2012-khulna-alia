@@ -109,6 +109,7 @@ model Fund {
   contributions  MonthlyContribution[]
   expenses       FundExpense[]
   activityLogs   ActivityLog[]
+  shareLinks     LedgerShareLink[]
 
   @@index([slug])
   @@index([isActive])
@@ -272,4 +273,19 @@ model ForumPost {
   @@index([parentId, createdAt])
   @@index([authorId])
   @@index([isPinned, createdAt])
+}
+
+model LedgerShareLink {
+  id          String   @id @default(cuid())
+  token       String   @unique
+  fundId      String?
+  fund        Fund?    @relation(fields: [fundId], references: [id], onDelete: Cascade)
+  title       String?
+  isActive    Boolean  @default(true)
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([token])
+  @@index([fundId])
 }

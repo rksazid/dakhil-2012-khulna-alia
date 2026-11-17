@@ -3,7 +3,13 @@
 import { useState, useTransition, useEffect } from "react";
 import { formatCurrency, toBengaliNumber } from "@/lib/utils";
 import { PaymentMethod, PaymentStatus } from "@prisma/client";
-import { updateLedgerCellAction } from "@/actions/ledger-actions";
+import {
+  updateLedgerCellAction,
+  getFundShareLinkAction,
+  createOrRegenerateShareLinkAction,
+  toggleShareLinkStatusAction,
+  deleteShareLinkAction,
+} from "@/actions/ledger-actions";
 import { adminUpdateUserCommitmentAction } from "@/actions/fund-actions";
 import {
   getNextMonthYear,
@@ -23,6 +29,14 @@ import {
   HeartHandshake,
   X,
   Loader2,
+  Share2,
+  Copy,
+  Check,
+  ExternalLink,
+  Power,
+  Trash2,
+  Globe,
+  RefreshCw,
 } from "lucide-react";
 
 export interface LedgerContribution {
@@ -73,6 +87,94 @@ export function SpreadsheetLedger({
   const [commitmentInput, setCommitmentInput] = useState<string>("500");
   const [commitmentFeedback, setCommitmentFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [isCommitmentPending, startCommitmentTransition] = useTransition();
+
+  // Share Link States
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [shareLinkData, setShareLinkData] = useState<{ id: string; token: string; isActive: boolean } | null>(null);
+  const [isShareLoading, setIsShareLoading] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [shareFeedback, setShareFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [isSharePending, startShareTransition] = useTransition();
+
+  const handleOpenShareModal = async () => {
+    setIsShareModalOpen(true);
+    setIsShareLoading(true);
+    setShareFeedback(null);
+    try {
+      const res = await getFundShareLinkAction(fundId);
+      if (res.success && res.shareLink) {
+        setShareLinkData({
+          id: res.shareLink.id,
+          token: res.shareLink.token,
+          isActive: res.shareLink.isActive,
+        });
+      } else {
+        setShareLinkData(null);
+      }
+    } catch {
+      setShareFeedback({ type: "error", message: "শেয়ার লিঙ্ক লোড করতে ব্যর্থ হয়েছে।" });
+    } finally {
+      setIsShareLoading(false);
+    }
+  };
+
+  const handleCreateOrRegenerateLink = () => {
+    setShareFeedback(null);
+    startShareTransition(async () => {
+      const res = await createOrRegenerateShareLinkAction(fundId);
+      if (res.success && res.shareLink) {
+        setShareLinkData({
+          id: res.shareLink.id,
+          token: res.shareLink.token,
+          isActive: res.shareLink.isActive,
+        });
+        setShareFeedback({ type: "success", message: "নতুন পাবলিক শেয়ার লিঙ্ক সফলভাবে তৈরি করা হয়েছে!" });
+      } else {
+        setShareFeedback({ type: "error", message: res.error || "লিঙ্ক তৈরিতে সমস্যা হয়েছে।" });
+      }
+    });
+  };
+
+  const handleToggleShareStatus = (active: boolean) => {
+    if (!shareLinkData) return;
+    setShareFeedback(null);
+    startShareTransition(async () => {
+      const res = await toggleShareLinkStatusAction(shareLinkData.id, active);
+      if (res.success && res.shareLink) {
+        setShareLinkData((prev) => (prev ? { ...prev, isActive: active } : null));
+        setShareFeedback({
+          type: "success",
+          message: active ? "লিঙ্কটি পুনরায় সক্রিয় করা হয়েছে।" : "লিঙ্কটি সাময়িকভাবে নিষ্ক্রিয় করা হয়েছে।",
+        });
+      } else {
+        setShareFeedback({ type: "error", message: res.error || "স্ট্যাটাস পরিবর্তন ব্যর্থ হয়েছে।" });
+      }
+    });
+  };
+
+  const handleDeleteShareLink = () => {
+    if (!shareLinkData) return;
+    if (!confirm("আপনি কি নিশ্চিত যে এই শেয়ার লিঙ্কটি মুছে ফেলতে চান? লিঙ্ক মুছে ফেললে প্রকাশিত লিঙ্ক আর কাজ করবে না।")) return;
+    setShareFeedback(null);
+    startShareTransition(async () => {
+      const res = await deleteShareLinkAction(shareLinkData.id);
+      if (res.success) {
+        setShareLinkData(null);
+        setShareFeedback({ type: "success", message: "শেয়ার লিঙ্কটি সফলভাবে মুছে ফেলা হয়েছে।" });
+      } else {
+        setShareFeedback({ type: "error", message: res.error || "মুছে ফেলতে ব্যর্থ হয়েছে।" });
+      }
+    });
+  };
+
+  const handleCopyLink = () => {
+    if (!shareLinkData) return;
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const fullUrl = `${origin}/ledger/share/${shareLinkData.token}`;
+    navigator.clipboard.writeText(fullUrl);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2500);
+  };
 
   // Sync if prop updates
   useEffect(() => {
@@ -282,6 +384,17 @@ export function SpreadsheetLedger({
             <Printer className="w-3.5 h-3.5 text-slate-600" />
             প্রিন্ট ভিউ
           </button>
+          {canEdit && (
+            <button
+              type="button"
+              onClick={handleOpenShareModal}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-teal-700 to-emerald-800 hover:from-teal-800 hover:to-emerald-900 rounded-lg transition shadow-2xs"
+              title="পাবলিক শেয়ার লিঙ্ক পরিচালনা করুন ও পিডিএফ ভিউ শেয়ার করুন"
+            >
+              <Share2 className="w-3.5 h-3.5" />
+              <span>শেয়ার লিঙ্ক</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -731,6 +844,202 @@ export function SpreadsheetLedger({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Modal 4: Share Link Management Modal */}
+      {isShareModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-lg w-full p-6 space-y-5 animate-in fade-in zoom-in-95 duration-150">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center">
+                  <Share2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-sm sm:text-base">
+                    পাবলিক স্প্রেডশিট শেয়ার লিঙ্ক
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    লগইন ছাড়া লেজার প্রদর্শন ও ৩-৪ মাসের খণ্ডভিত্তিক PDF ডাউনলোড
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsShareModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Feedback alert */}
+            {shareFeedback && (
+              <div
+                className={`p-3 rounded-xl text-xs font-semibold border ${
+                  shareFeedback.type === "success"
+                    ? "bg-emerald-50 text-emerald-900 border-emerald-300"
+                    : "bg-red-50 text-red-900 border-red-300"
+                }`}
+              >
+                {shareFeedback.message}
+              </div>
+            )}
+
+            {isShareLoading ? (
+              <div className="py-12 flex flex-col items-center justify-center gap-2 text-slate-400 text-xs">
+                <Loader2 className="w-6 h-6 animate-spin text-emerald-600" />
+                <span>তথ্য লোড হচ্ছে...</span>
+              </div>
+            ) : shareLinkData ? (
+              <div className="space-y-4">
+                {/* Active / Inactive Status Pill */}
+                <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-200">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`w-3 h-3 rounded-full ${
+                        shareLinkData.isActive ? "bg-emerald-500 animate-pulse" : "bg-slate-400"
+                      }`}
+                    />
+                    <div>
+                      <p className="text-xs font-bold text-slate-900">
+                        {shareLinkData.isActive ? "লিঙ্কটি বর্তমানে সক্রিয়" : "লিঙ্কটি সাময়িকভাবে স্থগিত"}
+                      </p>
+                      <p className="text-[10.5px] text-slate-500">
+                        {shareLinkData.isActive
+                          ? "যে কেউ লিঙ্কে প্রবেশ করে লেজার দেখতে ও PDF নামাতে পারবে।"
+                          : "লিঙ্কে প্রবেশ করলে সাময়িক স্থগিত বার্তা প্রদর্শিত হবে।"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleToggleShareStatus(!shareLinkData.isActive)}
+                    disabled={isSharePending}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+                      shareLinkData.isActive
+                        ? "bg-amber-100 text-amber-900 hover:bg-amber-200 border border-amber-300"
+                        : "bg-emerald-700 text-white hover:bg-emerald-800"
+                    }`}
+                  >
+                    <Power className="w-3 h-3" />
+                    <span>{shareLinkData.isActive ? "স্থগিত করুন" : "সক্রিয় করুন"}</span>
+                  </button>
+                </div>
+
+                {/* The Shareable URL Input with Copy button */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold text-slate-700">
+                    পাবলিক লিঙ্ক (সরাসরি ব্রাউজারে খোলার জন্য):
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={`${
+                        typeof window !== "undefined" ? window.location.origin : ""
+                      }/ledger/share/${shareLinkData.token}`}
+                      className="w-full px-3 py-2 text-xs font-mono bg-slate-50 border border-slate-300 rounded-xl text-slate-800 select-all"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleCopyLink}
+                      className="px-3.5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold rounded-xl transition shrink-0 flex items-center gap-1 shadow-xs"
+                      title="লিঙ্কটি ক্লিপবোর্ডে কপি করুন"
+                    >
+                      {copiedLink ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-amber-300" />
+                          <span>কপি হয়েছে!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3.5 h-3.5" />
+                          <span>কপি</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Secondary Actions */}
+                <div className="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={`/ledger/share/${shareLinkData.token}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 rounded-xl transition border border-emerald-200"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>ভিউ প্রিভিউ দেখুন</span>
+                    </a>
+
+                    <button
+                      type="button"
+                      onClick={handleCreateOrRegenerateLink}
+                      disabled={isSharePending}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition"
+                      title="নতুন টোকেন দিয়ে আগের লিঙ্ক পরিবর্তন করুন"
+                    >
+                      <RefreshCw className="w-3 h-3 text-slate-500" />
+                      <span>নতুন লিঙ্ক জেনারেট</span>
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleDeleteShareLink}
+                    disabled={isSharePending}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 rounded-xl transition"
+                    title="পাবলিক লিঙ্কটি সম্পূর্ণ মুছে ফেলুন"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>মুছে ফেলুন</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="py-6 text-center space-y-4">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center mx-auto">
+                  <Globe className="w-6 h-6" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-bold text-slate-900">
+                    এখনো কোনো পাবলিক শেয়ার লিঙ্ক তৈরি করা হয়নি
+                  </p>
+                  <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
+                    একটি সুরক্ষিত শেয়ার লিঙ্ক তৈরি করে আপনি যেকোনো ব্যাচমেট বা শুভাকাঙ্ক্ষীকে লগইন ছাড়াই লাইভ স্প্রেডশিট লেজার দেখার সুযোগ দিতে পারেন।
+                  </p>
+                </div>
+
+                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 text-left text-[11px] text-slate-600 space-y-1.5 max-w-sm mx-auto">
+                  <p className="flex items-center gap-1.5 text-emerald-800 font-bold">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> লেজার ভিউতে যা দেখা যাবে:
+                  </p>
+                  <p>• সর্বশেষ কবে এবং কে লেজারটি আপডেট করেছেন তার নাম ও তারিখ</p>
+                  <p>• ৩-৪ মাস করে সুনির্দিষ্ট খণ্ডে ভাগ করা প্রিন্ট ও নিখুঁত PDF ভিউ</p>
+                  <p>• আপনি চাইলে যেকোনো সময় লিঙ্কটি নিষ্ক্রিয় বা মুছে ফেলতে পারবেন</p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleCreateOrRegenerateLink}
+                  disabled={isSharePending}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold rounded-xl transition shadow-md disabled:opacity-50"
+                >
+                  {isSharePending ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Share2 className="w-4 h-4" />
+                  )}
+                  <span>পাবলিক শেয়ার লিঙ্ক তৈরি করুন</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

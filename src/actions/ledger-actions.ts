@@ -1,6 +1,7 @@
 "use server";
 
 import prisma from "@/lib/prisma";
+import crypto from "crypto";
 import { requireAuth, canManageFund } from "@/lib/auth";
 import { logActivity } from "@/lib/activity-logger";
 import { deleteFromVercelBlob } from "@/lib/blob";
@@ -346,5 +347,180 @@ export async function deleteContributionAction(contributionId: string) {
   } catch (err: unknown) {
     console.error("Delete contribution error:", err);
     return { success: false, error: "মুছে ফেলতে ব্যর্থ হয়েছে।" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Shareable Spreadsheet Link Management Actions
+// ---------------------------------------------------------------------------
+
+export async function getFundShareLinkAction(fundId: string) {
+  try {
+    const user = await requireAuth();
+    const isAllowed = await canManageFund(user.id, fundId);
+    if (!isAllowed) {
+      return { success: false, error: "আপনার এই তহবিলের তথ্য দেখার অনুমতি নেই।" };
+    }
+
+    const shareLink = await prisma.ledgerShareLink.findFirst({
+      where: { fundId },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return { success: true, shareLink };
+  } catch (err: unknown) {
+    console.error("Get share link error:", err);
+    return { success: false, error: "শেয়ার লিঙ্ক লোড করতে ব্যর্থ হয়েছে।" };
+  }
+}
+
+export async function createOrRegenerateShareLinkAction(fundId: string) {
+  try {
+    const user = await requireAuth();
+    const isAllowed = await canManageFund(user.id, fundId);
+    if (!isAllowed) {
+      return { success: false, error: "আপনার শেয়ার লিঙ্ক তৈরি করার অনুমতি নেই।" };
+    }
+
+    const fund = await prisma.fund.findUnique({
+      where: { id: fundId },
+      select: { title: true },
+    });
+    if (!fund) {
+      return { success: false, error: "তহবিল পাওয়া যায়নি।" };
+    }
+
+    // Generate a secure 32-character random hex token
+    const token = crypto.randomBytes(16).toString("hex");
+
+    // Check if a link already exists for this fund
+    const existing = await prisma.ledgerShareLink.findFirst({
+      where: { fundId },
+    });
+
+    let shareLink;
+    if (existing) {
+      shareLink = await prisma.ledgerShareLink.update({
+        where: { id: existing.id },
+        data: {
+          token,
+          isActive: true,
+          updatedAt: new Date(),
+        },
+      });
+    } else {
+      shareLink = await prisma.ledgerShareLink.create({
+        data: {
+          token,
+          fundId,
+          title: `${fund.title} • অফিসিয়াল লেজার`,
+          isActive: true,
+          createdById: user.id,
+        },
+      });
+    }
+
+    await logActivity({
+      action: "GENERATE_LEDGER_SHARE_LINK",
+      entityType: "LEDGER_SHARE_LINK",
+      entityId: shareLink.id,
+      fundId,
+      performedByUserId: user.id,
+      details: {
+        fundTitle: fund.title,
+        token: shareLink.token,
+        summary: `${fund.title}-এর জন্য নতুন পাবলিক শেয়ার লিঙ্ক জেনারেট করা হয়েছে।`,
+      },
+    });
+
+    revalidatePath("/admin/ledger");
+    revalidatePath(`/ledger/share/${shareLink.token}`);
+    return { success: true, shareLink };
+  } catch (err: unknown) {
+    console.error("Create or regenerate share link error:", err);
+    return { success: false, error: "শেয়ার লিঙ্ক তৈরি করতে সমস্যা হয়েছে।" };
+  }
+}
+
+export async function toggleShareLinkStatusAction(shareLinkId: string, isActive: boolean) {
+  try {
+    const user = await requireAuth();
+    const link = await prisma.ledgerShareLink.findUnique({
+      where: { id: shareLinkId },
+      include: { fund: { select: { title: true } } },
+    });
+    if (!link || !link.fundId) {
+      return { success: false, error: "শেয়ার লিঙ্ক পাওয়া যায়নি।" };
+    }
+
+    const isAllowed = await canManageFund(user.id, link.fundId);
+    if (!isAllowed) {
+      return { success: false, error: "আপনার এই লিঙ্ক পরিবর্তনের অনুমতি নেই।" };
+    }
+
+    const updated = await prisma.ledgerShareLink.update({
+      where: { id: shareLinkId },
+      data: { isActive },
+    });
+
+    await logActivity({
+      action: isActive ? "ACTIVATE_LEDGER_SHARE_LINK" : "DEACTIVATE_LEDGER_SHARE_LINK",
+      entityType: "LEDGER_SHARE_LINK",
+      entityId: shareLinkId,
+      fundId: link.fundId,
+      performedByUserId: user.id,
+      details: {
+        fundTitle: link.fund?.title,
+        isActive,
+        summary: `লেজার শেয়ার লিঙ্কটি ${isActive ? "সক্রিয়" : "নিষ্ক্রিয়"} করা হয়েছে।`,
+      },
+    });
+
+    revalidatePath("/admin/ledger");
+    revalidatePath(`/ledger/share/${link.token}`);
+    return { success: true, shareLink: updated };
+  } catch (err: unknown) {
+    console.error("Toggle share link status error:", err);
+    return { success: false, error: "স্ট্যাটাস পরিবর্তন ব্যর্থ হয়েছে।" };
+  }
+}
+
+export async function deleteShareLinkAction(shareLinkId: string) {
+  try {
+    const user = await requireAuth();
+    const link = await prisma.ledgerShareLink.findUnique({
+      where: { id: shareLinkId },
+      include: { fund: { select: { title: true } } },
+    });
+    if (!link || !link.fundId) {
+      return { success: false, error: "শেয়ার লিঙ্ক পাওয়া যায়নি।" };
+    }
+
+    const isAllowed = await canManageFund(user.id, link.fundId);
+    if (!isAllowed) {
+      return { success: false, error: "আপনার এই লিঙ্ক মুছে ফেলার অনুমতি নেই।" };
+    }
+
+    await prisma.ledgerShareLink.delete({
+      where: { id: shareLinkId },
+    });
+
+    await logActivity({
+      action: "DELETE_LEDGER_SHARE_LINK",
+      entityType: "LEDGER_SHARE_LINK",
+      entityId: shareLinkId,
+      fundId: link.fundId,
+      performedByUserId: user.id,
+      details: {
+        fundTitle: link.fund?.title,
+        summary: "পাবলিক লেজার শেয়ার লিঙ্কটি সম্পূর্ণ মুছে ফেলা হয়েছে।",
+      },
+    });
+
+    revalidatePath("/admin/ledger");
+    return { success: true };
+  } catch (err: unknown) {
+    console.error("Delete share link error:", err);
+    return { success: false, error: "লিঙ্ক মুছে ফেলতে ব্যর্থ হয়েছে।" };
   }
 }
