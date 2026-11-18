@@ -4,7 +4,7 @@ import prisma from "@/lib/prisma";
 import { requireRole, hashPassword } from "@/lib/auth";
 import { logActivity } from "@/lib/activity-logger";
 import { deleteFromVercelBlob } from "@/lib/blob";
-import { Role, CommitmentStatus } from "@prisma/client";
+import { Role, CommitmentStatus, PaymentStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
 export async function createMemberAction(formData: FormData) {
@@ -501,11 +501,85 @@ export async function mergeMembersAction(sourceUserId: string, targetUserId: str
       return { success: false, error: "উৎস বা গন্তব্য অ্যাকাউন্ট খুঁজে পাওয়া যায়নি।" };
     }
 
-    // 1. Reassign monthly contributions
-    await prisma.monthlyContribution.updateMany({
-      where: { userId: sourceUserId },
-      data: { userId: targetUserId },
-    });
+    // 1. Reassign monthly contributions with deduplication per (fundId, monthYear)
+    const affectedFundIds = new Set<string>();
+    const obsoleteReceiptUrls: string[] = [];
+    const targetContribMap = new Map(
+      targetUser.contributions.map((tc) => [`${tc.fundId}|${tc.monthYear}`, tc])
+    );
+
+    for (const sc of sourceUser.contributions) {
+      affectedFundIds.add(sc.fundId);
+      const key = `${sc.fundId}|${sc.monthYear}`;
+      const existingTc = targetContribMap.get(key);
+
+      if (!existingTc) {
+        const reassigned = await prisma.monthlyContribution.update({
+          where: { id: sc.id },
+          data: { userId: targetUserId },
+        });
+        targetContribMap.set(key, reassigned);
+      } else {
+        affectedFundIds.add(existingTc.fundId);
+        if (sc.status === PaymentStatus.VERIFIED && existingTc.status !== PaymentStatus.VERIFIED) {
+          const keptReceiptUrl = sc.receiptUrl || existingTc.receiptUrl;
+          if (existingTc.receiptUrl && existingTc.receiptUrl !== keptReceiptUrl) {
+            obsoleteReceiptUrls.push(existingTc.receiptUrl);
+          }
+          const updatedSc = await prisma.monthlyContribution.update({
+            where: { id: sc.id },
+            data: {
+              userId: targetUserId,
+              note: existingTc.note || sc.note,
+              transactionId: existingTc.transactionId || sc.transactionId,
+              receiptUrl: keptReceiptUrl,
+            },
+          });
+          await prisma.monthlyContribution.delete({ where: { id: existingTc.id } });
+          targetContribMap.set(key, updatedSc);
+        } else {
+          const keptReceiptUrl = existingTc.receiptUrl || sc.receiptUrl;
+          if (sc.receiptUrl && sc.receiptUrl !== keptReceiptUrl) {
+            obsoleteReceiptUrls.push(sc.receiptUrl);
+          }
+          if (
+            (!existingTc.note && sc.note) ||
+            (!existingTc.transactionId && sc.transactionId) ||
+            (!existingTc.receiptUrl && sc.receiptUrl)
+          ) {
+            const updatedTc = await prisma.monthlyContribution.update({
+              where: { id: existingTc.id },
+              data: {
+                note: existingTc.note || sc.note,
+                transactionId: existingTc.transactionId || sc.transactionId,
+                receiptUrl: keptReceiptUrl,
+              },
+            });
+            targetContribMap.set(key, updatedTc);
+          }
+          await prisma.monthlyContribution.delete({ where: { id: sc.id } });
+        }
+      }
+    }
+
+    for (const fId of affectedFundIds) {
+      const [verifiedAgg, expenseAgg] = await Promise.all([
+        prisma.monthlyContribution.aggregate({
+          where: { fundId: fId, status: PaymentStatus.VERIFIED },
+          _sum: { amountPaid: true },
+        }),
+        prisma.fundExpense.aggregate({
+          where: { fundId: fId },
+          _sum: { amount: true },
+        }),
+      ]);
+      const verifiedSum = Number(verifiedAgg._sum.amountPaid || 0);
+      const expenseSum = Number(expenseAgg._sum.amount || 0);
+      await prisma.fund.update({
+        where: { id: fId },
+        data: { currentBalance: verifiedSum - expenseSum },
+      });
+    }
 
     // 2. Handle commitments
     for (const sc of sourceUser.commitments) {
@@ -546,7 +620,10 @@ export async function mergeMembersAction(sourceUserId: string, targetUserId: str
     const targetUrls = [targetUser.avatarUrl, targetUser.thumbnailUrl, targetUser.bannerUrl].filter(
       (u): u is string => typeof u === "string" && u.length > 0
     );
-    const unneededUrls = sourceUrls.filter((u) => !targetUrls.includes(u));
+    const unneededUrls = [
+      ...sourceUrls.filter((u) => !targetUrls.includes(u)),
+      ...obsoleteReceiptUrls,
+    ];
     if (unneededUrls.length > 0) {
       await deleteFromVercelBlob(unneededUrls);
     }

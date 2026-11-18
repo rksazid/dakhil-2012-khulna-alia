@@ -147,7 +147,7 @@ export default async function SharedLedgerPage({ params }: SharedLedgerPageProps
     const contributionMap: Record<string, number> = {};
     m.contributions.forEach((c) => {
       const amt = Number(c.amountPaid);
-      contributionMap[c.monthYear] = amt;
+      contributionMap[c.monthYear] = (contributionMap[c.monthYear] || 0) + amt;
       columnTotals[c.monthYear] = (columnTotals[c.monthYear] || 0) + amt;
     });
 

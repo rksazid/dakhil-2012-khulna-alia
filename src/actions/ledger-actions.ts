@@ -215,32 +215,77 @@ export async function verifyContributionAction(
     }
 
     const oldStatus = contribution.status;
-    const amount = contribution.amountPaid;
+    const obsoleteReceiptUrls: string[] = [];
 
     await prisma.$transaction(async (tx) => {
+      let mergedNote = note !== undefined ? note : contribution.note;
+      let mergedTrxId = contribution.transactionId;
+      let mergedReceiptUrl = contribution.receiptUrl;
+
+      // Prevent duplicate verified records for the same (fundId, userId, monthYear)
+      if (status === PaymentStatus.VERIFIED) {
+        const duplicates = await tx.monthlyContribution.findMany({
+          where: {
+            fundId: contribution.fundId,
+            userId: contribution.userId,
+            monthYear: contribution.monthYear,
+            id: { not: contributionId },
+          },
+        });
+
+        if (duplicates.length > 0) {
+          for (const dup of duplicates) {
+            if (!mergedNote && dup.note) mergedNote = dup.note;
+            if (!mergedTrxId && dup.transactionId) mergedTrxId = dup.transactionId;
+            if (!mergedReceiptUrl && dup.receiptUrl) mergedReceiptUrl = dup.receiptUrl;
+          }
+          for (const dup of duplicates) {
+            if (dup.receiptUrl && dup.receiptUrl !== mergedReceiptUrl) {
+              obsoleteReceiptUrls.push(dup.receiptUrl);
+            }
+          }
+          await tx.monthlyContribution.deleteMany({
+            where: { id: { in: duplicates.map((d) => d.id) } },
+          });
+        }
+      }
+
       await tx.monthlyContribution.update({
         where: { id: contributionId },
         data: {
           status,
           verifiedByUserId: status === PaymentStatus.VERIFIED ? user.id : null,
           verifiedAt: status === PaymentStatus.VERIFIED ? new Date() : null,
-          note: note !== undefined ? note : contribution.note,
+          note: mergedNote,
+          transactionId: mergedTrxId,
+          receiptUrl: mergedReceiptUrl,
         },
       });
 
-      // Adjust fund balance
-      if (oldStatus !== PaymentStatus.VERIFIED && status === PaymentStatus.VERIFIED) {
-        await tx.fund.update({
-          where: { id: contribution.fundId },
-          data: { currentBalance: { increment: amount } },
-        });
-      } else if (oldStatus === PaymentStatus.VERIFIED && status !== PaymentStatus.VERIFIED) {
-        await tx.fund.update({
-          where: { id: contribution.fundId },
-          data: { currentBalance: { decrement: amount } },
-        });
-      }
+      // Recalculate and set fund balance directly from verified contributions minus expenses
+      const [verifiedAgg, expenseAgg] = await Promise.all([
+        tx.monthlyContribution.aggregate({
+          where: { fundId: contribution.fundId, status: PaymentStatus.VERIFIED },
+          _sum: { amountPaid: true },
+        }),
+        tx.fundExpense.aggregate({
+          where: { fundId: contribution.fundId },
+          _sum: { amount: true },
+        }),
+      ]);
+
+      const verifiedSum = Number(verifiedAgg._sum.amountPaid || 0);
+      const expenseSum = Number(expenseAgg._sum.amount || 0);
+
+      await tx.fund.update({
+        where: { id: contribution.fundId },
+        data: { currentBalance: verifiedSum - expenseSum },
+      });
     });
+
+    if (obsoleteReceiptUrls.length > 0) {
+      await deleteFromVercelBlob(obsoleteReceiptUrls);
+    }
 
     if (oldStatus !== PaymentStatus.VERIFIED && status === PaymentStatus.VERIFIED) {
       await createNotificationHelper({

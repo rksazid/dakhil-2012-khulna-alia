@@ -1290,7 +1290,7 @@ export async function generateLedgerPdfBuffer(token: string): Promise<{ buffer: 
     const contributionMap: Record<string, number> = {};
     m.contributions.forEach((c) => {
       const amt = Number(c.amountPaid);
-      contributionMap[c.monthYear] = amt;
+      contributionMap[c.monthYear] = (contributionMap[c.monthYear] || 0) + amt;
       columnTotals[c.monthYear] = (columnTotals[c.monthYear] || 0) + amt;
     });
 
